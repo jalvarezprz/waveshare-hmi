@@ -1,0 +1,41 @@
+menu "LVGL Port (example)"
+
+config EXAMPLE_LVGL_PORT_BUF_HEIGHT
+	int "LVGL draw buffer height (lines)"
+	default 40
+	help
+		Número de líneas del buffer de dibujo (doble buffer con DMA recomendado).
+
+config EXAMPLE_LVGL_PORT_TICK
+	int "LVGL tick period (ms)"
+	default 2
+	help
+		Periodo del tick de LVGL. 2–5 ms es habitual; 2 ms mejora la fluidez.
+
+config EXAMPLE_LVGL_PORT_TASK_MAX_DELAY_MS
+	int "LVGL task max delay (ms)"
+	default 500
+
+config EXAMPLE_LVGL_PORT_TASK_MIN_DELAY_MS
+	int "LVGL task min delay (ms)"
+	default 1
+
+config EXAMPLE_LVGL_PORT_TASK_STACK_SIZE_KB
+	int "LVGL task stack size (KB)"
+	default 8
+
+config EXAMPLE_LVGL_PORT_TASK_PRIORITY
+	int "LVGL task priority"
+	default 3
+	help
+		Prioridad moderada para no bloquear otros drivers/tasks.
+
+config EXAMPLE_LVGL_PORT_TASK_CORE
+	int "LVGL task core (-1:any)"
+	default 1
+	help
+		1 = pin al segundo core; -1 = sin afinidad.
+
+endmenu
+
+

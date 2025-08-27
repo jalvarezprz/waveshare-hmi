@@ -1,0 +1,16 @@
+# ESP-IDF / CMake
+build/
+sdkconfig
+sdkconfig.old
+.vscode/
+*.log
+
+# VS Code
+.vscode/
+.history/
+*.code-workspace
+
+# Misc
+.DS_Store
+Thumbs.db
+*.zip
