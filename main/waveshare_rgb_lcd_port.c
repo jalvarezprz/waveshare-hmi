@@ -54,22 +54,40 @@ void gpio_init(void)
     gpio_config(&io_conf);
 }
 
-// Reset the touch screen
+// Reset the touch screen — GT911 limpio (sin FT5x06) y con guards para pines -1
 void waveshare_esp32_s3_touch_reset()
 {
-    uint8_t write_buf = 0x01;
-    i2c_master_write_to_device(I2C_MASTER_NUM, 0x24, &write_buf, 1, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
+#if CONFIG_EXAMPLE_LCD_TOUCH_CONTROLLER_GT911
+    ESP_LOGI(TAG, "Initialize Touch LCD");
+    ESP_LOGI(TAG, "Touch pins: RST=%d INT=%d", EXAMPLE_PIN_NUM_TOUCH_RST, EXAMPLE_PIN_NUM_TOUCH_INT);
 
-    // Reset the touch screen. It is recommended to reset the touch screen before using it.
-    write_buf = 0x2C;
-    i2c_master_write_to_device(I2C_MASTER_NUM, 0x38, &write_buf, 1, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
-    esp_rom_delay_us(100 * 1000);
-    gpio_set_level(GPIO_INPUT_IO_4, 0);
-    esp_rom_delay_us(100 * 1000);
-    write_buf = 0x2E;
-    i2c_master_write_to_device(I2C_MASTER_NUM, 0x38, &write_buf, 1, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
-    esp_rom_delay_us(200 * 1000);
+    // Selección de dirección vía INT (0x5D) solo si INT está cableado
+    if (EXAMPLE_PIN_NUM_TOUCH_INT >= 0) {
+        gpio_set_direction(EXAMPLE_PIN_NUM_TOUCH_INT, GPIO_MODE_OUTPUT);
+        gpio_set_level(EXAMPLE_PIN_NUM_TOUCH_INT, 1); // Selecciona 0x5D
+    }
+
+    // Pulso de reset solo si RST está cableado
+    if (EXAMPLE_PIN_NUM_TOUCH_RST >= 0) {
+        gpio_set_direction(EXAMPLE_PIN_NUM_TOUCH_RST, GPIO_MODE_OUTPUT);
+        gpio_set_level(EXAMPLE_PIN_NUM_TOUCH_RST, 0);
+        esp_rom_delay_us(10 * 1000);
+        gpio_set_level(EXAMPLE_PIN_NUM_TOUCH_RST, 1);
+        esp_rom_delay_us(100 * 1000);
+    }
+
+    // Devolver INT a entrada con pull-up si está cableado
+    if (EXAMPLE_PIN_NUM_TOUCH_INT >= 0) {
+        gpio_set_direction(EXAMPLE_PIN_NUM_TOUCH_INT, GPIO_MODE_INPUT);
+        gpio_set_pull_mode(EXAMPLE_PIN_NUM_TOUCH_INT, GPIO_PULLUP_ONLY);
+    }
+
+    ESP_LOGI(TAG, "GT911 reset sequence done (addr 0x5D)");
+#else
+    ESP_LOGW(TAG, "GT911 not enabled in Kconfig");
+#endif
 }
+
 
 #endif
 
