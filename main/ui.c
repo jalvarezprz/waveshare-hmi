@@ -16,8 +16,8 @@ static void on_menu_btn(lv_event_t *e)
 {
     if (lv_event_get_code(e) == LV_EVENT_CLICKED) {
         lv_obj_t *label = (lv_obj_t *)lv_event_get_user_data(e);
-        if (label) lv_label_set_text(label, "Menú pulsado");
-        ESP_LOGI(TAG, "Botón Menú clicado");
+        if (label) lv_label_set_text(label, "Menu pressed");
+        ESP_LOGI(TAG, "Boton Menu pulsado");
     }
 }
 
@@ -78,7 +78,7 @@ void ui_create(void)
     lv_obj_t *menu_btn = lv_btn_create(header);
     lv_obj_set_size(menu_btn, 120, LV_SIZE_CONTENT);
     lv_obj_t *menu_lbl = lv_label_create(menu_btn);
-    lv_label_set_text(menu_lbl, "Menú");
+    lv_label_set_text(menu_lbl, "Menu");
     lv_obj_center(menu_lbl);
     lv_obj_add_event_cb(menu_btn, on_menu_btn, LV_EVENT_CLICKED, menu_lbl);
 
