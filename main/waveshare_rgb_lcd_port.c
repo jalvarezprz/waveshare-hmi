@@ -94,6 +94,7 @@ void waveshare_esp32_s3_touch_reset()
 // Initialize RGB LCD
 esp_err_t waveshare_esp32_s3_rgb_lcd_init()
 {
+    esp_log_level_set("GT911", ESP_LOG_ERROR);
     ESP_LOGI(TAG, "Install RGB LCD panel driver"); // Log the start of the RGB LCD panel driver installation
     esp_lcd_panel_handle_t panel_handle = NULL; // Declare a handle for the LCD panel
     esp_lcd_rgb_panel_config_t panel_config = {
@@ -162,12 +163,16 @@ esp_err_t waveshare_esp32_s3_rgb_lcd_init()
     waveshare_esp32_s3_touch_reset(); // Reset the touch panel
 
     esp_lcd_panel_io_handle_t tp_io_handle = NULL; // Declare a handle for touch panel I/O
-    const esp_lcd_panel_io_i2c_config_t tp_io_config = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG(); // Configure I2C for GT911 touch controller
+    //const esp_lcd_panel_io_i2c_config_t tp_io_config = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG(); // Configure I2C for GT911 touch controller
+
+    esp_lcd_panel_io_i2c_config_t tp_io_config = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG();
+    tp_io_config.dev_addr = 0x5D;  // ← fija 0x5D
 
     ESP_LOGI(TAG, "Initialize I2C panel IO"); // Log I2C panel I/O initialization
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)I2C_MASTER_NUM, &tp_io_config, &tp_io_handle)); // Create new I2C panel I/O
 
     ESP_LOGI(TAG, "Initialize touch controller GT911"); // Log touch controller initialization
+
     const esp_lcd_touch_config_t tp_cfg = {
         .x_max = EXAMPLE_LCD_H_RES, // Set maximum X coordinate
         .y_max = EXAMPLE_LCD_V_RES, // Set maximum Y coordinate
