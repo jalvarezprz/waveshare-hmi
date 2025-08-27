@@ -96,7 +96,7 @@ void ui_create(void)
 
     /* 3.1) Etiqueta “Temperatura” */
     lv_obj_t *temp_lbl = lv_label_create(content);
-    lv_label_set_text(temp_lbl, "Temperatura: 21.5°C");
+    lv_label_set_text(temp_lbl, "Temperatura: 23.5°C");
     lv_obj_set_style_text_color(temp_lbl, lv_color_white(), 0);
 #if LV_FONT_MONTSERRAT_20
     lv_obj_set_style_text_font(temp_lbl, &lv_font_montserrat_20, 0);
