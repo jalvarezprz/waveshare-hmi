@@ -5,7 +5,8 @@ idf_component_register(
         "ui/widgets_reusable/widget_slider.cpp"
         "lvgl_port.c"
         "waveshare_rgb_lcd_port.c"
-        "lvgl_lock_shim.c"                 # <— AÑADIDO
+        "lvgl_lock_shim.c"
+        "ui/ui_menu_mcr50.cpp"
     INCLUDE_DIRS
         "."
         "ui"
@@ -16,5 +17,6 @@ idf_component_register(
         driver
         esp_timer
         esp_lcd_touch
+        json
 )
 target_compile_features(${COMPONENT_LIB} PUBLIC cxx_std_17)
