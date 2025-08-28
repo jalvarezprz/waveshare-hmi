@@ -1,6 +1,20 @@
 idf_component_register(
-    SRCS "waveshare_rgb_lcd_port.c" "main.c" "lvgl_port.c" "ui.c"
-    INCLUDE_DIRS ".")
-
-idf_component_get_property(lvgl_lib lvgl__lvgl COMPONENT_LIB)
-target_compile_options(${lvgl_lib} PRIVATE -Wno-format)
+    SRCS
+        "main.cpp"
+        "ui/ui_screens.cpp"
+        "ui/widgets_reusable/widget_slider.cpp"
+        "lvgl_port.c"
+        "waveshare_rgb_lcd_port.c"
+        "lvgl_lock_shim.c"                 # <— AÑADIDO
+    INCLUDE_DIRS
+        "."
+        "ui"
+        "ui/widgets_reusable"
+    REQUIRES
+        lvgl
+        esp_lcd
+        driver
+        esp_timer
+        esp_lcd_touch
+)
+target_compile_features(${COMPONENT_LIB} PUBLIC cxx_std_17)
