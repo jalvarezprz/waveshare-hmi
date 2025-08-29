@@ -91,21 +91,14 @@ void ui_mcr50_build_main_menu() {
         // Copia propia del ID (sobrevive al cJSON_Delete)
         char* id_copy = id_json ? strdup(id_json) : NULL;
 
-        // CLICK: usar id_copy (recuperado vía user_data del evento)
+        // CLICK
         lv_obj_add_event_cb(btn, [](lv_event_t* e){
             const char* id = (const char*) lv_event_get_user_data(e);
             if (!id) return;
 
             // Acceso sin PIN
-            if (!strcmp(id,"info")) {
-                ui_router_go(UiScreen::INFO_MENU);
-                return;
-            }
-            if (!strcmp(id,"tend")) {
-                // TODO: ui_router_go(UiScreen::TRENDS); cuando exista
-                ESP_LOGI(TAG, "Tendencias (pendiente)");
-                return;
-            }
+            if (!strcmp(id,"info")) { ui_router_go(UiScreen::INFO_MENU); return; }
+            if (!strcmp(id,"tend")) { ESP_LOGI(TAG, "Tendencias (pendiente)"); return; }
 
             // Acceso con PIN
             if (is_protected_id(id)) {
@@ -122,7 +115,7 @@ void ui_mcr50_build_main_menu() {
             ESP_LOGI(TAG, "Entrada no manejada: %s", id);
         }, LV_EVENT_CLICKED, (void*)id_copy);
 
-        // DELETE: liberar la copia del ID cuando se destruye el botón
+        // DELETE: liberar la copia
         lv_obj_add_event_cb(btn, [](lv_event_t* e){
             void* ud = lv_event_get_user_data(e);
             if (ud) free(ud);
@@ -134,16 +127,60 @@ void ui_mcr50_build_main_menu() {
 // ===========================================================
 
 
-// =============== UI: stub 'Inf. Sistema' ===================
+// =============== UI: submenú 'Inf. Sistema' ===================
 void ui_mcr50_build_info_menu() {
+    cJSON* root = loadMenuMcr50(); if (!root) return;
+    cJSON* menu = cJSON_GetObjectItem(root, "menu");
+    if (!cJSON_IsArray(menu)) { cJSON_Delete(root); return; }
+
+    // Buscar el nodo "info"
+    cJSON* info = nullptr;
+    cJSON_ArrayForEach(info, menu) {
+        const char* id = cJSON_GetStringValue(cJSON_GetObjectItem(info, "id"));
+        if (id && !strcmp(id, "info")) break;
+    }
+    if (!info) { cJSON_Delete(root); return; }
+
+    cJSON* items = cJSON_GetObjectItem(info, "items");
+
+    // Contenedor de pantalla
     lv_obj_t* cont = lv_obj_create(lv_scr_act());
     lv_obj_set_size(cont, 780, 440);
     lv_obj_center(cont);
 
+    // Título
     lv_obj_t* title = lv_label_create(cont);
     lv_label_set_text(title, "Inf. Sistema");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
+    // Lista de opciones
+    lv_obj_t* list = lv_list_create(cont);
+    lv_obj_set_size(list, 740, 320);
+    lv_obj_align(list, LV_ALIGN_CENTER, 0, 10);
+
+    if (cJSON_IsArray(items)) {
+        cJSON* it = nullptr;
+        cJSON_ArrayForEach(it, items) {
+            const char* id = cJSON_GetStringValue(cJSON_GetObjectItem(it, "id"));
+            const char* tt = cJSON_GetStringValue(cJSON_GetObjectItem(it, "title"));
+
+            lv_obj_t* btn = lv_list_add_btn(list, NULL, tt ? tt : "?");
+            char* id_copy = id ? strdup(id) : NULL;
+
+            lv_obj_add_event_cb(btn, [](lv_event_t* e){
+                const char* id = (const char*) lv_event_get_user_data(e);
+                if (id) ESP_LOGI(TAG, "Inf. Sistema -> %s", id);
+                // TODO: aquí llamaremos a pantallas específicas (AIN/AOUT/DIN/DOUT/TOT/HOURS)
+            }, LV_EVENT_CLICKED, id_copy);
+
+            lv_obj_add_event_cb(btn, [](lv_event_t* e){
+                void* ud = lv_event_get_user_data(e);
+                if (ud) free(ud);
+            }, LV_EVENT_DELETE, id_copy);
+        }
+    }
+
+    // Botón ATRAS
     lv_obj_t* back = lv_btn_create(cont);
     lv_obj_set_size(back, 120, 48);
     lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
@@ -155,6 +192,6 @@ void ui_mcr50_build_info_menu() {
         ui_router_go(UiScreen::MAIN_MENU);
     }, LV_EVENT_CLICKED, nullptr);
 
-    // TODO: poblar con las 6 opciones (ain/aout/din/dout/tot/hours) desde el JSON.
+    cJSON_Delete(root);
 }
 // ===========================================================
