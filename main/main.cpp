@@ -11,14 +11,13 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(waveshare_esp32_s3_rgb_lcd_init());
 
     lvgl_port_lock(UINT32_MAX);   // bloquea (equivalente a -1)
-    ui_init_example();
-    lvgl_port_unlock();
+
+    // ui_init_example();
     
-    /*
-    ESP_LOGI("MAIN", "Arrancando HMI con menús MCR50...");
-    // Depuración: imprime los menús embebidos
-    printMenuMcr50();
-    */
+    printMenuMcr50();              // logs
+    ui_mcr50_build_main_menu();    // pinta la lista en pantalla
+
+    lvgl_port_unlock();
 
     while (true) vTaskDelay(pdMS_TO_TICKS(1000));
 }

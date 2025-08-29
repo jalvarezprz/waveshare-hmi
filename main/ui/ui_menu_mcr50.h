@@ -1,14 +1,11 @@
 #pragma once
-
-// declaración adelantada; no necesita cJSON aquí
 struct cJSON;
+struct _lv_obj_t;
+typedef _lv_obj_t lv_obj_t;
 
 cJSON* loadMenuMcr50();
 void   printMenuMcr50();
 
-// Carga el menú embebido del MCR50 y lo devuelve como objeto cJSON
-// (debes liberar con cJSON_Delete() después de usarlo)
-cJSON* loadMenuMcr50();
+// Construye el menú de primer nivel en la pantalla activa
+void   ui_mcr50_build_main_menu();
 
-// Solo para depuración: imprime los menús de primer nivel
-void printMenuMcr50();
