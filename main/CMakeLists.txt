@@ -8,6 +8,7 @@ idf_component_register(
         "lvgl_lock_shim.c"
         "ui/ui_menu_mcr50.cpp"
         "ui/ui_router.cpp"
+        "ui/ui_pin.cpp"
     INCLUDE_DIRS
         "."
         "ui"

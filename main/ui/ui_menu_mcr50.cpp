@@ -1,21 +1,25 @@
+#include "ui_menu_mcr50.h"
+#include "esp_log.h"
+#include "lvgl.h"
+#include <string.h>   // strcmp, strdup, free
+
 extern "C" {
 #include "cJSON.h"
 }
-#include "ui_menu_mcr50.h"
-#include "ui_router.h"  // para volver atrás
-#include "esp_log.h"
-#include "lvgl.h"
-#include <array>
-#include <string>
+
+#include "ui_router.h"
+#include "ui_pin.h"
 
 static const char* TAG = "UI_MENU_MCR50";
 
-// ---------- JSON embebido (igual que ya tenías) ----------
+// ---------------------- JSON embebido ----------------------
 static const char *menu_json_mcr50 = R"json(
-{ "menu":[
+{
+  "menu":[
     {"id":"tend","title":"Punt. Tendencia","items":[
       {"id":"tend_buf","title":"Buffer Tendenc"},
-      {"id":"tend_flash","title":"Flash EEPROM"}]},
+      {"id":"tend_flash","title":"Flash EEPROM"}
+    ]},
     {"id":"params","title":"Parámetros"},
     {"id":"info","title":"Inf. Sistema","items":[
       {"id":"ain","title":"Ent. Analóg"},
@@ -23,114 +27,123 @@ static const char *menu_json_mcr50 = R"json(
       {"id":"din","title":"Ent. Digital"},
       {"id":"dout","title":"Sal. Digital"},
       {"id":"tot","title":"Totalizador"},
-      {"id":"hours","title":"Horas Functo."}]},
+      {"id":"hours","title":"Horas Functo."}
+    ]},
     {"id":"hw","title":"Conf. Hardware"},
     {"id":"ddc","title":"Ciclos DDC"},
     {"id":"bus","title":"Acceso Buswide"}
-]} )json";
+  ]
+}
+)json";
+// -----------------------------------------------------------
 
-// ---------- API JSON ----------
+
+// ===================== API JSON ============================
 cJSON* loadMenuMcr50() {
     cJSON *root = cJSON_Parse(menu_json_mcr50);
-    if (!root) ESP_LOGE(TAG, "Error al parsear JSON");
+    if (!root) ESP_LOGE(TAG, "Error al parsear JSON embebido");
     return root;
 }
 
 void printMenuMcr50() {
-    cJSON *root = loadMenuMcr50(); if(!root) return;
+    cJSON *root = loadMenuMcr50(); if (!root) return;
     cJSON *menu = cJSON_GetObjectItem(root, "menu");
     if (!cJSON_IsArray(menu)) { ESP_LOGE(TAG, "Estructura inválida"); cJSON_Delete(root); return; }
-    ESP_LOGI(TAG, "Menús (nivel 1): %d", cJSON_GetArraySize(menu));
-    cJSON *it = nullptr; int idx = 0;
+
+    ESP_LOGI(TAG, "Menús de primer nivel (MCR50): %d", cJSON_GetArraySize(menu));
+    int idx = 0; cJSON *it = nullptr;
     cJSON_ArrayForEach(it, menu) {
         const char *id = cJSON_GetStringValue(cJSON_GetObjectItem(it,"id"));
         const char *tt = cJSON_GetStringValue(cJSON_GetObjectItem(it,"title"));
-        ESP_LOGI(TAG, "%d) %s -> %s", ++idx, id?id:"?", tt?tt:"?");
+        ESP_LOGI(TAG, " %d) %s -> %s", ++idx, id?id:"?", tt?tt:"?");
     }
     cJSON_Delete(root);
 }
+// ===========================================================
 
-// ---------- UI: menú principal ----------
+
+// ======= Helpers =======
 static bool is_protected_id(const char* id) {
-    static const std::array<const char*,4> protectedIds = {"params","hw","ddc","bus"};
-    if(!id) return false;
-    for (auto p: protectedIds) if (std::string(id)==p) return true;
-    return false;
+    if (!id) return false;
+    return !strcmp(id,"params") || !strcmp(id,"hw") || !strcmp(id,"ddc") || !strcmp(id,"bus");
 }
+// =======================
 
-static void show_pin_note() {
-    static const char* btns[] = {"OK", ""};
-    lv_obj_t* m = lv_msgbox_create(NULL, "Acceso restringido",
-                                   "Se requiere PIN (pantalla de clave).",
-                                   btns, false);
-    lv_obj_center(m);
-}
 
-static void menu_btn_event_cb(lv_event_t* e) {
-    lv_obj_t* btn = lv_event_get_target(e);
-    const char* id   = (const char*)lv_obj_get_user_data(btn);   // requiere LV_USE_USER_DATA=1
-    const char* text = lv_label_get_text(lv_obj_get_child(btn, 0));
-
-    ESP_LOGI(TAG, "Click: %s (%s)", text?text:"<no text>", id?id:"<no id>");
-    if (is_protected_id(id)) {
-        show_pin_note();           // aquí dispararías tu diálogo de clave real
-        return;
-    }
-    // TODO: navegar a submenús según 'id'
-}
-
-#include <cstring>   // para strcmp
-#include "ui_router.h"
-
+// ===================== UI: menú principal ==================
 void ui_mcr50_build_main_menu() {
-    cJSON* root = loadMenuMcr50(); 
-    if (!root) return;
-
+    cJSON* root = loadMenuMcr50(); if (!root) return;
     cJSON* menu = cJSON_GetObjectItem(root, "menu");
     if (!cJSON_IsArray(menu)) { cJSON_Delete(root); return; }
 
     // Lista contenedora
     lv_obj_t* list = lv_list_create(lv_scr_act());
-    lv_obj_set_size(list, 780, 440);
+    lv_obj_set_size(list, 780, 440);     // 800x480 con márgenes
     lv_obj_center(list);
 
-    // Crea los botones de nivel 1
     cJSON* it = nullptr;
     cJSON_ArrayForEach(it, menu) {
-        const char* id = cJSON_GetStringValue(cJSON_GetObjectItem(it, "id"));
-        const char* tt = cJSON_GetStringValue(cJSON_GetObjectItem(it, "title"));
+        const char* id_json = cJSON_GetStringValue(cJSON_GetObjectItem(it, "id"));
+        const char* tt      = cJSON_GetStringValue(cJSON_GetObjectItem(it, "title"));
 
-        lv_obj_t* btn = lv_list_add_btn(list, NULL, tt ? tt : "<sin título>");
+        lv_obj_t* btn = lv_list_add_btn(list, NULL, tt ? tt : "?");
+
+        // Copia propia del ID (sobrevive al cJSON_Delete)
+        char* id_copy = id_json ? strdup(id_json) : NULL;
+
+        // CLICK: usar id_copy (recuperado vía user_data del evento)
         lv_obj_add_event_cb(btn, [](lv_event_t* e){
-            lv_obj_t* target = lv_event_get_target(e);
-            // El label es el primer hijo del botón
-            const char* txt = lv_label_get_text(lv_obj_get_child(target, 0));
-            if (txt && std::strcmp(txt, "Inf. Sistema") == 0) {
+            const char* id = (const char*) lv_event_get_user_data(e);
+            if (!id) return;
+
+            // Acceso sin PIN
+            if (!strcmp(id,"info")) {
                 ui_router_go(UiScreen::INFO_MENU);
                 return;
             }
-            // TODO: otras opciones del menú principal
-        }, LV_EVENT_CLICKED, nullptr);
+            if (!strcmp(id,"tend")) {
+                // TODO: ui_router_go(UiScreen::TRENDS); cuando exista
+                ESP_LOGI(TAG, "Tendencias (pendiente)");
+                return;
+            }
 
-        // (Más adelante usaremos LV_USE_USER_DATA para pasar 'id' en vez de comparar por texto)
-        (void)id; // evita warning si aún no lo usas
+            // Acceso con PIN
+            if (is_protected_id(id)) {
+                ui_show_pin_dialog(2410, [id](bool ok){
+                    if (!ok) return;
+                    if (!strcmp(id,"params")) ui_router_go(UiScreen::PARAMS_MENU);
+                    else if (!strcmp(id,"hw")) ui_router_go(UiScreen::HW_MENU);
+                    else if (!strcmp(id,"ddc")) ui_router_go(UiScreen::DDC_MENU);
+                    else if (!strcmp(id,"bus")) ui_router_go(UiScreen::BUS_MENU);
+                });
+                return;
+            }
+
+            ESP_LOGI(TAG, "Entrada no manejada: %s", id);
+        }, LV_EVENT_CLICKED, (void*)id_copy);
+
+        // DELETE: liberar la copia del ID cuando se destruye el botón
+        lv_obj_add_event_cb(btn, [](lv_event_t* e){
+            void* ud = lv_event_get_user_data(e);
+            if (ud) free(ud);
+        }, LV_EVENT_DELETE, id_copy);
     }
 
     cJSON_Delete(root);
 }
+// ===========================================================
 
+
+// =============== UI: stub 'Inf. Sistema' ===================
 void ui_mcr50_build_info_menu() {
-    // Contenedor básico
     lv_obj_t* cont = lv_obj_create(lv_scr_act());
     lv_obj_set_size(cont, 780, 440);
     lv_obj_center(cont);
 
-    // Título
     lv_obj_t* title = lv_label_create(cont);
     lv_label_set_text(title, "Inf. Sistema");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
-    // Botón ATRAS
     lv_obj_t* back = lv_btn_create(cont);
     lv_obj_set_size(back, 120, 48);
     lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
@@ -141,4 +154,7 @@ void ui_mcr50_build_info_menu() {
     lv_obj_add_event_cb(back, [](lv_event_t*){
         ui_router_go(UiScreen::MAIN_MENU);
     }, LV_EVENT_CLICKED, nullptr);
+
+    // TODO: poblar con las 6 opciones (ain/aout/din/dout/tot/hours) desde el JSON.
 }
+// ===========================================================
