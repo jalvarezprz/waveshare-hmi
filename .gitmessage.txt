@@ -1,0 +1,16 @@
+feat(ui): add embedded JSON menus for MCR50 and initial LVGL list rendering
+
+- Implemented ui_menu_mcr50.cpp/.h with embedded JSON definition.
+- Added function to parse JSON and print menu structure to log.
+- Added initial LVGL UI: dynamic list showing top-level menu items.
+- Integrated with waveshare_rgb_lcd_port initialization.
+- Replaced ui_init_example() call in main.cpp with ui_mcr50_build_main_menu().
+
+BREAKING CHANGES:
+- ui_init_example() is no longer called automatically from app_main.
+- Any code relying on ui_init_example() must adapt to ui_mcr50_build_main_menu().
+
+TODO:
+- Implement navigation to submenus (Info, Parámetros, etc.).
+- Add PIN entry screen for protected menus.
+- Apply final styling to match target HMI design.
