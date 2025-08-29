@@ -66,7 +66,26 @@ static const char *menu_json_mcr50 = R"json(
               ]
             },
 
-            { "id": "T_DEP_BAJA",     "title": "T_DEP_BAJA" },
+            {
+              "id": "T_DEP_BAJA",
+              "title": "T_DEP_BAJA",
+              "view": "detail",
+              "fields": [
+                { "id": "histeresis", "label": "Histeresis Tend.", "unit": "°C",  "type": "number", "mock": "0.0" },
+                { "id": "ciclo",      "label": "Ciclo Tend.",      "unit": "min", "type": "number", "mock": "0" },
+                { "id": "output",     "label": "Output",                          "type": "enum",   "mock": "—" },
+                { "id": "input",      "label": "Input",                           "type": "enum",   "mock": "—" },
+                { "id": "dirtec",     "label": "Dir. Tec.",                        "type": "text",   "mock": "010102" },
+                { "id": "habtend",    "label": "Hab. Tend.",                       "type": "enum",   "mock": "OFF" },
+                { "id": "maxlim",     "label": "Max lim1/lim2",   "unit": "°C",    "type": "text",   "mock": "145.0/145.0" },
+                { "id": "minlim",     "label": "Min lim1/lim2",   "unit": "°C",    "type": "text",   "mock": "45.0/45.0" },
+                { "id": "soffset",    "label": "S. Offset",       "unit": "°C",    "type": "number", "mock": "0.0" },
+                { "id": "suprimalm",  "label": "Suprim. Alm.",                    "type": "enum",   "mock": "NO" },
+                { "id": "valor",      "label": "Valor actual",    "unit": "°C",    "type": "number", "mock": "26.0" },
+                { "id": "modo",       "label": "Modo",                             "type": "enum",   "mock": "AUTO" }
+              ]
+            },
+
             { "id": "T_IDA_CALD",     "title": "T_IDA_CALD" },
             { "id": "T_IDA_FANCOILS", "title": "T_IDA_FANCOILS" }
           ]
@@ -86,6 +105,7 @@ static const char *menu_json_mcr50 = R"json(
   ]
 }
 )json";
+
 
 /* ==================== Carga / utilidades JSON =================== */
 cJSON* loadMenuMcr50() {
