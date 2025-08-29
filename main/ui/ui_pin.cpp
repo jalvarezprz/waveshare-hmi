@@ -1,77 +1,84 @@
 #include "ui_pin.h"
 #include "lvgl.h"
-#include <array>
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <functional>
 
-static lv_obj_t* g_container = nullptr;
-static lv_obj_t* g_mask_label = nullptr;
-static std::array<int,4> g_digits = {0,0,0,0};
-static int g_idx = 0;
 static int g_expected = 0;
-static std::function<void(bool)> g_cb;
+static std::function<void(bool)> g_callback;
+static std::string g_entered;
+static lv_obj_t* g_label = nullptr;
 
-static void redraw_mask() {
-    static char buf[8] = "****";
-    lv_label_set_text(g_mask_label, buf);
-}
+void ui_show_pin_dialog(int correct_pin, std::function<void(bool)> cb) {
+    g_expected = correct_pin;
+    g_callback = cb;
+    g_entered.clear();
 
-static void close_dialog() {
-    if (g_container) {
-        lv_obj_del(g_container);
-        g_container = nullptr;
-    }
-}
+    // Contenedor principal
+    lv_obj_t* dlg = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(dlg, 400, 250);
+    lv_obj_center(dlg);
+    lv_obj_set_flex_flow(dlg, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_all(dlg, 12, 0);
+    lv_obj_set_style_pad_row(dlg, 12, 0);
 
-static void inc_digit(int delta) {
-    g_digits[g_idx] = (g_digits[g_idx] + delta + 10) % 10;
-    redraw_mask();
-}
+    lv_obj_t* title = lv_label_create(dlg);
+    lv_label_set_text(title, "Introducir clave");
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(title, LV_PCT(100));
 
-static int current_pin() {
-    return g_digits[0]*1000 + g_digits[1]*100 + g_digits[2]*10 + g_digits[3];
-}
+    // Label de PIN oculto
+    g_label = lv_label_create(dlg);
+    lv_label_set_text(g_label, "----");
+    lv_obj_set_style_text_font(g_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_align(g_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(g_label, LV_PCT(100));
 
-void ui_show_pin_dialog(int expected_pin, std::function<void(bool)> on_done) {
-    g_expected = expected_pin;
-    g_cb = std::move(on_done);
-    g_digits = {0,0,0,0};
-    g_idx = 0;
+    // Grid de botones numéricos
+    lv_obj_t* grid = lv_obj_create(dlg);
+    lv_obj_set_size(grid, LV_PCT(100), 140);
+    lv_obj_set_flex_flow(grid, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_flex_align(grid,
+        LV_FLEX_ALIGN_SPACE_EVENLY,
+        LV_FLEX_ALIGN_CENTER,
+        LV_FLEX_ALIGN_CENTER);
 
-    // Contenedor
-    g_container = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(g_container, 420, 260);
-    lv_obj_center(g_container);
+    auto digit_cb = [](lv_event_t* e){
+        int digit = (int)(intptr_t) lv_event_get_user_data(e);
+        g_entered.push_back('0' + digit);
+        if (g_entered.size() > 4) g_entered.erase(0, g_entered.size() - 4);
 
-    // Título
-    lv_obj_t* title = lv_label_create(g_container);
-    lv_label_set_text(title, "Introducir\nclave");
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+        std::string mask(g_entered.size(), '*');
+        lv_label_set_text(g_label, mask.c_str());
 
-    // ****
-    g_mask_label = lv_label_create(g_container);
-    lv_label_set_text(g_mask_label, "****");
-    lv_obj_align(g_mask_label, LV_ALIGN_CENTER, 0, -10);
-
-    auto mk_btn = [&](const char* txt, lv_event_cb_t cb, lv_align_t a, int dx, int dy){
-        lv_obj_t* b = lv_btn_create(g_container);
-        lv_obj_set_size(b, 90, 48);
-        lv_obj_align(b, a, dx, dy);
-        lv_obj_t* l = lv_label_create(b);
-        lv_label_set_text(l, txt);
-        lv_obj_center(l);
-        lv_obj_add_event_cb(b, cb, LV_EVENT_CLICKED, nullptr);
-        return b;
+        if (g_entered.size() == 4) {
+            bool ok = (std::stoi(g_entered) == g_expected);
+            if (g_callback) g_callback(ok);
+            lv_obj_del_async(lv_obj_get_parent(g_label)); // eliminar diálogo
+        }
     };
 
-    mk_btn("▲", [](lv_event_t*){ inc_digit(+1); }, LV_ALIGN_BOTTOM_LEFT,  30, -80);
-    mk_btn("▼", [](lv_event_t*){ inc_digit(-1); }, LV_ALIGN_BOTTOM_LEFT,  30, -20);
-    mk_btn("◄", [](lv_event_t*){ g_idx = (g_idx + 3) % 4; }, LV_ALIGN_BOTTOM_MID, -60, -50);
-    mk_btn("►", [](lv_event_t*){ g_idx = (g_idx + 1) % 4; }, LV_ALIGN_BOTTOM_MID,  60, -50);
-    mk_btn("SEGUIR", [](lv_event_t*){
-        bool ok = (current_pin() == g_expected);
-        auto cb = g_cb;
-        close_dialog();
-        if (cb) cb(ok);
-    }, LV_ALIGN_BOTTOM_RIGHT, -20, -20);
+    for (int i = 0; i <= 9; i++) {
+        lv_obj_t* btn = lv_btn_create(grid);
+        lv_obj_set_size(btn, 70, 50);
+        lv_obj_t* l = lv_label_create(btn);
+        char buf[2]; sprintf(buf, "%d", i);
+        lv_label_set_text(l, buf);
+        lv_obj_center(l);
 
-    redraw_mask();
+        lv_obj_add_event_cb(btn, digit_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
+    }
+
+    // Botón cancelar
+    lv_obj_t* cancel = lv_btn_create(dlg);
+    lv_obj_set_size(cancel, 100, 40);
+    lv_obj_t* l = lv_label_create(cancel);
+    lv_label_set_text(l, "Cancelar");
+    lv_obj_center(l);
+    lv_obj_add_event_cb(cancel, [](lv_event_t* e){
+        lv_obj_del_async(lv_obj_get_parent(lv_event_get_target(e)));
+        if (g_callback) g_callback(false);
+    }, LV_EVENT_CLICKED, nullptr);
 }
