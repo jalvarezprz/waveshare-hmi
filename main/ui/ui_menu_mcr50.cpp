@@ -18,52 +18,80 @@ static const char* TAG = "UI_MENU_MCR50";
 /* ============================================================
  * JSON embebido (con hijos de "Ent. Analóg")
  * ==========================================================*/
+// ---------------------- JSON embebido ----------------------
 static const char *menu_json_mcr50 = R"json(
 {
-  "menu": [
+  "menu":[
     {
-      "id": "tend",
-      "title": "Punt. Tendencia",
-      "items": [
-        { "id": "tend_buf",   "title": "Buffer Tendenc" },
-        { "id": "tend_flash", "title": "Flash EEPROM"   }
+      "id":"tend",
+      "title":"Punt. Tendencia",
+      "items":[
+        {"id":"tend_buf","title":"Buffer Tendenc"},
+        {"id":"tend_flash","title":"Flash EEPROM"}
       ]
     },
-
-    { "id": "params", "title": "Parámetros" },
-
     {
-      "id": "info",
-      "title": "Inf. Sistema",
-      "items": [
+      "id":"params",
+      "title":"Parámetros"
+    },
+    {
+      "id":"info",
+      "title":"Inf. Sistema",
+      "items":[
         {
-          "id": "ain",
-          "title": "Ent. Analóg",
-          "items": [
-            { "id": "t_ida_suelo",     "title": "T_IDA_SUELO"     },
-            { "id": "t_ret_maquinas1", "title": "T_RET_MAQUINAS1" },
-            { "id": "z_mcx4_1",        "title": "Z_MCX4_1"        },
-            { "id": "z_mcx4_2",        "title": "Z_MCX4_2"        },
-            { "id": "t_dep_alta",      "title": "T_DEP_ALTA"      },
-            { "id": "t_dep_baja",      "title": "T_DEP_BAJA"      },
-            { "id": "t_ida_cald",      "title": "T_IDA_CALD"      },
-            { "id": "t_ida_fancoils",  "title": "T_IDA_FANCOILS"  }
+          "id":"ain",
+          "title":"Ent. Analóg",
+          "items":[
+            {"id":"T_IDA_SUELO","title":"T_IDA_SUELO"},
+            {"id":"T_RET_MAQUINA1","title":"T_RET_MAQUINA1"},
+            {"id":"Z_MCX4_1","title":"Z_MCX4_1"},
+            {"id":"Z_MCX4_2","title":"Z_MCX4_2"},
+            {
+              "id":"T_DEP_ALTA",
+              "title":"T_DEP_ALTA",
+              "items":[
+                {"id":"histeresis","title":"Histeresis Tend."},
+                {"id":"ciclo","title":"Ciclo Tend."},
+                {"id":"output","title":"Output:"},
+                {"id":"input","title":"Input:"},
+                {"id":"dirtec","title":"Dir. Tec."},
+                {"id":"habtend","title":"Hab. Tend."},
+                {"id":"maxlim","title":"Max lim1/lim2"},
+                {"id":"minlim","title":"Min lim1/lim2"},
+                {"id":"soffset","title":"S. Offset"},
+                {"id":"suprimalm","title":"Suprim. Alm."},
+                {"id":"valor","title":"Valor actual"}
+              ]
+            },
+            {"id":"T_DEP_BAJA","title":"T_DEP_BAJA"},
+            {"id":"T_IDA_CALD","title":"T_IDA_CALD"},
+            {"id":"T_IDA_FANCOILS","title":"T_IDA_FANCOILS"}
           ]
         },
-        { "id": "aout",  "title": "Sal. Analóg"  },
-        { "id": "din",   "title": "Ent. Digital" },
-        { "id": "dout",  "title": "Sal. Digital" },
-        { "id": "tot",   "title": "Totalizador"  },
-        { "id": "hours", "title": "Horas Functo."}
+        {"id":"aout","title":"Sal. Analóg"},
+        {"id":"din","title":"Ent. Digital"},
+        {"id":"dout","title":"Sal. Digital"},
+        {"id":"tot","title":"Totalizador"},
+        {"id":"hours","title":"Horas Functo."}
       ]
     },
-
-    { "id": "hw",  "title": "Conf. Hardware" },
-    { "id": "ddc", "title": "Ciclos DDC"     },
-    { "id": "bus", "title": "Acceso Buswide" }
+    {
+      "id":"hw",
+      "title":"Conf. Hardware"
+    },
+    {
+      "id":"ddc",
+      "title":"Ciclos DDC"
+    },
+    {
+      "id":"bus",
+      "title":"Acceso Buswide"
+    }
   ]
 }
 )json";
+// -----------------------------------------------------------
+
 
 /* ==================== Carga / utilidades JSON =================== */
 cJSON* loadMenuMcr50() {
