@@ -2,6 +2,7 @@ extern "C" {
 #include "cJSON.h"
 }
 #include "ui_menu_mcr50.h"
+#include "ui_router.h"  // para volver atrás
 #include "esp_log.h"
 #include "lvgl.h"
 #include <array>
@@ -78,27 +79,66 @@ static void menu_btn_event_cb(lv_event_t* e) {
     // TODO: navegar a submenús según 'id'
 }
 
+#include <cstring>   // para strcmp
+#include "ui_router.h"
+
 void ui_mcr50_build_main_menu() {
-    cJSON* root = loadMenuMcr50(); if(!root) return;
+    cJSON* root = loadMenuMcr50(); 
+    if (!root) return;
+
     cJSON* menu = cJSON_GetObjectItem(root, "menu");
     if (!cJSON_IsArray(menu)) { cJSON_Delete(root); return; }
 
-    // Contenedor de toda la lista
+    // Lista contenedora
     lv_obj_t* list = lv_list_create(lv_scr_act());
-    lv_obj_set_size(list, 780, 440);          // 800x480 menos márgenes
+    lv_obj_set_size(list, 780, 440);
     lv_obj_center(list);
 
-    // Crea una entrada por ítem de nivel 1
-    cJSON *it = nullptr;
+    // Crea los botones de nivel 1
+    cJSON* it = nullptr;
     cJSON_ArrayForEach(it, menu) {
         const char* id = cJSON_GetStringValue(cJSON_GetObjectItem(it, "id"));
         const char* tt = cJSON_GetStringValue(cJSON_GetObjectItem(it, "title"));
-        lv_obj_t* btn = lv_list_add_btn(list, NULL, tt?tt:"<sin título>");
-        lv_obj_add_event_cb(btn, menu_btn_event_cb, LV_EVENT_CLICKED, NULL);
 
-        // Guarda el id como user_data (activa LV_USE_USER_DATA=1 en lv_conf.h)
-        lv_obj_set_user_data(btn, (void*)id);
+        lv_obj_t* btn = lv_list_add_btn(list, NULL, tt ? tt : "<sin título>");
+        lv_obj_add_event_cb(btn, [](lv_event_t* e){
+            lv_obj_t* target = lv_event_get_target(e);
+            // El label es el primer hijo del botón
+            const char* txt = lv_label_get_text(lv_obj_get_child(target, 0));
+            if (txt && std::strcmp(txt, "Inf. Sistema") == 0) {
+                ui_router_go(UiScreen::INFO_MENU);
+                return;
+            }
+            // TODO: otras opciones del menú principal
+        }, LV_EVENT_CLICKED, nullptr);
+
+        // (Más adelante usaremos LV_USE_USER_DATA para pasar 'id' en vez de comparar por texto)
+        (void)id; // evita warning si aún no lo usas
     }
 
     cJSON_Delete(root);
+}
+
+void ui_mcr50_build_info_menu() {
+    // Contenedor básico
+    lv_obj_t* cont = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(cont, 780, 440);
+    lv_obj_center(cont);
+
+    // Título
+    lv_obj_t* title = lv_label_create(cont);
+    lv_label_set_text(title, "Inf. Sistema");
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+
+    // Botón ATRAS
+    lv_obj_t* back = lv_btn_create(cont);
+    lv_obj_set_size(back, 120, 48);
+    lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
+    lv_obj_t* l = lv_label_create(back);
+    lv_label_set_text(l, "ATRAS");
+    lv_obj_center(l);
+
+    lv_obj_add_event_cb(back, [](lv_event_t*){
+        ui_router_go(UiScreen::MAIN_MENU);
+    }, LV_EVENT_CLICKED, nullptr);
 }

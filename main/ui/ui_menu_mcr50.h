@@ -7,5 +7,5 @@ cJSON* loadMenuMcr50();
 void   printMenuMcr50();
 
 // Construye el menú de primer nivel en la pantalla activa
-void   ui_mcr50_build_main_menu();
-
+void ui_mcr50_build_main_menu();
+void ui_mcr50_build_info_menu();
