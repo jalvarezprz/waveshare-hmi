@@ -21,84 +21,86 @@ static const char* TAG = "UI_MENU_MCR50";
 // ---------------------- JSON embebido ----------------------
 static const char *menu_json_mcr50 = R"json(
 {
-  "menu":[
+  "menu": [
     {
-      "id":"tend",
-      "title":"Punt. Tendencia",
-      "items":[
-        {"id":"tend_buf","title":"Buffer Tendenc"},
-        {"id":"tend_flash","title":"Flash EEPROM"}
+      "id": "tend",
+      "title": "Punt. Tendencia",
+      "items": [
+        { "id": "tend_buf",   "title": "Buffer Tendenc" },
+        { "id": "tend_flash", "title": "Flash EEPROM"   }
       ]
     },
+    { "id": "params", "title": "Parámetros" },
     {
-      "id":"params",
-      "title":"Parámetros"
-    },
-    {
-      "id":"info",
-      "title":"Inf. Sistema",
-      "items":[
+      "id": "info",
+      "title": "Inf. Sistema",
+      "items": [
         {
-          "id":"ain",
-          "title":"Ent. Analóg",
-          "items":[
-            {"id":"T_IDA_SUELO","title":"T_IDA_SUELO"},
-            {"id":"T_RET_MAQUINA1","title":"T_RET_MAQUINA1"},
-            {"id":"Z_MCX4_1","title":"Z_MCX4_1"},
-            {"id":"Z_MCX4_2","title":"Z_MCX4_2"},
+          "id": "ain",
+          "title": "Ent. Analóg",
+          "items": [
+            { "id": "T_IDA_SUELO",      "title": "T_IDA_SUELO" },
+            { "id": "T_RET_MAQUINA1",   "title": "T_RET_MAQUINA1" },
+            { "id": "Z_MCX4_1",         "title": "Z_MCX4_1" },
+            { "id": "Z_MCX4_2",         "title": "Z_MCX4_2" },
             {
-              "id":"T_DEP_ALTA",
-              "title":"T_DEP_ALTA",
-              "items":[
-                {"id":"histeresis","title":"Histeresis Tend."},
-                {"id":"ciclo","title":"Ciclo Tend."},
-                {"id":"output","title":"Output:"},
-                {"id":"input","title":"Input:"},
-                {"id":"dirtec","title":"Dir. Tec."},
-                {"id":"habtend","title":"Hab. Tend."},
-                {"id":"maxlim","title":"Max lim1/lim2"},
-                {"id":"minlim","title":"Min lim1/lim2"},
-                {"id":"soffset","title":"S. Offset"},
-                {"id":"suprimalm","title":"Suprim. Alm."},
-                {"id":"valor","title":"Valor actual"}
+              "id": "T_DEP_ALTA",
+              "title": "T_DEP_ALTA",
+              "items": [
+                { "id": "histeresis", "title": "Histeresis Tend.", "value": "2.5 ºC" },
+                { "id": "ciclo",      "title": "Ciclo Tend.",      "value": "15 min" },
+                { "id": "output",     "title": "Output",           "value": "1 (ON)" },
+                { "id": "input",      "title": "Input",            "value": "0 (OFF)" },
+                { "id": "dirtec",     "title": "Dir. Tec." },
+                { "id": "habtend",    "title": "Hab. Tend." },
+                { "id": "maxlim",     "title": "Max lim1/lim2" },
+                { "id": "minlim",     "title": "Min lim1/lim2" },
+                { "id": "soffset",    "title": "S. Offset" },
+                { "id": "suprimalm",  "title": "Suprim. Alm." },
+                { "id": "valor",      "title": "Valor actual" }
               ]
             },
-            {"id":"T_DEP_BAJA","title":"T_DEP_BAJA"},
-            {"id":"T_IDA_CALD","title":"T_IDA_CALD"},
-            {"id":"T_IDA_FANCOILS","title":"T_IDA_FANCOILS"}
+            { "id": "T_DEP_BAJA",      "title": "T_DEP_BAJA" },
+            { "id": "T_IDA_CALD",      "title": "T_IDA_CALD" },
+            { "id": "T_IDA_FANCOILS",  "title": "T_IDA_FANCOILS" }
           ]
         },
-        {"id":"aout","title":"Sal. Analóg"},
-        {"id":"din","title":"Ent. Digital"},
-        {"id":"dout","title":"Sal. Digital"},
-        {"id":"tot","title":"Totalizador"},
-        {"id":"hours","title":"Horas Functo."}
+        { "id": "aout",  "title": "Sal. Analóg"  },
+        { "id": "din",   "title": "Ent. Digital" },
+        { "id": "dout",  "title": "Sal. Digital" },
+        { "id": "tot",   "title": "Totalizador"  },
+        { "id": "hours", "title": "Horas Functo."}
       ]
     },
-    {
-      "id":"hw",
-      "title":"Conf. Hardware"
-    },
-    {
-      "id":"ddc",
-      "title":"Ciclos DDC"
-    },
-    {
-      "id":"bus",
-      "title":"Acceso Buswide"
-    }
+    { "id": "hw",  "title": "Conf. Hardware" },
+    { "id": "ddc", "title": "Ciclos DDC"     },
+    { "id": "bus", "title": "Acceso Buswide" }
   ]
 }
 )json";
+
 // -----------------------------------------------------------
 
 
 /* ==================== Carga / utilidades JSON =================== */
 cJSON* loadMenuMcr50() {
     cJSON *root = cJSON_Parse(menu_json_mcr50);
-    if (!root) ESP_LOGE(TAG, "Error al parsear JSON embebido");
+    if (!root) {
+        ESP_LOGE(TAG, "Error al parsear JSON embebido");
+        const char* ep = cJSON_GetErrorPtr();
+        if (ep) {
+            // Imprime 40 chars antes y después del fallo
+            const char* start = ep - 40 > menu_json_mcr50 ? ep - 40 : menu_json_mcr50;
+            char ctx[120] = {0};
+            size_t len = 0;
+            while (start[len] && &start[len] < ep + 40 && len < sizeof(ctx)-1) { ctx[len] = start[len]; len++; }
+            ctx[len] = '\0';
+            ESP_LOGE(TAG, "Contexto cercano a error: >>>%s<<<", ctx);
+        }
+    }
     return root;
 }
+
 
 void printMenuMcr50() {
     cJSON *root = loadMenuMcr50(); if (!root) return;
@@ -217,6 +219,20 @@ static void ui_mcr50_show_menu_generic()
             bool has_children = items && cJSON_IsArray(items);
 
             lv_obj_t* btn = lv_list_add_btn(list, NULL, text ? text : "?");
+
+            // 🔹 Añadir valor dinámico si está en el JSON
+            const char* val = cJSON_GetStringValue(cJSON_GetObjectItem(it, "value"));
+            if (val) {
+                // Opcional: dar ancho completo al botón
+                lv_obj_set_width(btn, LV_PCT(100));
+
+                // Label adicional a la derecha
+                lv_obj_t* lbl_val = lv_label_create(btn);
+                lv_label_set_text(lbl_val, val);
+                lv_label_set_long_mode(lbl_val, LV_LABEL_LONG_CLIP);
+                lv_obj_set_width(lbl_val, LV_SIZE_CONTENT);
+                lv_obj_align(lbl_val, LV_ALIGN_RIGHT_MID, -10, 0);
+            }
 
             MenuItemUD* ud = (MenuItemUD*) malloc(sizeof(MenuItemUD));
             ud->id = id ? strdup(id) : NULL;
