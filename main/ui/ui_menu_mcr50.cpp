@@ -14,116 +14,30 @@ extern "C" {
 
 #include "ui_router.h"
 #include "ui_pin.h"
+#include "ui_menu_mcr50_json.h"
 
 static const char* TAG = "UI_MENU_MCR50";
 
-/* ============================================================
- * JSON embebido (con T_DEP_ALTA en modo detail/fields)
- * ==========================================================*/
-static const char *menu_json_mcr50 = R"json(
-{
-  "menu": [
-    {
-      "id": "tend",
-      "title": "Punt. Tendencia",
-      "items": [
-        { "id": "tend_buf",   "title": "Buffer Tendenc" },
-        { "id": "tend_flash", "title": "Flash EEPROM"   }
-      ]
-    },
-
-    { "id": "params", "title": "Parámetros" },
-
-    {
-      "id": "info",
-      "title": "Inf. Sistema",
-      "items": [
-        {
-          "id": "ain",
-          "title": "Ent. Analóg",
-          "items": [
-            { "id": "T_IDA_SUELO",     "title": "T_IDA_SUELO" },
-            { "id": "T_RET_MAQUINA1",  "title": "T_RET_MAQUINA1" },
-            { "id": "Z_MCX4_1",        "title": "Z_MCX4_1" },
-            { "id": "Z_MCX4_2",        "title": "Z_MCX4_2" },
-
-            {
-              "id": "T_DEP_ALTA",
-              "title": "T_DEP_ALTA",
-              "view": "detail",
-              "fields": [
-                { "id": "histeresis", "label": "Histeresis Tend.", "unit": "°C",  "type": "number", "mock": "2.5" },
-                { "id": "ciclo",      "label": "Ciclo Tend.",      "unit": "min", "type": "number", "mock": "15" },
-                { "id": "output",     "label": "Output",                          "type": "enum",   "mock": "ON" },
-                { "id": "input",      "label": "Input",                           "type": "enum",   "mock": "OFF" },
-                { "id": "dirtec",     "label": "Dir. Tec.",                        "type": "text",   "mock": "010101" },
-                { "id": "habtend",    "label": "Hab. Tend.",                       "type": "enum",   "mock": "OFF" },
-                { "id": "maxlim",     "label": "Max lim1/lim2",   "unit": "°C",    "type": "text",   "mock": "145/145" },
-                { "id": "minlim",     "label": "Min lim1/lim2",   "unit": "°C",    "type": "text",   "mock": "45/45" },
-                { "id": "soffset",    "label": "S. Offset",       "unit": "°C",    "type": "number", "mock": "0.0" },
-                { "id": "suprimalm",  "label": "Suprim. Alm.",                    "type": "enum",   "mock": "NO" },
-                { "id": "valor",      "label": "Valor actual",    "unit": "°C",    "type": "number", "mock": "25.2" }
-              ]
-            },
-
-            {
-              "id": "T_DEP_BAJA",
-              "title": "T_DEP_BAJA",
-              "view": "detail",
-              "fields": [
-                { "id": "histeresis", "label": "Histeresis Tend.", "unit": "°C",  "type": "number", "mock": "0.0" },
-                { "id": "ciclo",      "label": "Ciclo Tend.",      "unit": "min", "type": "number", "mock": "0" },
-                { "id": "output",     "label": "Output",                          "type": "enum",   "mock": "—" },
-                { "id": "input",      "label": "Input",                           "type": "enum",   "mock": "—" },
-                { "id": "dirtec",     "label": "Dir. Tec.",                        "type": "text",   "mock": "010102" },
-                { "id": "habtend",    "label": "Hab. Tend.",                       "type": "enum",   "mock": "OFF" },
-                { "id": "maxlim",     "label": "Max lim1/lim2",   "unit": "°C",    "type": "text",   "mock": "145.0/145.0" },
-                { "id": "minlim",     "label": "Min lim1/lim2",   "unit": "°C",    "type": "text",   "mock": "45.0/45.0" },
-                { "id": "soffset",    "label": "S. Offset",       "unit": "°C",    "type": "number", "mock": "0.0" },
-                { "id": "suprimalm",  "label": "Suprim. Alm.",                    "type": "enum",   "mock": "NO" },
-                { "id": "valor",      "label": "Valor actual",    "unit": "°C",    "type": "number", "mock": "26.0" },
-                { "id": "modo",       "label": "Modo",                             "type": "enum",   "mock": "AUTO" }
-              ]
-            },
-
-            { "id": "T_IDA_CALD",     "title": "T_IDA_CALD" },
-            { "id": "T_IDA_FANCOILS", "title": "T_IDA_FANCOILS" }
-          ]
-        },
-
-        { "id": "aout",  "title": "Sal. Analóg"  },
-        { "id": "din",   "title": "Ent. Digital" },
-        { "id": "dout",  "title": "Sal. Digital" },
-        { "id": "tot",   "title": "Totalizador"  },
-        { "id": "hours", "title": "Horas Functo."}
-      ]
-    },
-
-    { "id": "hw",  "title": "Conf. Hardware" },
-    { "id": "ddc", "title": "Ciclos DDC"     },
-    { "id": "bus", "title": "Acceso Buswide" }
-  ]
-}
-)json";
-
-
 /* ==================== Carga / utilidades JSON =================== */
+
 cJSON* loadMenuMcr50() {
-    cJSON *root = cJSON_Parse(menu_json_mcr50);
+    // Parsear el JSON embebido definido en ui_menu_mcr50_json.cpp
+    cJSON* root = cJSON_Parse(ui_menu_mcr50_json);
     if (!root) {
         ESP_LOGE(TAG, "Error al parsear JSON embebido");
+
+        // Diagnóstico opcional: mostrar un pequeño contexto para cazar el fallo de codificación
         const char* ep = cJSON_GetErrorPtr();
         if (ep) {
-            const char* start = ep - 40 > menu_json_mcr50 ? ep - 40 : menu_json_mcr50;
-            char ctx[120] = {0};
-            size_t len = 0;
-            while (start[len] && &start[len] < ep + 40 && len < sizeof(ctx)-1) { ctx[len] = start[len]; len++; }
-            ctx[len] = '\0';
-            ESP_LOGE(TAG, "Contexto cercano a error: >>>%s<<<", ctx);
+            const char* start = (ep - 40 > ui_menu_mcr50_json) ? ep - 40 : ui_menu_mcr50_json;
+            const char* end   = ep + 40;
+            std::string snippet(start, end);
+            ESP_LOGE(TAG, "cJSON error cerca de: >>>%s<<<", snippet.c_str());
         }
     }
     return root;
 }
+
 
 void printMenuMcr50() {
     cJSON *root = loadMenuMcr50(); if (!root) return;

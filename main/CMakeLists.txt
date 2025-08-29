@@ -7,6 +7,7 @@ idf_component_register(
         "waveshare_rgb_lcd_port.c"
         "lvgl_lock_shim.c"
         "ui/ui_menu_mcr50.cpp"
+        "ui/ui_menu_mcr50_json.cpp"
         "ui/ui_router.cpp"
         "ui/ui_pin.cpp"
     INCLUDE_DIRS
