@@ -7,6 +7,7 @@
 #include <string.h>    // ::strdup
 #include <vector>
 #include <string>
+#include <cmath>       // fabs, round, llround, pow
 
 extern "C" {
 #include "cJSON.h"
@@ -139,6 +140,10 @@ static const cJSON* find_node_by_path_and_id(const cJSON* root,
 /* ======= forward del renderer genérico de lista (SE USA MÁS ABAJO) ======= */
 static void ui_mcr50_show_menu_generic();
 
+/* ======= forward de la factoría de widgets de detalle ==================== */
+static lv_obj_t* create_field_widget(lv_obj_t* parent, const cJSON* f);
+
+
 /* ---------------- renderer detail (view:"detail") -------------- */
 /*  Mejora contenida: dibuja widgets reales por field.widget_type (slider/dropdown).
     number/text siguen como etiquetas por ahora (cambio pequeño y seguro). */
@@ -164,135 +169,39 @@ static void ui_render_detail_from_node(const cJSON* node) {
     lv_obj_set_style_pad_all(col, 8, 0);     // reemplazo de pad_col
     lv_obj_set_scroll_dir(col, LV_DIR_VER);
 
-    if (fields && cJSON_IsArray(fields)) {
-        const cJSON* f = nullptr;
-        cJSON_ArrayForEach(f, fields) {
-            const char* label = cJSON_GetStringValue(cJSON_GetObjectItem(f, "label"));
-            const char* unit  = cJSON_GetStringValue(cJSON_GetObjectItem(f, "unit"));
-            const char* mock  = cJSON_GetStringValue(cJSON_GetObjectItem(f, "mock"));
-            const char* wtype = cJSON_GetStringValue(cJSON_GetObjectItem(f, "widget_type"));
+        // INICIO CAMBIO: bucle fields usando la factoría
+        if (fields && cJSON_IsArray(fields)) {
+            const cJSON* f = nullptr;
+            cJSON_ArrayForEach(f, fields) {
+                const char* label = cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)f, "label"));
 
-            // row contenedor
-            lv_obj_t* row = lv_obj_create(col);
-            lv_obj_set_width(row, LV_PCT(100));
-            lv_obj_set_height(row, LV_SIZE_CONTENT);
-            lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-            lv_obj_set_style_pad_all(row, 6, 0);
-            lv_obj_set_style_radius(row, 8, 0);
+                // Fila contenedora (una por campo)
+                lv_obj_t* row = lv_obj_create(col);
+                lv_obj_set_width(row, LV_PCT(100));
+                lv_obj_set_style_pad_all(row, 6, 0);
+                lv_obj_set_style_radius(row, 8, 0);
+                lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+                lv_obj_set_style_pad_column(row, 8, 0);
+                lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
-            // etiqueta izquierda
-            lv_obj_t* l = lv_label_create(row);
-            lv_label_set_text(l, label ? label : "-");
-            lv_obj_set_width(l, 300);
+                // Etiqueta (columna izquierda)
+                lv_obj_t* l = lv_label_create(row);
+                lv_label_set_text(l, label ? label : "-");
+                lv_obj_set_width(l, 300);
 
-            // valor a la derecha (widget o etiqueta)
-            if (wtype && std::strcmp(wtype, "slider") == 0) {
-                // Slider (editable según "editable")
-                int min = 0, max = 100;
-                double step = 1.0;
-                bool editable = cJSON_IsTrue(cJSON_GetObjectItem(f, "editable"));
-
-                const cJSON* jmin  = cJSON_GetObjectItem(f, "min");
-                const cJSON* jmax  = cJSON_GetObjectItem(f, "max");
-                const cJSON* jstep = cJSON_GetObjectItem(f, "step");
-                if (cJSON_IsNumber(jmin))  min  = (int) jmin->valuedouble;
-                if (cJSON_IsNumber(jmax))  max  = (int) jmax->valuedouble;
-                if (cJSON_IsNumber(jstep)) step = jstep->valuedouble;
-
-                int value = 0;
-                if (mock) {
-                    // convertir mock a entero dentro de rango
-                    value = (int) (atof(mock));
-                    if (value < min) value = min;
-                    if (value > max) value = max;
-                }
-
-                lv_obj_t* slider = lv_slider_create(row);
-                lv_obj_set_width(slider, 320);
-                lv_slider_set_range(slider, min, max);
-                lv_slider_set_value(slider, value, LV_ANIM_OFF);
-                if (!editable) lv_obj_add_state(slider, LV_STATE_DISABLED);
-
-                // etiqueta de valor
-                lv_obj_t* v = lv_label_create(row);
-                char buf[48];
-                if (unit && *unit) snprintf(buf, sizeof(buf), "%d %s", value, unit);
-                else               snprintf(buf, sizeof(buf), "%d", value);
-                lv_label_set_text(v, buf);
-                lv_obj_add_flag(v, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-
-                // actualizar valor cuando cambie el slider
-                lv_obj_add_event_cb(slider, [](lv_event_t* e){
-                    lv_obj_t* lab = (lv_obj_t*) lv_event_get_user_data(e);
-                    lv_obj_t* sl  = (lv_obj_t*) lv_event_get_target(e);
-                    int val = lv_slider_get_value(sl);
-                    // tomar unidad del label de la izquierda si está codificada en el texto del label de valor
-                    // (aquí más simple: si label de valor tenía espacio + unidad, lo rehacemos sin unidad)
-                    char buf2[32];
-                    snprintf(buf2, sizeof(buf2), "%d", val);
-                    lv_label_set_text(lab, buf2);
-                }, LV_EVENT_VALUE_CHANGED, v);
-
-                // si hay unidad, añadimos una pequeña etiqueta fija de unidad a la derecha
-                if (unit && *unit) {
-                    lv_obj_t* u = lv_label_create(row);
-                    lv_label_set_text(u, unit);
+                // Widget (columna derecha) creado por la factoría
+                lv_obj_t* w = create_field_widget(row, f);
+                if (w) {
+                    // que el widget ocupe el resto de la línea
+                    lv_obj_set_flex_grow(w, 1);
                 }
             }
-            else if (wtype && std::strcmp(wtype, "dropdown") == 0) {
-                // Si hay "options", se usan; si no, se muestra etiqueta con el mock
-                const cJSON* opts = cJSON_GetObjectItem(f, "options");
-                if (opts && cJSON_IsArray(opts) && cJSON_GetArraySize(opts) > 0) {
-                    // Construir string de opciones separado por '\n'
-                    std::string all;
-                    const cJSON* o = nullptr;
-                    bool first = true;
-                    cJSON_ArrayForEach(o, opts) {
-                        const char* s = cJSON_GetStringValue(o);
-                        if (!s) continue;
-                        if (!first) all += "\n";
-                        all += s;
-                        first = false;
-                    }
-                    lv_obj_t* dd = lv_dropdown_create(row);
-                    lv_obj_set_width(dd, 320);
-                    lv_dropdown_set_options(dd, all.c_str());
-                    // Seleccionar opción por mock si coincide
-                    if (mock) {
-                        // buscar índice
-                        int idx = 0, found = -1, i = 0;
-                        const cJSON* o2 = nullptr;
-                        cJSON_ArrayForEach(o2, opts) {
-                            const char* s2 = cJSON_GetStringValue(o2);
-                            if (s2 && std::strcmp(s2, mock) == 0) { found = i; break; }
-                            ++i;
-                        }
-                        if (found >= 0) lv_dropdown_set_selected(dd, found);
-                    }
-                    bool editable = cJSON_IsTrue(cJSON_GetObjectItem(f, "editable"));
-                    if (!editable) lv_obj_add_state(dd, LV_STATE_DISABLED);
-                } else {
-                    // Sin opciones declaradas: mostrar valor como etiqueta
-                    lv_obj_t* v = lv_label_create(row);
-                    std::string val = mock ? mock : "--";
-                    if (unit && *unit) { val += " "; val += unit; }
-                    lv_label_set_text(v, val.c_str());
-                    lv_obj_add_flag(v, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-                }
-            }
-            else {
-                // number o text (o desconocidos) -> etiqueta de solo lectura (por ahora)
-                lv_obj_t* v = lv_label_create(row);
-                std::string val = mock ? mock : "--";
-                if (unit && *unit) { val += " "; val += unit; }
-                lv_label_set_text(v, val.c_str());
-                lv_obj_add_flag(v, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-            }
+        } else {
+            lv_obj_t* info = lv_label_create(col);
+            lv_label_set_text(info, "(Sin campos definidos)");
         }
-    } else {
-        lv_obj_t* info = lv_label_create(col);
-        lv_label_set_text(info, "(Sin campos definidos)");
-    }
+        // FIN CAMBIO
+
 
     lv_obj_t* back = lv_btn_create(cont);
     lv_obj_set_size(back, 120, 48);
@@ -304,6 +213,205 @@ static void ui_render_detail_from_node(const cJSON* node) {
         ui_mcr50_show_menu_generic();
     }, LV_EVENT_CLICKED, nullptr);
 }
+
+// ---------------------------------------------------------------------------
+// Factoría de widgets de un campo de "view:detail"
+// Crea el control adecuado y aplica min/max/step/mock/options si están en el JSON.
+// Soporta: slider, dropdown, number, text (read-only), button (placeholder).
+// ---------------------------------------------------------------------------
+static lv_obj_t* create_field_widget(lv_obj_t* parent, const cJSON* f) {
+    if (!f) return nullptr;
+
+    const char* widget_type = cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)f, "widget_type"));
+    const char* unit        = cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)f, "unit"));
+    const char* mock_str    = cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)f, "mock"));
+    const cJSON* editableJS = cJSON_GetObjectItem((cJSON*)f, "editable");
+    bool editable = cJSON_IsBool(editableJS) ? cJSON_IsTrue(editableJS) : false;
+
+    // Helpers numéricos
+    auto json_get_number = [&](const char* key, double def) -> double {
+        const cJSON* it = cJSON_GetObjectItem((cJSON*)f, key);
+        return (it && cJSON_IsNumber(it)) ? it->valuedouble : def;
+    };
+
+    // Formato de etiqueta "valor [unidad]" manejando enteros bonitos
+    auto set_value_label = [&](lv_obj_t* lbl, double v){
+        char buf[48];
+        if (unit && *unit) {
+            if (std::fabs(v - std::round(v)) < 0.0005) std::snprintf(buf, sizeof(buf), "%d %s", (int)std::llround(v), unit);
+            else                                       std::snprintf(buf, sizeof(buf), "%.3f %s", v, unit);
+        } else {
+            if (std::fabs(v - std::round(v)) < 0.0005) std::snprintf(buf, sizeof(buf), "%d", (int)std::llround(v));
+            else                                       std::snprintf(buf, sizeof(buf), "%.3f", v);
+        }
+        lv_label_set_text(lbl, buf);
+    };
+
+    // ===================== SLIDER =====================
+    if (widget_type && std::strcmp(widget_type, "slider") == 0) {
+        // Leemos min/max/step/mock
+        double min   = json_get_number("min",   0.0);
+        double max   = json_get_number("max", 100.0);
+        double step  = json_get_number("step",  1.0);
+        double mock  = 0.0;
+        if (mock_str) {
+            char* endp=nullptr;
+            mock = std::strtod(mock_str, &endp);
+            if (endp==mock_str) mock = min; // si no parsea, usa min
+        }
+
+        // Decimales derivados de step (p.ej. 0.1 -> 1 decimal, 0.01 -> 2)
+        int decimals = 0;
+        double x = step;
+        while (decimals < 6 && std::fabs(x - std::round(x)) > 1e-9) { x *= 10.0; decimals++; }
+        int scale = (decimals > 0) ? (int)std::llround(std::pow(10.0, decimals)) : 1;
+
+        // Rango entero escalado
+        int32_t smin = (int32_t)std::llround(min  * scale);
+        int32_t smax = (int32_t)std::llround(max  * scale);
+        int32_t sval = (int32_t)std::llround(mock * scale);
+
+        // Contenedor del control + etiqueta de valor
+        lv_obj_t* wrap = lv_obj_create(parent);
+        lv_obj_set_width(wrap, LV_PCT(100));
+        lv_obj_set_flex_flow(wrap, LV_FLEX_FLOW_ROW);
+        lv_obj_set_style_pad_all(wrap, 0, 0);
+        lv_obj_clear_flag(wrap, LV_OBJ_FLAG_SCROLLABLE);
+
+        lv_obj_t* slider = lv_slider_create(wrap);
+        lv_obj_set_flex_grow(slider, 1);
+        lv_obj_set_height(slider, 22);           
+        lv_slider_set_range(slider, smin, smax);
+        lv_slider_set_value(slider, sval, LV_ANIM_OFF);
+
+        lv_obj_t* lbl_val = lv_label_create(wrap);
+        set_value_label(lbl_val, (double)sval / (double)scale);
+
+        // Evento: arrastre
+        lv_obj_add_event_cb(slider, +[](lv_event_t* e){
+            lv_obj_t* slider = lv_event_get_target(e);
+            if (lv_event_get_code(e) != LV_EVENT_VALUE_CHANGED) return;
+
+            // Guardamos los pointers que necesitamos como "user data" para no capturar lambdas complejas
+            struct U {
+                lv_obj_t* label;
+                int       scale;
+                double    min;
+                double    max;
+                double    step;
+            };
+            U* u = (U*)lv_event_get_user_data(e);
+            if (!u) return;
+
+            int sval = lv_slider_get_value(slider);
+            double real = (double)sval / (double)u->scale;
+
+            // Quantize al múltiplo de step dentro de [min,max]
+            double t = (real - u->min) / (u->step > 0 ? u->step : 1.0);
+            if (t < 0) t = 0;
+            if (t > (u->max - u->min) / (u->step > 0 ? u->step : 1.0)) t = (u->max - u->min) / (u->step > 0 ? u->step : 1.0);
+            double snapped = u->min + std::round(t) * (u->step > 0 ? u->step : 1.0);
+
+            // Actualiza label
+            char buf[48];
+            if (u->label) {
+                if (std::fabs(snapped - std::round(snapped)) < 0.0005) std::snprintf(buf, sizeof(buf), "%d", (int)std::llround(snapped));
+                else                                                   std::snprintf(buf, sizeof(buf), "%.3f", snapped);
+                // Si tienes unidad, puedes guardarla en U y añadirla aquí; para mantener compat, dejamos sólo número.
+                lv_label_set_text(u->label, buf);
+            }
+        }, LV_EVENT_VALUE_CHANGED,
+        // user data: empaquetamos label, scale y límites
+        [lbl_val, scale, min, max, step](){
+            struct U {
+                lv_obj_t* label; int scale; double min, max, step;
+            };
+            static U u_static; // estático para evitar stack dangling (es 1 por llamada; suficiente aquí)
+            u_static.label = lbl_val;
+            u_static.scale = scale;
+            u_static.min   = min;
+            u_static.max   = max;
+            u_static.step  = step;
+            return (void*)&u_static;
+        }());
+
+        if (!editable) {
+            lv_obj_add_state(slider, LV_STATE_DISABLED);
+        }
+        return wrap;
+    }
+
+    // ===================== DROPDOWN =====================
+    if (widget_type && std::strcmp(widget_type, "dropdown") == 0) {
+        lv_obj_t* dd = lv_dropdown_create(parent);
+
+        // Construimos options si hay "options": [...]
+        const cJSON* opts = cJSON_GetObjectItem((cJSON*)f, "options");
+        if (opts && cJSON_IsArray(opts)) {
+            // Convertimos a string con '\n'
+            std::string opt_text;
+            const cJSON* o = nullptr;
+            bool first=true;
+            cJSON_ArrayForEach(o, opts) {
+                const char* s = cJSON_GetStringValue(o);
+                if (!s) continue;
+                if (!first) opt_text.push_back('\n');
+                opt_text += s;
+                first=false;
+            }
+            if (!opt_text.empty()) {
+                lv_dropdown_set_options(dd, opt_text.c_str());
+            }
+        }
+
+        // Valor inicial (si coincide con alguna opción, LVGL lo seleccionará)
+        if (mock_str && *mock_str) {
+            lv_dropdown_set_text(dd, mock_str);
+        }
+
+        if (!editable) {
+            lv_obj_add_state(dd, LV_STATE_DISABLED);
+        }
+        return dd;
+    }
+
+    // ===================== NUMBER (read-only) =====================
+    if (widget_type && std::strcmp(widget_type, "number") == 0) {
+        lv_obj_t* lbl = lv_label_create(parent);
+        if (mock_str) {
+            std::string txt = mock_str;
+            if (unit && *unit) { txt += " "; txt += unit; }
+            lv_label_set_text(lbl, txt.c_str());
+        } else {
+            lv_label_set_text(lbl, "--");
+        }
+        return lbl;
+    }
+
+    // ===================== TEXT (read-only) =====================
+    if (widget_type && std::strcmp(widget_type, "text") == 0) {
+        lv_obj_t* lbl = lv_label_create(parent);
+        lv_label_set_text(lbl, mock_str ? mock_str : "--");
+        return lbl;
+    }
+
+    // ===================== BUTTON (placeholder) ==================
+    if (widget_type && std::strcmp(widget_type, "button") == 0) {
+        lv_obj_t* btn = lv_btn_create(parent);
+        lv_obj_t* l   = lv_label_create(btn);
+        lv_label_set_text(l, "OK");
+        lv_obj_center(l);
+        if (!editable) lv_obj_add_state(btn, LV_STATE_DISABLED);
+        return btn;
+    }
+
+    // Desconocido: devolvemos un label neutro y logeamos
+    ESP_LOGW(TAG, "Widget no soportado en detail: %s", widget_type ? widget_type : "(null)");
+    lv_obj_t* fallback = lv_label_create(parent);
+    lv_label_set_text(fallback, "--");
+    return fallback;
+}
+
 
 /* ======================= Render genérico ======================== */
 typedef struct {
