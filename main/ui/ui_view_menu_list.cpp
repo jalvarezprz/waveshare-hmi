@@ -16,91 +16,9 @@ extern "C" {
 #include "ui_router.h"
 #include "ui_pin.h"
 #include "ui_menu_json_utilities.h"
+#include "ui_menu_nav.h"
 
 static const char* TAG = "UI_MENU_JSON_TREE";
-
-/* ======================== Router helpers ======================== */
-static bool is_protected_root_id(const char* id) {
-    if (!id) return false;
-    return std::strcmp(id,"params")==0 || std::strcmp(id,"hw")==0
-        || std::strcmp(id,"ddc")==0   || std::strcmp(id,"bus")==0;
-}
-
-/* Ruta actual dentro del árbol de menús (lista de IDs) */
-static std::vector<std::string> g_path;
-
-/* Busca el array de hijos y el título del nodo apuntado por g_path */
-static bool find_node_by_path(cJSON* root,
-                              cJSON** out_array,    // "menu" o "items"
-                              const char** out_title)
-{
-    cJSON* node_array = cJSON_GetObjectItem(root, "menu");
-    if (!cJSON_IsArray(node_array)) return false;
-
-    const char* title = "Menú principal";
-    cJSON* current = nullptr;
-
-    if (g_path.empty()) {
-        *out_array = node_array;
-        *out_title = title;
-        return true;
-    }
-
-    for (size_t depth = 0; depth < g_path.size(); ++depth) {
-        const char* want = g_path[depth].c_str();
-
-        cJSON* it = nullptr;
-        cJSON* found = nullptr;
-        cJSON_ArrayForEach(it, node_array) {
-            const char* id = cJSON_GetStringValue(cJSON_GetObjectItem(it,"id"));
-            if (id && std::strcmp(id, want) == 0) { found = it; break; }
-        }
-        if (!found) return false;
-
-        current = found;
-        title   = cJSON_GetStringValue(cJSON_GetObjectItem(current,"title"));
-        node_array = cJSON_GetObjectItem(current, "items");
-        if (!node_array) { // hoja
-            *out_array = nullptr;
-            *out_title = title ? title : "";
-            return true;
-        }
-        if (!cJSON_IsArray(node_array)) return false;
-    }
-
-    *out_array = node_array;
-    *out_title = title ? title : "";
-    return true;
-}
-
-/* -------- helpers para localizar un nodo hoja concreto -------- */
-static const cJSON* find_node_by_path_and_id(const cJSON* root,
-                                             const std::vector<std::string>& path,
-                                             const char* leaf_id)
-{
-    const cJSON* cur = cJSON_GetObjectItem(root, "menu");
-    if(!cJSON_IsArray(cur)) return nullptr;
-
-    for (const auto& idp : path) {
-        const cJSON* it = nullptr; bool found=false;
-        cJSON_ArrayForEach(it, cur) {
-            const char* nid = cJSON_GetStringValue(cJSON_GetObjectItem(it, "id"));
-            if(nid && idp == nid) {
-                const cJSON* items = cJSON_GetObjectItem(it, "items");
-                if(items && cJSON_IsArray(items)) { cur = items; found=true; break; }
-                else return nullptr;
-            }
-        }
-        if(!found) return nullptr;
-    }
-
-    const cJSON* it = nullptr;
-    cJSON_ArrayForEach(it, cur) {
-        const char* nid = cJSON_GetStringValue(cJSON_GetObjectItem(it, "id"));
-        if(nid && leaf_id && std::strcmp(nid, leaf_id)==0) return it;
-    }
-    return nullptr;
-}
 
 /* ======= forward del renderer genérico de lista (SE USA MÁS ABAJO) ======= */
 static void ui_show_menu_generic();
@@ -395,7 +313,7 @@ static void ui_show_menu_generic()
 
     cJSON* children = nullptr;
     const char* title_txt = "Menú";
-    if (!find_node_by_path(root, &children, &title_txt)) {
+    if (!Ui::Menu::ui_menu_nav_find(root, &children, &title_txt)) {
         ESP_LOGE(TAG, "Ruta inválida");
         cJSON_Delete(root);
         return;
@@ -450,23 +368,23 @@ static void ui_show_menu_generic()
                 if (!ud || !ud->id) return;
 
                 /* Si estamos en raíz y es protegido, pedimos PIN antes de entrar */
-                if (g_path.empty() && is_protected_root_id(ud->id)) {
+                if (Ui::Menu::ui_menu_nav_path().empty() && Ui::Menu::ui_menu_nav_is_protected_root_id(ud->id)) {
                     ui_show_pin_dialog(2410, [id_copy = std::string(ud->id)](bool ok){
                         if (!ok) return;
-                        g_path.push_back(id_copy);
+                        Ui::Menu::ui_menu_nav_push(id_copy);
                         ui_show_menu_generic();
                     });
                     return;
                 }
 
                 if (ud->has_children) {
-                    g_path.push_back(ud->id);
+                    Ui::Menu::ui_menu_nav_push(ud->id);
                     ui_show_menu_generic();
                 } else {
                     /* Hoja: ¿es una vista "detail"? */
                     cJSON* root_local = ui_menu_json_load();
                     if (root_local) {
-                        const cJSON* node = find_node_by_path_and_id(root_local, g_path, ud->id);
+                        const cJSON* node = Ui::Menu::ui_menu_nav_find_leaf(root_local, ud->id);
                         const char* view = node ? cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)node, "view")) : nullptr;
                         if (node && view && std::strcmp(view, "detail")==0) {
                             ui_render_detail_from_node(node);
@@ -492,7 +410,7 @@ static void ui_show_menu_generic()
         lv_obj_align(info, LV_ALIGN_CENTER, 0, 0);
     }
 
-    if (!g_path.empty()) {
+    if (!Ui::Menu::ui_menu_nav_path().empty()) {
         lv_obj_t* back = lv_btn_create(cont);
         lv_obj_set_size(back, 120, 48);
         lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
@@ -501,8 +419,8 @@ static void ui_show_menu_generic()
         lv_obj_center(l);
 
         lv_obj_add_event_cb(back, [](lv_event_t*){
-            if (!g_path.empty()) g_path.pop_back();
-            if (g_path.empty()) {
+            if (!Ui::Menu::ui_menu_nav_path().empty()) Ui::Menu::ui_menu_nav_pop();
+            if (Ui::Menu::ui_menu_nav_path().empty()) {
                 ui_router_go(UiScreen::MAIN_MENU);
             } else {
                 ui_show_menu_generic();
@@ -515,13 +433,13 @@ static void ui_show_menu_generic()
 
 /* ===================== Entry points públicos ==================== */
 void ui_build_main_menu() {
-    g_path.clear();
+    Ui::Menu::ui_menu_nav_clear();
     ui_show_menu_generic();
 }
 
 void ui_build_info_menu() {
-    g_path.clear();
-    g_path.push_back("info");
+    Ui::Menu::ui_menu_nav_clear();
+    Ui::Menu::ui_menu_nav_push("info");
     ui_show_menu_generic();
 }
 

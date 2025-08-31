@@ -8,6 +8,7 @@ idf_component_register(
         "ui/widgets_reusable/widget_slider.cpp"
         "ui/ui_menu_json_utilities.cpp"
         "ui/ui_menu_json_tree.cpp"
+        "ui/ui_menu_nav.cpp"
         "ui/ui_view_menu_list.cpp"
         "ui/ui_router.cpp"
         "ui/ui_pin.cpp"
