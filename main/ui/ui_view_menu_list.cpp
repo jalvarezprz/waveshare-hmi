@@ -15,44 +15,9 @@ extern "C" {
 
 #include "ui_router.h"
 #include "ui_pin.h"
-#include "ui_menu_json_tree.h"
+#include "ui_menu_json_utilities.h"
 
 static const char* TAG = "UI_MENU_JSON_TREE";
-
-/* ==================== Carga / utilidades JSON =================== */
-
-cJSON* loadMenu() {
-    // Parsear el JSON embebido definido en ui_menu_json_tree.cpp
-    cJSON* root = cJSON_Parse(ui_menu_json_tree);
-    if (!root) {
-        ESP_LOGE(TAG, "Error al parsear JSON embebido");
-
-        // Diagnóstico opcional: mostrar un pequeño contexto para cazar el fallo de codificación
-        const char* ep = cJSON_GetErrorPtr();
-        if (ep) {
-            const char* start = (ep - 40 > ui_menu_json_tree) ? ep - 40 : ui_menu_json_tree;
-            const char* end   = ep + 40;
-            std::string snippet(start, end);
-            ESP_LOGE(TAG, "cJSON error cerca de: >>>%s<<<", snippet.c_str());
-        }
-    }
-    return root;
-}
-
-
-void printMenu() {
-    cJSON *root = loadMenu(); if (!root) return;
-    cJSON *menu = cJSON_GetObjectItem(root, "menu");
-    if (!cJSON_IsArray(menu)) { ESP_LOGE(TAG, "Estructura inválida"); cJSON_Delete(root); return; }
-    ESP_LOGI(TAG, "Entradas raíz: %d", cJSON_GetArraySize(menu));
-    int i = 0; cJSON *it = nullptr;
-    cJSON_ArrayForEach(it, menu) {
-        const char *id = cJSON_GetStringValue(cJSON_GetObjectItem(it,"id"));
-        const char *tt = cJSON_GetStringValue(cJSON_GetObjectItem(it,"title"));
-        ESP_LOGI(TAG, " %d) %s -> %s", ++i, id?id:"?", tt?tt:"?");
-    }
-    cJSON_Delete(root);
-}
 
 /* ======================== Router helpers ======================== */
 static bool is_protected_root_id(const char* id) {
@@ -426,7 +391,7 @@ static void ui_show_menu_generic()
 {
     lv_obj_clean(lv_scr_act());
 
-    cJSON* root = loadMenu(); if (!root) return;
+    cJSON* root = ui_menu_json_load(); if (!root) return;
 
     cJSON* children = nullptr;
     const char* title_txt = "Menú";
@@ -499,7 +464,7 @@ static void ui_show_menu_generic()
                     ui_show_menu_generic();
                 } else {
                     /* Hoja: ¿es una vista "detail"? */
-                    cJSON* root_local = loadMenu();
+                    cJSON* root_local = ui_menu_json_load();
                     if (root_local) {
                         const cJSON* node = find_node_by_path_and_id(root_local, g_path, ud->id);
                         const char* view = node ? cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)node, "view")) : nullptr;

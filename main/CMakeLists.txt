@@ -1,11 +1,12 @@
 idf_component_register(
     SRCS
         "main.cpp"
-        "ui/ui_screens.cpp"
-        "ui/widgets_reusable/widget_slider.cpp"
         "lvgl_port.c"
         "waveshare_rgb_lcd_port.c"
         "lvgl_lock_shim.c"
+        "ui/ui_screens.cpp"
+        "ui/widgets_reusable/widget_slider.cpp"
+        "ui/ui_menu_json_utilities.cpp"
         "ui/ui_menu_json_tree.cpp"
         "ui/ui_view_menu_list.cpp"
         "ui/ui_router.cpp"
