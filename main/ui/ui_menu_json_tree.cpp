@@ -1,7 +1,7 @@
-#include "ui_menu_tree.h"
+#include "ui_menu_json_tree.h"
 
 // Definición del JSON embebido como array de chars
-const char ui_menu_tree[] = R"json(
+const char ui_menu_json_tree[] = R"json(
 {
   "menu": [
     {

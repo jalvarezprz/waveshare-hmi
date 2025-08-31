@@ -15,22 +15,22 @@ extern "C" {
 
 #include "ui_router.h"
 #include "ui_pin.h"
-#include "ui_menu_tree.h"
+#include "ui_menu_json_tree.h"
 
-static const char* TAG = "UI_MENU_TREE";
+static const char* TAG = "UI_MENU_JSON_TREE";
 
 /* ==================== Carga / utilidades JSON =================== */
 
 cJSON* loadMenu() {
-    // Parsear el JSON embebido definido en ui_menu_tree.cpp
-    cJSON* root = cJSON_Parse(ui_menu_tree);
+    // Parsear el JSON embebido definido en ui_menu_json_tree.cpp
+    cJSON* root = cJSON_Parse(ui_menu_json_tree);
     if (!root) {
         ESP_LOGE(TAG, "Error al parsear JSON embebido");
 
         // Diagnóstico opcional: mostrar un pequeño contexto para cazar el fallo de codificación
         const char* ep = cJSON_GetErrorPtr();
         if (ep) {
-            const char* start = (ep - 40 > ui_menu_tree) ? ep - 40 : ui_menu_tree;
+            const char* start = (ep - 40 > ui_menu_json_tree) ? ep - 40 : ui_menu_json_tree;
             const char* end   = ep + 40;
             std::string snippet(start, end);
             ESP_LOGE(TAG, "cJSON error cerca de: >>>%s<<<", snippet.c_str());

@@ -6,7 +6,7 @@ idf_component_register(
         "lvgl_port.c"
         "waveshare_rgb_lcd_port.c"
         "lvgl_lock_shim.c"
-        "ui/ui_menu_tree.cpp"
+        "ui/ui_menu_json_tree.cpp"
         "ui/ui_view_menu_list.cpp"
         "ui/ui_router.cpp"
         "ui/ui_pin.cpp"
