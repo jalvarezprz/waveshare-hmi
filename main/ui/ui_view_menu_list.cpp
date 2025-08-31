@@ -1,4 +1,4 @@
-#include "ui_menu_mcr50.h"
+#include "ui_view_menu_list.h"
 #include "esp_log.h"
 #include "lvgl.h"
 
@@ -15,22 +15,22 @@ extern "C" {
 
 #include "ui_router.h"
 #include "ui_pin.h"
-#include "ui_menu_mcr50_json.h"
+#include "ui_menu_tree.h"
 
-static const char* TAG = "UI_MENU_MCR50";
+static const char* TAG = "UI_MENU_TREE";
 
 /* ==================== Carga / utilidades JSON =================== */
 
-cJSON* loadMenuMcr50() {
-    // Parsear el JSON embebido definido en ui_menu_mcr50_json.cpp
-    cJSON* root = cJSON_Parse(ui_menu_mcr50_json);
+cJSON* loadMenu() {
+    // Parsear el JSON embebido definido en ui_menu_tree.cpp
+    cJSON* root = cJSON_Parse(ui_menu_tree);
     if (!root) {
         ESP_LOGE(TAG, "Error al parsear JSON embebido");
 
         // Diagnóstico opcional: mostrar un pequeño contexto para cazar el fallo de codificación
         const char* ep = cJSON_GetErrorPtr();
         if (ep) {
-            const char* start = (ep - 40 > ui_menu_mcr50_json) ? ep - 40 : ui_menu_mcr50_json;
+            const char* start = (ep - 40 > ui_menu_tree) ? ep - 40 : ui_menu_tree;
             const char* end   = ep + 40;
             std::string snippet(start, end);
             ESP_LOGE(TAG, "cJSON error cerca de: >>>%s<<<", snippet.c_str());
@@ -40,8 +40,8 @@ cJSON* loadMenuMcr50() {
 }
 
 
-void printMenuMcr50() {
-    cJSON *root = loadMenuMcr50(); if (!root) return;
+void printMenu() {
+    cJSON *root = loadMenu(); if (!root) return;
     cJSON *menu = cJSON_GetObjectItem(root, "menu");
     if (!cJSON_IsArray(menu)) { ESP_LOGE(TAG, "Estructura inválida"); cJSON_Delete(root); return; }
     ESP_LOGI(TAG, "Entradas raíz: %d", cJSON_GetArraySize(menu));
@@ -138,7 +138,7 @@ static const cJSON* find_node_by_path_and_id(const cJSON* root,
 }
 
 /* ======= forward del renderer genérico de lista (SE USA MÁS ABAJO) ======= */
-static void ui_mcr50_show_menu_generic();
+static void ui_show_menu_generic();
 
 /* ======= forward de la factoría de widgets de detalle ==================== */
 static lv_obj_t* create_field_widget(lv_obj_t* parent, const cJSON* f);
@@ -210,7 +210,7 @@ static void ui_render_detail_from_node(const cJSON* node) {
     lv_label_set_text(bl, "ATRAS");
     lv_obj_center(bl);
     lv_obj_add_event_cb(back, [](lv_event_t*){
-        ui_mcr50_show_menu_generic();
+        ui_show_menu_generic();
     }, LV_EVENT_CLICKED, nullptr);
 }
 
@@ -420,13 +420,13 @@ typedef struct {
 } MenuItemUD;
 
 /* forward ya declarado arriba */
-// static void ui_mcr50_show_menu_generic();
+// static void ui_show_menu_generic();
 
-static void ui_mcr50_show_menu_generic()
+static void ui_show_menu_generic()
 {
     lv_obj_clean(lv_scr_act());
 
-    cJSON* root = loadMenuMcr50(); if (!root) return;
+    cJSON* root = loadMenu(); if (!root) return;
 
     cJSON* children = nullptr;
     const char* title_txt = "Menú";
@@ -489,17 +489,17 @@ static void ui_mcr50_show_menu_generic()
                     ui_show_pin_dialog(2410, [id_copy = std::string(ud->id)](bool ok){
                         if (!ok) return;
                         g_path.push_back(id_copy);
-                        ui_mcr50_show_menu_generic();
+                        ui_show_menu_generic();
                     });
                     return;
                 }
 
                 if (ud->has_children) {
                     g_path.push_back(ud->id);
-                    ui_mcr50_show_menu_generic();
+                    ui_show_menu_generic();
                 } else {
                     /* Hoja: ¿es una vista "detail"? */
-                    cJSON* root_local = loadMenuMcr50();
+                    cJSON* root_local = loadMenu();
                     if (root_local) {
                         const cJSON* node = find_node_by_path_and_id(root_local, g_path, ud->id);
                         const char* view = node ? cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)node, "view")) : nullptr;
@@ -540,7 +540,7 @@ static void ui_mcr50_show_menu_generic()
             if (g_path.empty()) {
                 ui_router_go(UiScreen::MAIN_MENU);
             } else {
-                ui_mcr50_show_menu_generic();
+                ui_show_menu_generic();
             }
         }, LV_EVENT_CLICKED, nullptr);
     }
@@ -549,18 +549,18 @@ static void ui_mcr50_show_menu_generic()
 }
 
 /* ===================== Entry points públicos ==================== */
-void ui_mcr50_build_main_menu() {
+void ui_build_main_menu() {
     g_path.clear();
-    ui_mcr50_show_menu_generic();
+    ui_show_menu_generic();
 }
 
-void ui_mcr50_build_info_menu() {
+void ui_build_info_menu() {
     g_path.clear();
     g_path.push_back("info");
-    ui_mcr50_show_menu_generic();
+    ui_show_menu_generic();
 }
 
 /* (helpers opcionales)
-void ui_mcr50_build_tend_menu() { g_path = {"tend"}; ui_mcr50_show_menu_generic(); }
-void ui_mcr50_build_params_menu() { g_path = {"params"}; ui_mcr50_show_menu_generic(); }
+void ui_build_tend_menu() { g_path = {"tend"}; ui_show_menu_generic(); }
+void ui_build_params_menu() { g_path = {"params"}; ui_show_menu_generic(); }
 */

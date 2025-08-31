@@ -1,7 +1,7 @@
 #include "ui_router.h"
 #include "lvgl.h"
 #include "esp_log.h"
-#include "ui_menu_mcr50.h"   // builders de pantallas
+#include "ui_view_menu_list.h"   // builders de pantallas
 
 static const char* TAG = "UI_ROUTER";
 
@@ -16,10 +16,10 @@ void ui_router_go(UiScreen s) {
 
     switch (s) {
         case UiScreen::MAIN_MENU:
-            ui_mcr50_build_main_menu();
+            ui_build_main_menu();
             break;
         case UiScreen::INFO_MENU:
-            ui_mcr50_build_info_menu();   // ver stub más abajo
+            ui_build_info_menu();   // ver stub más abajo
             break;
         default:
             break;

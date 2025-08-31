@@ -4,7 +4,6 @@
 #include "lvgl_lock_shim.h"
 
 #include "ui/ui_router.h"        // <-- nuevo
-// #include "ui/ui_menu_mcr50.h" // ya no hace falta aquí
 
 extern "C" void app_main(void)
 {
