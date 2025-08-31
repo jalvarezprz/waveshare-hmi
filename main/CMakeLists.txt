@@ -10,7 +10,8 @@ idf_component_register(
         "ui/ui_menu_json_tree.cpp"
         "ui/ui_menu_nav.cpp"
         "ui/ui_menu_render_detail.cpp"
-        "ui/ui_view_menu_list.cpp"
+        "ui/ui_menu_field_factory.cpp"
+        "ui/ui_view_menu_list.cpp"      
         "ui/ui_router.cpp"
         "ui/ui_pin.cpp"
     INCLUDE_DIRS
