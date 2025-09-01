@@ -11,6 +11,7 @@ idf_component_register(
         "ui/ui_menu_field_factory.cpp"
         "ui/ui_view_menu_list.cpp"
         "ui/ui_router.cpp"
+        "ui/ui_router_mount.cpp"
         "ui/ui_pin.cpp"
         "ui/component/ui_component_button.cpp"
         "ui/component/ui_component_label.cpp"

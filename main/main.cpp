@@ -5,7 +5,7 @@
 #include "ui/theme/ui_theme_c_api.h"
 #include "ui/layout/ui_layout_scaffold.h"
 #include "ui/ui_router.h"
-#include "ui/view/ui_view_welcome.h"
+#include "ui/ui_router_mount.h"         // ← NUEVO
 
 extern "C" void app_main(void)
 {
@@ -19,8 +19,11 @@ extern "C" void app_main(void)
     scaffold.setBarsHeight(56, 48);
     scaffold.build(lv_scr_act());
 
-    // Inyecta contenido real en el Content del scaffold
-    Ui::ui_view_welcome_mount(scaffold);
+    // ← indicar al router que monte sus vistas en el Content del scaffold
+    ui_router_mount_set(scaffold.content());
+
+    // lanzar la vista inicial del router
+    ui_router_go(UiScreen::MAIN_MENU);
 
     lvgl_port_unlock();
 
