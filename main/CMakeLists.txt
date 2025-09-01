@@ -12,6 +12,12 @@ idf_component_register(
         "ui/ui_view_menu_list.cpp"
         "ui/ui_router.cpp"
         "ui/ui_pin.cpp"
+        "ui/component/ui_component_button.cpp"
+        "ui/component/ui_component_label.cpp"
+        "ui/theme/ui_theme_c_api.cpp"
+        "ui/theme/ui_theme_styles.cpp"
+        "ui/theme/ui_theme_tokens.cpp"
+        "ui/layout/ui_layout_scaffold.cpp"
     INCLUDE_DIRS
         "."
         "ui"

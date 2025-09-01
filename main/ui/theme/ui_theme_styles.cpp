@@ -1,0 +1,105 @@
+#include "ui/theme/ui_theme_styles.h"
+
+namespace Ui {
+
+static UiThemeTokens  g_tokens;
+static UiThemeStyles  g_styles;
+
+UiThemeStyles& getThemeStyles()     { return g_styles; }
+const UiThemeTokens& getThemeTokens(){ return g_tokens; }
+
+static void style_reset(lv_style_t& s) {
+    if(s.prop_cnt) lv_style_reset(&s);
+    else lv_style_init(&s);
+}
+
+void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
+    // Base
+    style_reset(s.base);
+    lv_style_set_bg_color(&s.base, t.colorBg);
+    lv_style_set_text_color(&s.base, t.colorText);
+
+    // Header
+    style_reset(s.header);
+    lv_style_set_bg_color(&s.header, t.colorSurface);
+    lv_style_set_pad_all(&s.header, t.spaceSm);
+    lv_style_set_border_width(&s.header, 1);
+    lv_style_set_border_color(&s.header, t.colorMuted);
+
+    // Content
+    style_reset(s.content);
+    lv_style_set_bg_color(&s.content, t.colorBg);
+    lv_style_set_pad_all(&s.content, t.spaceMd);
+
+    // Footer
+    style_reset(s.footer);
+    lv_style_set_bg_color(&s.footer, t.colorSurface);
+    lv_style_set_pad_all(&s.footer, t.spaceSm);
+    lv_style_set_border_width(&s.footer, 1);
+    lv_style_set_border_color(&s.footer, t.colorMuted);
+
+    // Card
+    style_reset(s.card);
+    lv_style_set_bg_color(&s.card, t.colorSurface);
+    lv_style_set_radius(&s.card, t.radiusMd);
+    lv_style_set_pad_all(&s.card, t.spaceMd);
+    lv_style_set_border_width(&s.card, 1);
+    lv_style_set_border_color(&s.card, t.colorMuted);
+    lv_style_set_shadow_width(&s.card, 8);
+    lv_style_set_shadow_ofs_y(&s.card, 2);
+    lv_style_set_shadow_color(&s.card, lv_color_black());
+
+    // Labels
+    style_reset(s.labelTitle);
+    lv_style_set_text_font(&s.labelTitle, t.fontTitle);
+    lv_style_set_text_color(&s.labelTitle, t.colorText);
+
+    style_reset(s.labelBody);
+    lv_style_set_text_font(&s.labelBody, t.fontBody);
+    lv_style_set_text_color(&s.labelBody, t.colorText);
+
+    style_reset(s.labelCaption);
+    lv_style_set_text_font(&s.labelCaption, t.fontCaption);
+    lv_style_set_text_color(&s.labelCaption, t.colorMuted);
+
+    // Botones
+    style_reset(s.btnPrimary);
+    lv_style_set_bg_color(&s.btnPrimary, t.colorPrimary);
+    lv_style_set_bg_opa(&s.btnPrimary, t.opaEnabled);
+    lv_style_set_radius(&s.btnPrimary, t.radiusMd);
+    lv_style_set_pad_hor(&s.btnPrimary, t.spaceLg);
+    lv_style_set_pad_ver(&s.btnPrimary, t.spaceSm);
+    lv_style_set_text_color(&s.btnPrimary, lv_color_hex(0xFFFFFF));
+
+    style_reset(s.btnSecondary);
+    lv_style_set_bg_color(&s.btnSecondary, t.colorSecondary);
+    lv_style_set_bg_opa(&s.btnSecondary, t.opaEnabled);
+    lv_style_set_radius(&s.btnSecondary, t.radiusMd);
+    lv_style_set_pad_hor(&s.btnSecondary, t.spaceLg);
+    lv_style_set_pad_ver(&s.btnSecondary, t.spaceSm);
+    lv_style_set_text_color(&s.btnSecondary, lv_color_hex(0xFFFFFF));
+
+    style_reset(s.btnGhost);
+    lv_style_set_bg_opa(&s.btnGhost, LV_OPA_TRANSP);
+    lv_style_set_border_width(&s.btnGhost, 1);
+    lv_style_set_border_color(&s.btnGhost, t.colorMuted);
+    lv_style_set_radius(&s.btnGhost, t.radiusMd);
+    lv_style_set_pad_hor(&s.btnGhost, t.spaceLg);
+    lv_style_set_pad_ver(&s.btnGhost, t.spaceSm);
+    lv_style_set_text_color(&s.btnGhost, t.colorText);
+
+    s.initialized = true;
+}
+
+void applyHeader(lv_obj_t* obj, UiThemeStyles& s)  { lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
+void applyContent(lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
+void applyFooter(lv_obj_t* obj, UiThemeStyles& s)  { lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
+
+void themeInitOnce() {
+    if (!g_styles.initialized) {
+        g_tokens = makeDefaultTokens();
+        initThemeStyles(g_styles, g_tokens);
+    }
+}
+
+} // namespace Ui
