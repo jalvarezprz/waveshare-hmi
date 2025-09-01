@@ -21,6 +21,36 @@ extern "C" {
 
 static const char* TAG = "UI_MENU_JSON_TREE";
 
+// --- Helpers visuales mínimos (solo para esta vista) ---
+static void ui_apply_basic_theme_screen()
+{
+    lv_obj_t* scr = lv_scr_act();
+    lv_obj_set_style_bg_color(scr, lv_color_hex(0x121212), 0);   // fondo oscuro suave
+}
+
+static void ui_style_list_item(lv_obj_t* item)
+{
+    // Tarjeta/ítem con borde sutil y padding
+    lv_obj_set_style_bg_color(item, lv_color_hex(0x1E1F25), 0);
+    lv_obj_set_style_border_width(item, 1, 0);
+    lv_obj_set_style_border_color(item, lv_color_hex(0x2A2C33), 0);
+    lv_obj_set_style_radius(item, 12, 0);
+    lv_obj_set_style_pad_all(item, 8, 0);
+    lv_obj_set_height(item, 40); // altura compacta
+}
+
+static void ui_style_slider_basic(lv_obj_t* slider)
+{
+    // Pista
+    lv_obj_set_style_bg_color(slider, lv_color_hex(0x2A2C33), LV_PART_MAIN);
+    // Indicador
+    lv_obj_set_style_bg_color(slider, lv_color_hex(0x6FA8FF), LV_PART_INDICATOR);
+    // Knob
+    lv_obj_set_style_bg_color(slider, lv_color_hex(0xEDEEF0), LV_PART_KNOB);
+
+    lv_obj_set_size(slider, 280, 10); // más fino y ancho
+}
+
 /* ======= forward del renderer genérico de lista (SE USA MÁS ABAJO) ======= */
 static void ui_show_menu_generic();
 static void ui_detail_back_bridge(void) {
@@ -42,6 +72,8 @@ typedef struct {
 static void ui_show_menu_generic()
 {
     lv_obj_clean(lv_scr_act());
+       
+    ui_apply_basic_theme_screen();  // [ADD] Fondo oscuro suave global
 
     cJSON* root = ui_menu_json_load(); if (!root) return;
 
@@ -59,12 +91,17 @@ static void ui_show_menu_generic()
 
     lv_obj_t* title = lv_label_create(cont);
     lv_label_set_text(title, title_txt ? title_txt : "Menú");
+        
+    lv_obj_set_style_text_color(title, lv_color_hex(0xEDEEF0), 0); // [ADD-OPTIONAL] Mejora contraste del título
+
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
     if (children && cJSON_IsArray(children)) {
         lv_obj_t* list = lv_list_create(cont);
         lv_obj_set_size(list, 740, 320);
         lv_obj_align(list, LV_ALIGN_CENTER, 0, 10);
+         
+        lv_obj_set_style_pad_row(list, 6, 0);   // [ADD] Separación vertical entre filas del listado
 
         cJSON* it = nullptr;
         cJSON_ArrayForEach(it, children) {
@@ -74,6 +111,13 @@ static void ui_show_menu_generic()
             bool has_children = items && cJSON_IsArray(items);
 
             lv_obj_t* btn = lv_list_add_btn(list, NULL, text ? text : "?");
+                       
+            ui_style_list_item(btn);     // [ADD] Aplicar estilo de “tarjeta” al botón-fila
+            lv_obj_t* lbl = lv_obj_get_child(btn, 0); // el label que crea lv_list_add_btn
+            if (lbl) {
+                lv_obj_set_style_text_color(lbl, lv_color_hex(0xEDEEF0), 0);
+            }
+
 
             /* Representación dinámica en listas: si hay "value" en el item, muéstralo a la derecha */
             const char* val = cJSON_GetStringValue(cJSON_GetObjectItem(it, "value"));
