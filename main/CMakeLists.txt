@@ -18,6 +18,7 @@ idf_component_register(
         "ui/theme/ui_theme_styles.cpp"
         "ui/theme/ui_theme_tokens.cpp"
         "ui/layout/ui_layout_scaffold.cpp"
+        "ui/view/ui_view_welcome.cpp"
     INCLUDE_DIRS
         "."
         "ui"
