@@ -1,6 +1,5 @@
 #include "lvgl_port.h"
 #include "waveshare_rgb_lcd_port.h"
-#include "ui/ui_screens.h"
 #include "lvgl_lock_shim.h"
 
 #include "ui/ui_router.h"        // <-- nuevo

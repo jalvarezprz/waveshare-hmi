@@ -4,26 +4,19 @@ idf_component_register(
         "lvgl_port.c"
         "waveshare_rgb_lcd_port.c"
         "lvgl_lock_shim.c"
-        "ui/ui_screens.cpp"
-        "ui/widgets_reusable/widget_slider.cpp"
         "ui/ui_menu_json_utilities.cpp"
         "ui/ui_menu_json_tree.cpp"
         "ui/ui_menu_nav.cpp"
         "ui/ui_menu_render_detail.cpp"
         "ui/ui_menu_field_factory.cpp"
-        "ui/ui_view_menu_list.cpp"      
+        "ui/ui_view_menu_list.cpp"
         "ui/ui_router.cpp"
         "ui/ui_pin.cpp"
     INCLUDE_DIRS
         "."
         "ui"
-        "ui/widgets_reusable"
     REQUIRES
-        lvgl
         esp_lcd
-        driver
-        esp_timer
-        esp_lcd_touch
+        lvgl
         json
 )
-target_compile_features(${COMPONENT_LIB} PUBLIC cxx_std_17)
