@@ -9,6 +9,8 @@
 
 extern "C" void app_main(void)
 {
+    esp_log_level_set("*", ESP_LOG_INFO);
+    
     ESP_ERROR_CHECK(waveshare_esp32_s3_rgb_lcd_init());
 
     lvgl_port_lock(UINT32_MAX);
