@@ -18,6 +18,8 @@ idf_component_register(
         "ui/theme/ui_theme_c_api.cpp"
         "ui/theme/ui_theme_styles.cpp"
         "ui/theme/ui_theme_tokens.cpp"
+        "ui/theme/fonts/montserrat_16_lat1.c"
+        "ui/theme/fonts/montserrat_20_lat1.c"
         "ui/layout/ui_layout_scaffold.cpp"
         "ui/view/ui_view_welcome.cpp"
     INCLUDE_DIRS
@@ -28,3 +30,5 @@ idf_component_register(
         lvgl
         json
 )
+
+target_compile_definitions(${COMPONENT_LIB} PRIVATE LV_LVGL_H_INCLUDE_SIMPLE)

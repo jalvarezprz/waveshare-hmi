@@ -104,6 +104,8 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_pad_bottom(&s.listItem, t.spaceSm);
     lv_style_set_text_color(&s.listItem, t.colorText);
 
+    lv_style_set_text_font(&s.listItem, t.fontBody);
+    
     style_reset(s.listItemPressed);
     lv_style_set_bg_color(&s.listItemPressed, lv_color_mix(t.colorPrimary, t.colorSurface, LV_OPA_20));
 

@@ -65,6 +65,7 @@ static void ui_show_menu_generic()
 
     lv_obj_t* title = lv_label_create(cont);
     lv_label_set_text(title, title_txt ? title_txt : "Menú");
+    lv_obj_set_style_text_font(title, Ui::getThemeTokens().fontBody, LV_PART_MAIN);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
     if (children && cJSON_IsArray(children)) {
@@ -87,14 +88,17 @@ static void ui_show_menu_generic()
                 lv_obj_set_width(btn, LV_PCT(100));
                 lv_obj_t* lbl_val = lv_label_create(btn);
                 lv_label_set_text(lbl_val, val);
+                lv_obj_set_style_text_font(lbl_val, Ui::getThemeTokens().fontBody, LV_PART_MAIN);
                 lv_label_set_long_mode(lbl_val, LV_LABEL_LONG_CLIP);
                 lv_obj_set_width(lbl_val, LV_SIZE_CONTENT);
                 lv_obj_align(lbl_val, LV_ALIGN_RIGHT_MID, -10, 0);
+    
 
                 /* Opcional: acotar ancho del label de título para evitar solapamientos */
                 lv_obj_t* title_lbl = lv_obj_get_child(btn, 0);
                 if (title_lbl) {
                     lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_DOT);
+                    lv_obj_set_style_text_font(title_lbl, Ui::getThemeTokens().fontBody, LV_PART_MAIN);
                     lv_obj_set_width(title_lbl, LV_PCT(70));
                 }
             }
@@ -162,9 +166,10 @@ static void ui_show_menu_generic()
         lv_obj_set_size(back, 120, 48);
         lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
         lv_obj_t* l = lv_label_create(back);
-        lv_label_set_text(l, "ATRAS");
+        lv_label_set_text(l, LV_SYMBOL_LEFT " Atrás");
+        lv_obj_set_style_text_font(l, Ui::getThemeTokens().fontBody, LV_PART_MAIN); // acentos OK
         lv_obj_center(l);
-
+        
         lv_obj_add_event_cb(back, [](lv_event_t*){
             if (!Ui::Menu::ui_menu_nav_path().empty()) Ui::Menu::ui_menu_nav_pop();
             if (Ui::Menu::ui_menu_nav_path().empty()) {
@@ -195,23 +200,24 @@ void ui_build_info_menu() {
 /** Crea icono izquierdo (según si hay hijos) y chevron derecho (si hay hijos). */
 static void decorate_list_item_icons(lv_obj_t* btn, bool has_children) {
     if (!btn) return;
-    auto& t = Ui::getThemeTokens();
 
-    // Izquierda: icono "tipo" (submenú vs hoja)
+    // Izquierda
     lv_obj_t* icon_left = lv_label_create(btn);
     lv_label_set_text(icon_left, has_children ? LV_SYMBOL_SETTINGS : LV_SYMBOL_EDIT);
-    lv_label_set_long_mode(icon_left, LV_LABEL_LONG_CLIP);
-    lv_obj_set_style_text_color(icon_left, t.colorMuted, LV_PART_MAIN);
-    if (t.fontCaption) lv_obj_set_style_text_font(icon_left, t.fontCaption, LV_PART_MAIN);
+
+    // ⬇️ usa la fuente built-in de LVGL, que trae los símbolos
+    lv_obj_set_style_text_font(icon_left, LV_FONT_DEFAULT, LV_PART_MAIN);
+
+    // Color apagado igual que antes (si quieres mantenerlo)
+    lv_obj_set_style_text_color(icon_left, Ui::getThemeTokens().colorMuted, LV_PART_MAIN);
     lv_obj_align(icon_left, LV_ALIGN_LEFT_MID, +8, 0);
 
-    // Derecha: chevron sólo si hay hijos
+    // Derecha (chevron)
     if (has_children) {
         lv_obj_t* chevron = lv_label_create(btn);
         lv_label_set_text(chevron, LV_SYMBOL_RIGHT);
-        lv_label_set_long_mode(chevron, LV_LABEL_LONG_CLIP);
-        lv_obj_set_style_text_color(chevron, t.colorMuted, LV_PART_MAIN);
-        if (t.fontCaption) lv_obj_set_style_text_font(chevron, t.fontCaption, LV_PART_MAIN);
+        lv_obj_set_style_text_font(chevron, LV_FONT_DEFAULT, LV_PART_MAIN);  // ⬅️ built-in
+        lv_obj_set_style_text_color(chevron, Ui::getThemeTokens().colorMuted, LV_PART_MAIN);
         lv_obj_align(chevron, LV_ALIGN_RIGHT_MID, -8, 0);
     }
 }

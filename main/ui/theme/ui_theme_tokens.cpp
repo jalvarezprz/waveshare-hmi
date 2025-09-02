@@ -1,5 +1,10 @@
 #include "ui_theme_tokens.h"
 
+extern "C" {
+    extern const lv_font_t montserrat_20_lat1;
+    extern const lv_font_t montserrat_16_lat1;
+}
+
 namespace Ui {
 
 UiThemeTokens makeDefaultTokens() {
@@ -29,9 +34,16 @@ UiThemeTokens makeDefaultTokens() {
     t.spaceLg = 16;
 
     // Fuentes: por ahora usa la global; más adelante activamos Montserrat con acentos
+    /*
     t.fontTitle   = LV_FONT_DEFAULT;
     t.fontBody    = LV_FONT_DEFAULT;
     t.fontCaption = LV_FONT_DEFAULT;
+    */
+
+    t.fontTitle   = &montserrat_20_lat1;
+    t.fontBody    = &montserrat_20_lat1;
+    t.fontCaption = &montserrat_16_lat1;   // <- usar 16 px para textos secundarios
+
 
     // Alturas estándar de ítems
     t.itemHeightMd = 32;    //Valores típicos: 32, 44, 56, 64
