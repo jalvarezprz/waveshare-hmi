@@ -17,7 +17,7 @@ extern "C" {
 #include "ui_menu_render_detail.h"
 #include "ui_menu_field_factory.h"
 #include "ui/theme/ui_theme_styles.h"               // ← tokens + styles (fuentes/colores)
-#include "ui/component/ui_component_button.h"  
+#include "ui/component/ui_component_button_presets.h"  
 
 /// Etiqueta de log para este módulo.
 static const char* TAG_DETAIL = "UI_MENU_DETAIL";
@@ -83,14 +83,7 @@ void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
     }
 
     // Botón "Atrás" usando la nueva clase Button (prueba mínima)
-    auto btnBack = ::Button::create(
-        cont,
-        "Patrás",
-        LV_SYMBOL_LEFT,
-        on_back,
-        120, 44
-    );
-    lv_obj_align(btnBack.root(), LV_ALIGN_BOTTOM_LEFT, 16, -16);
+    auto btnBack = ButtonPresets::Back(cont, on_back);
 
 
 

@@ -19,7 +19,7 @@ extern "C" {
 #include "ui_menu_nav.h"
 #include "ui_menu_render_detail.h"
 #include "ui/theme/ui_theme_styles.h"
-#include "ui/component/ui_component_button.h"
+#include "ui/component/ui_component_button_presets.h"
 
 // Forward declaration para que el handler pueda llamar a esta función
 static void ui_show_menu_generic();
@@ -181,15 +181,8 @@ static void ui_show_menu_generic()
     }
 
     if (!Ui::Menu::ui_menu_nav_path().empty()) {
-    auto btnBack = Button::create(
-        cont,               // parent
-        "Tira patrás",            // texto
-        LV_SYMBOL_LEFT,     // icono LVGL
-        menu_list_back_handler,
-        120, 44
-    );
-    lv_obj_align(btnBack.root(), LV_ALIGN_BOTTOM_LEFT, 16, -16);
-}
+     auto btnBack = ButtonPresets::Back(cont, menu_list_back_handler);
+    }
 
     cJSON_Delete(root);
 }
