@@ -1,49 +1,24 @@
 #pragma once
 #include "lvgl.h"
 
-namespace Ui {
+namespace Ui { namespace Tokens {
 
-/**
- * @brief Tokens de diseño (paleta, tipografías, spacing, radios, alturas).
- *        A partir de estos tokens derivan los estilos LVGL cacheados.
- */
-struct UiThemeTokens {
-    // Paleta base
-    lv_color_t colorBg;
-    lv_color_t colorSurface;
-    lv_color_t colorPrimary;
-    lv_color_t colorSecondary;
-    lv_color_t colorText;
-    lv_color_t colorMuted;
-    lv_color_t colorSuccess;
-    lv_color_t colorWarning;
-    lv_color_t colorError;
+/** Colores para botón primario — derivados de Ui::UiThemeTokens */
+lv_color_t button_primary_bg();          
+lv_color_t button_primary_bg_pressed();  
+lv_color_t button_primary_bg_focused();  
+lv_color_t button_primary_text();        
 
-    // Opacidades
-    lv_opa_t  opaEnabled;
-    lv_opa_t  opaDisabled;
+/** Fuentes usadas por el botón */
+const lv_font_t* font_icon();   
+const lv_font_t* font_text();   
 
-    // Radios y spacing
-    uint16_t radiusSm;
-    uint16_t radiusMd;
-    uint16_t radiusLg;
+/** Medidas del botón */
+lv_coord_t button_width();      
+lv_coord_t button_height();     
+lv_coord_t button_radius();     
+lv_coord_t button_pad_lr();     
+lv_coord_t button_pad_tb();     
+lv_coord_t button_icon_gap();   
 
-    uint8_t  spaceXs;
-    uint8_t  spaceSm;
-    uint8_t  spaceMd;
-    uint8_t  spaceLg;
-
-    // Tipografías
-    const lv_font_t* fontTitle;
-    const lv_font_t* fontBody;
-    const lv_font_t* fontCaption;
-
-    // Alturas estándar de filas para listas
-    uint16_t itemHeightMd;   ///< Fila normal, táctil (~56 px)
-    uint16_t itemHeightLg;   ///< Fila grande (~64 px)
-};
-
-/** @brief Devuelve tokens por defecto (contraste adecuado, seguros). */
-UiThemeTokens makeDefaultTokens();
-
-} // namespace Ui
+}} // namespace Ui::Tokens

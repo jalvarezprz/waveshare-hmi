@@ -1,5 +1,11 @@
 #include "ui_theme_styles.h"
 
+extern "C" {
+    extern const lv_font_t montserrat_20_lat1;
+    extern const lv_font_t montserrat_18_lat1;
+    extern const lv_font_t montserrat_16_lat1;
+}
+
 namespace Ui {
 
 static UiThemeTokens  g_tokens;
@@ -11,6 +17,54 @@ const UiThemeTokens& getThemeTokens(){ return g_tokens; }
 static void style_reset(lv_style_t& s) {
     if (s.prop_cnt) lv_style_reset(&s);
     else lv_style_init(&s);
+}
+
+UiThemeTokens makeDefaultTokens() {
+    UiThemeTokens t{};
+
+    // === Paleta base ===
+    t.colorBg        = lv_color_hex(0xFFFFFF); // fondo
+    t.colorSurface   = lv_color_hex(0xF5F5F5); // cards/containers
+    t.colorPrimary   = lv_color_hex(0x42A5F5); // azul claro (tu primario)
+    t.colorSecondary = lv_color_hex(0x9C27B0); // morado (secundario)
+    t.colorText      = lv_color_hex(0x212121); // casi negro (texto principal)
+    t.colorMuted     = lv_color_hex(0x9E9E9E); // gris medio (texto secundario)
+    t.colorSuccess   = lv_color_hex(0x4CAF50); // verde
+    t.colorWarning   = lv_color_hex(0xFFC107); // amarillo
+    t.colorError     = lv_color_hex(0xF44336); // rojo
+
+    // === Opacidades ===
+    t.opaEnabled  = LV_OPA_COVER;
+    t.opaDisabled = LV_OPA_50;
+
+    // === Radios y spacing ===
+    t.radiusSm = 4;
+    t.radiusMd = 8;
+    t.radiusLg = 16;
+
+    t.spaceXs = 2;
+    t.spaceSm = 4;
+    t.spaceMd = 8;
+    t.spaceLg = 16;
+
+    // === Tipografías ===
+    // Opción A (sin fuentes propias): coger del theme activo (seguro)
+    /*
+    t.fontTitle   = lv_theme_get_font_large(nullptr);
+    t.fontBody    = lv_theme_get_font_normal(nullptr);
+    t.fontCaption = lv_theme_get_font_small(nullptr);
+    */
+
+    // Opción B (si tienes Montserrat enlazado):
+    t.fontTitle   = &montserrat_20_lat1;
+    t.fontBody    = &montserrat_18_lat1;
+    t.fontCaption = &montserrat_16_lat1;
+
+    // === Alturas estándar para listas ===
+    t.itemHeightMd = 56;  // ~alto táctil normal
+    t.itemHeightLg = 64;  // ~alto táctil grande
+
+    return t;
 }
 
 void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {

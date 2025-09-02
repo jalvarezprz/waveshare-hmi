@@ -3,6 +3,7 @@
 #include "lvgl_lock_shim.h"
 
 #include "ui/theme/ui_theme_c_api.h"
+#include "ui/theme/ui_theme_styles.h"
 #include "ui/layout/ui_layout_scaffold.h"
 #include "ui/ui_router.h"
 #include "ui/ui_router_mount.h"         // ← NUEVO
@@ -15,7 +16,11 @@ extern "C" void app_main(void)
 
     lvgl_port_lock(UINT32_MAX);
 
-    ui_theme_init_once_c();
+    Ui::themeInitOnce();
+
+    // 2) (Opcional) Aplica estilo base al screen activo
+    //    Así fondo, color de texto y font por defecto quedan coherentes
+    lv_obj_add_style(lv_scr_act(), &Ui::getThemeStyles().base, LV_PART_MAIN);
 
     Ui::UiLayoutScaffold scaffold;
     scaffold.setBarsHeight(56, 48);

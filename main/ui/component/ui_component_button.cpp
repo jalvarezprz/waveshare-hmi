@@ -1,64 +1,50 @@
 #include "ui/component/ui_component_button.h"
 #include "esp_log.h"
-#include "ui/theme/ui_theme_styles.h"   // ← usamos tus tokens para las fuentes/colores
+#include "ui/theme/ui_theme_tokens.h"
 
 static const char* TAG_BTN = "UI/Button";
 
-// ── Estáticos
 bool Button::stylesInited_ = false;
-
 lv_style_t Button::styleBtnBase_;
 lv_style_t Button::styleBtnPressed_;
 lv_style_t Button::styleBtnFocused_;
-
 lv_style_t Button::styleIconLabel_;
 lv_style_t Button::styleTextLabel_;
 
-// ── Inicialización perezosa de estilos (una sola vez)
 void Button::ensureStyles()
 {
     if (stylesInited_) return;
     stylesInited_ = true;
 
-    // --- Botón base (azul claro + texto blanco) ---
-    lv_style_init(&styleBtnBase_);
-    lv_style_set_bg_color(&styleBtnBase_, lv_color_hex(0x42A5F5)); // azul claro
-    lv_style_set_border_width(&styleBtnBase_, 0);
-    lv_style_set_pad_left(&styleBtnBase_, 10);
-    lv_style_set_pad_right(&styleBtnBase_, 10);
-    lv_style_set_pad_top(&styleBtnBase_, 6);
-    lv_style_set_pad_bottom(&styleBtnBase_, 6);
-    lv_style_set_text_color(&styleBtnBase_, lv_color_white());
-    // (sin transición por compatibilidad con tu LVGL)
+    using namespace Ui::Tokens;
 
-    // --- Botón pressed / focused ---
+    // Base
+    lv_style_init(&styleBtnBase_);
+    lv_style_set_bg_color(&styleBtnBase_, button_primary_bg());
+    lv_style_set_border_width(&styleBtnBase_, 0);
+    lv_style_set_pad_left(&styleBtnBase_,   button_pad_lr());
+    lv_style_set_pad_right(&styleBtnBase_,  button_pad_lr());
+    lv_style_set_pad_top(&styleBtnBase_,    button_pad_tb());
+    lv_style_set_pad_bottom(&styleBtnBase_, button_pad_tb());
+    lv_style_set_text_color(&styleBtnBase_, button_primary_text());
+
+    // Estados derivados con helpers LVGL
     lv_style_init(&styleBtnPressed_);
-    lv_style_set_bg_color(&styleBtnPressed_, lv_color_hex(0x1E88E5));
+    lv_style_set_bg_color(&styleBtnPressed_, lv_color_darken(button_primary_bg(), LV_OPA_30));
 
     lv_style_init(&styleBtnFocused_);
-    lv_style_set_bg_color(&styleBtnFocused_, lv_color_hex(0x64B5F6));
+    lv_style_set_bg_color(&styleBtnFocused_, lv_color_lighten(button_primary_bg(), LV_OPA_20));
 
-    // --- Fuentes del theme actual (si hay tema cargado) ---
-    const lv_font_t* font_small  = lv_theme_get_font_small(nullptr);
-    const lv_font_t* font_normal = lv_theme_get_font_normal(nullptr);
-    const lv_font_t* font_large  = lv_theme_get_font_large(nullptr);
-
-    // --- Label icono ---
+    // Labels
     lv_style_init(&styleIconLabel_);
-    // Usamos la "small" del theme; si el theme incluye símbolos, LV_SYMBOL_* se verá.
-    // Si no, luego cambiamos a imagen cuando toquemos presets/tokens.
-    lv_style_set_text_font(&styleIconLabel_, font_small ? font_small : font_normal);
-    lv_style_set_text_color(&styleIconLabel_, lv_color_white());
+    lv_style_set_text_font(&styleIconLabel_, font_icon());
+    lv_style_set_text_color(&styleIconLabel_, button_primary_text());
 
-    // --- Label texto ---
     lv_style_init(&styleTextLabel_);
-    // Preferimos la "large" del theme; si no hay, usamos la normal.
-    lv_style_set_text_font(&styleTextLabel_, font_large ? font_large : font_normal);
-    lv_style_set_text_color(&styleTextLabel_, lv_color_white());
+    lv_style_set_text_font(&styleTextLabel_, font_text());
+    lv_style_set_text_color(&styleTextLabel_, button_primary_text());
 }
 
-
-// ── Creación en una línea
 Button Button::create(lv_obj_t* parent,
                       const char* text,
                       const char* symbol,
@@ -68,17 +54,17 @@ Button Button::create(lv_obj_t* parent,
 {
     ensureStyles();
 
-    // Botón
     lv_obj_t* btn = lv_btn_create(parent);
-    lv_obj_set_size(btn, width, height);
-    lv_obj_set_style_radius(btn, 12, 0);
+    lv_obj_set_size(btn,
+        width  > 0 ? width  : Ui::Tokens::button_width(),
+        height > 0 ? height : Ui::Tokens::button_height()
+    );
+    lv_obj_set_style_radius(btn, Ui::Tokens::button_radius(), 0);
 
-    // Estilos por estado (sin OR de enums → sin warnings)
     lv_obj_add_style(btn, &styleBtnBase_,    0);
     lv_obj_add_style(btn, &styleBtnPressed_, LV_STATE_PRESSED);
     lv_obj_add_style(btn, &styleBtnFocused_, LV_STATE_FOCUSED);
 
-    // Icono opcional (símbolo LVGL)
     lv_obj_t* iconObj = nullptr;
     if (symbol && *symbol) {
         iconObj = lv_label_create(btn);
@@ -87,21 +73,15 @@ Button Button::create(lv_obj_t* parent,
         lv_obj_align(iconObj, LV_ALIGN_LEFT_MID, 4, 0);
     }
 
-    // Texto opcional
     lv_obj_t* textObj = nullptr;
     if (text && *text) {
         textObj = lv_label_create(btn);
         lv_obj_add_style(textObj, &styleTextLabel_, 0);
         lv_label_set_text(textObj, text);
-
-        if (iconObj) {
-            lv_obj_align_to(textObj, iconObj, LV_ALIGN_OUT_RIGHT_MID, 8, 0);
-        } else {
-            lv_obj_center(textObj);
-        }
+        if (iconObj) lv_obj_align_to(textObj, iconObj, LV_ALIGN_OUT_RIGHT_MID, Ui::Tokens::button_icon_gap(), 0);
+        else         lv_obj_center(textObj);
     }
 
-    // Callback
     if (onClick) {
         lv_obj_add_event_cb(
             btn,
@@ -120,7 +100,6 @@ Button Button::create(lv_obj_t* parent,
     return Button(btn, iconObj, textObj);
 }
 
-// ── Métodos de instancia
 void Button::setText(const char* txt)
 {
     if (!textLabel_) return;
@@ -131,5 +110,5 @@ void Button::setEnabled(bool enabled)
 {
     if (!btn_) return;
     if (enabled) lv_obj_clear_state(btn_, LV_STATE_DISABLED);
-    else         lv_obj_add_state(btn_,   LV_STATE_DISABLED);
+    else         lv_obj_add_state  (btn_, LV_STATE_DISABLED);
 }
