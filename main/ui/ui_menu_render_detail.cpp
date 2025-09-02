@@ -4,8 +4,6 @@
  * @ingroup ui_menu
  */
 
-#include "ui_menu_render_detail.h"
-#include "ui_menu_field_factory.h"
 #include "esp_log.h"
 #include "lvgl.h"
 #include <cmath>
@@ -16,8 +14,10 @@ extern "C" {
 #include "cJSON.h"
 }
 
+#include "ui_menu_render_detail.h"
+#include "ui_menu_field_factory.h"
 #include "ui/theme/ui_theme_styles.h"               // ← tokens + styles (fuentes/colores)
-#include "ui/component/ui_component_back_button.h"  // ← botón "Atrás" unificado
+#include "ui/component/ui_component_button.h"  
 
 /// Etiqueta de log para este módulo.
 static const char* TAG_DETAIL = "UI_MENU_DETAIL";
@@ -82,9 +82,16 @@ void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
         lv_obj_set_style_text_font(info, t.fontBody, LV_PART_MAIN);   // ← acentos OK
     }
 
-    // Botón "Atrás" unificado (estilo + icono + fuente)
-    lv_obj_t* back = Ui::create_back_button(cont, [on_back]() {
-        if (on_back) on_back();   // delega la navegación al llamador
-    });
-    lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
+    // Botón "Atrás" usando la nueva clase Button (prueba mínima)
+    auto btnBack = ::Button::create(
+        cont,
+        "Patrás",
+        LV_SYMBOL_LEFT,
+        on_back,
+        120, 44
+    );
+    lv_obj_align(btnBack.root(), LV_ALIGN_BOTTOM_LEFT, 16, -16);
+
+
+
 }
