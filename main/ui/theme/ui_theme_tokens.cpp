@@ -34,8 +34,8 @@ UiThemeTokens makeDefaultTokens() {
     t.fontCaption = LV_FONT_DEFAULT;
 
     // Alturas estándar de ítems
-    t.itemHeightMd = 56;
-    t.itemHeightLg = 64;
+    t.itemHeightMd = 32;    //Valores típicos: 32, 44, 56, 64
+    t.itemHeightLg = 40;    //Valores típicos: 40, 52, 64, 72
 
     return t;
 }
