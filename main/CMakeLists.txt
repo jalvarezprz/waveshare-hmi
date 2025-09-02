@@ -13,6 +13,7 @@ idf_component_register(
         "ui/ui_router.cpp"
         "ui/ui_router_mount.cpp"
         "ui/ui_pin.cpp"     
+        "ui/actions/ui_actions.cpp"
         "ui/component/ui_component_button.cpp"
         "ui/component/ui_component_button_presets.cpp"
         "ui/component/ui_component_label.cpp"

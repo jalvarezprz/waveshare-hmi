@@ -20,24 +20,10 @@ extern "C" {
 #include "ui_menu_render_detail.h"
 #include "ui/theme/ui_theme_styles.h"
 #include "ui/component/ui_component_button_presets.h"
+#include "ui/actions/ui_actions.h"
 
 // Forward declaration para que el handler pueda llamar a esta función
-static void ui_show_menu_generic();
-
-// Handler para el botón Atrás en la lista de menús
-static void menu_list_back_handler()
-{
-    if (!Ui::Menu::ui_menu_nav_path().empty()) {
-        Ui::Menu::ui_menu_nav_pop();
-    }
-
-    if (Ui::Menu::ui_menu_nav_path().empty()) {
-        ui_router_go(UiScreen::MAIN_MENU);
-    } else {
-        ui_show_menu_generic();
-    }
-}
-
+void ui_show_menu_generic();
 
 // ==== Prototipos de helpers locales (declaración adelantada) ====
 static void decorate_list_item_icons(lv_obj_t* btn, bool has_children);
@@ -47,7 +33,6 @@ static void style_and_decorate_list_item(lv_obj_t* btn, bool has_children, bool 
 static const char* TAG = "UI_MENU_JSON_TREE";
 
 /* ======= forward del renderer genérico de lista (SE USA MÁS ABAJO) ======= */
-static void ui_show_menu_generic();
 static void ui_detail_back_bridge(void) {
     ui_show_menu_generic();
 }
@@ -64,7 +49,7 @@ typedef struct {
 /* forward ya declarado arriba */
 // static void ui_show_menu_generic();
 
-static void ui_show_menu_generic()
+void ui_show_menu_generic()
 {
     lv_obj_clean(lv_scr_act());
 
@@ -181,7 +166,7 @@ static void ui_show_menu_generic()
     }
 
     if (!Ui::Menu::ui_menu_nav_path().empty()) {
-     auto btnBack = ButtonPresets::Back(cont, menu_list_back_handler);
+        auto btnBack = ButtonPresets::Back(cont, Ui::Actions::back_default);
     }
 
     cJSON_Delete(root);
