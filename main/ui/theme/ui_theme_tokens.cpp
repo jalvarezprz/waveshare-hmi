@@ -2,6 +2,7 @@
 
 extern "C" {
     extern const lv_font_t montserrat_20_lat1;
+    extern const lv_font_t montserrat_18_lat1;
     extern const lv_font_t montserrat_16_lat1;
 }
 
@@ -40,8 +41,8 @@ UiThemeTokens makeDefaultTokens() {
     t.fontCaption = LV_FONT_DEFAULT;
     */
 
-    t.fontTitle   = &montserrat_20_lat1;
-    t.fontBody    = &montserrat_20_lat1;
+    t.fontTitle   = &montserrat_18_lat1;
+    t.fontBody    = &montserrat_18_lat1;
     t.fontCaption = &montserrat_16_lat1;   // <- usar 16 px para textos secundarios
 
 
