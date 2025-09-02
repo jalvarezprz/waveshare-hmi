@@ -15,6 +15,7 @@ idf_component_register(
         "ui/ui_pin.cpp"
         "ui/component/ui_component_button.cpp"
         "ui/component/ui_component_label.cpp"
+        "ui/component/ui_component_back_button.cpp"
         "ui/theme/ui_theme_c_api.cpp"
         "ui/theme/ui_theme_styles.cpp"
         "ui/theme/ui_theme_tokens.cpp"

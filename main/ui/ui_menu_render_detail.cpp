@@ -16,6 +16,9 @@ extern "C" {
 #include "cJSON.h"
 }
 
+#include "ui/theme/ui_theme_styles.h"               // ← tokens + styles (fuentes/colores)
+#include "ui/component/ui_component_back_button.h"  // ← botón "Atrás" unificado
+
 /// Etiqueta de log para este módulo.
 static const char* TAG_DETAIL = "UI_MENU_DETAIL";
 
@@ -24,19 +27,26 @@ static const char* TAG_DETAIL = "UI_MENU_DETAIL";
  * --------------------------------------------------------------------------- */
 void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
 {
+    // Limpia la pantalla activa
     lv_obj_clean(lv_scr_act());
+
+    auto& t = Ui::getThemeTokens();
 
     const char* title_txt = cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)node, "title"));
     const cJSON* fields   = cJSON_GetObjectItem((cJSON*)node, "fields");
 
+    // Contenedor raíz
     lv_obj_t* cont = lv_obj_create(lv_scr_act());
     lv_obj_set_size(cont, 780, 440);
     lv_obj_center(cont);
 
+    // Título
     lv_obj_t* title = lv_label_create(cont);
     lv_label_set_text(title, title_txt ? title_txt : "Detalle");
+    lv_obj_set_style_text_font(title, t.fontTitle, LV_PART_MAIN);   // ← fuente con acentos
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
+    // Columna con los campos
     lv_obj_t* col = lv_obj_create(cont);
     lv_obj_set_size(col, 740, 300);
     lv_obj_align(col, LV_ALIGN_CENTER, 0, 10);
@@ -60,6 +70,7 @@ void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
 
             lv_obj_t* l = lv_label_create(row);
             lv_label_set_text(l, label ? label : "-");
+            lv_obj_set_style_text_font(l, t.fontBody, LV_PART_MAIN);  // ← acentos OK
             lv_obj_set_width(l, 300);
 
             lv_obj_t* w = ui_menu_field_create_widget(row, f);
@@ -68,18 +79,12 @@ void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
     } else {
         lv_obj_t* info = lv_label_create(col);
         lv_label_set_text(info, "(Sin campos definidos)");
+        lv_obj_set_style_text_font(info, t.fontBody, LV_PART_MAIN);   // ← acentos OK
     }
 
-    lv_obj_t* back = lv_btn_create(cont);
-    lv_obj_set_size(back, 120, 48);
+    // Botón "Atrás" unificado (estilo + icono + fuente)
+    lv_obj_t* back = Ui::create_back_button(cont, [on_back]() {
+        if (on_back) on_back();   // delega la navegación al llamador
+    });
     lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
-    lv_obj_t* bl = lv_label_create(back);
-    lv_label_set_text(bl, "ATRAS");
-    lv_obj_center(bl);
-
-    // Delega la acción de volver en el callback proporcionado
-    lv_obj_add_event_cb(back, [](lv_event_t* e){
-        void (*cb)(void) = (void(*)(void)) lv_event_get_user_data(e);
-        if (cb) cb();
-    }, LV_EVENT_CLICKED, (void*)on_back);
 }

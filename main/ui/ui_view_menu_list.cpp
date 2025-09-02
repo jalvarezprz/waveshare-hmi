@@ -19,6 +19,7 @@ extern "C" {
 #include "ui_menu_nav.h"
 #include "ui_menu_render_detail.h"
 #include "ui/theme/ui_theme_styles.h"
+#include "ui/component/ui_component_back_button.h"
 
 // ==== Prototipos de helpers locales (declaración adelantada) ====
 static void decorate_list_item_icons(lv_obj_t* btn, bool has_children);
@@ -162,22 +163,15 @@ static void ui_show_menu_generic()
     }
 
     if (!Ui::Menu::ui_menu_nav_path().empty()) {
-        lv_obj_t* back = lv_btn_create(cont);
-        lv_obj_set_size(back, 120, 48);
-        lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
-        lv_obj_t* l = lv_label_create(back);
-        lv_label_set_text(l, LV_SYMBOL_LEFT " Atrás");
-        lv_obj_set_style_text_font(l, Ui::getThemeTokens().fontBody, LV_PART_MAIN); // acentos OK
-        lv_obj_center(l);
-        
-        lv_obj_add_event_cb(back, [](lv_event_t*){
+        lv_obj_t* back = Ui::create_back_button(cont, [](){
             if (!Ui::Menu::ui_menu_nav_path().empty()) Ui::Menu::ui_menu_nav_pop();
             if (Ui::Menu::ui_menu_nav_path().empty()) {
                 ui_router_go(UiScreen::MAIN_MENU);
             } else {
                 ui_show_menu_generic();
             }
-        }, LV_EVENT_CLICKED, nullptr);
+        });
+        lv_obj_align(back, LV_ALIGN_BOTTOM_LEFT, 16, -16);
     }
 
     cJSON_Delete(root);
