@@ -20,6 +20,11 @@ extern "C" {
 #include "ui_menu_render_detail.h"
 #include "ui/theme/ui_theme_styles.h"
 
+// ==== Prototipos de helpers locales (declaración adelantada) ====
+static void decorate_list_item_icons(lv_obj_t* btn, bool has_children);
+static void adjust_list_item_title_layout(lv_obj_t* btn, bool has_value);
+static void style_and_decorate_list_item(lv_obj_t* btn, bool has_children, bool has_value);
+
 static const char* TAG = "UI_MENU_JSON_TREE";
 
 /* ======= forward del renderer genérico de lista (SE USA MÁS ABAJO) ======= */
@@ -29,7 +34,7 @@ static void ui_detail_back_bridge(void) {
 }
 
 /* ======= forward de la factoría de widgets de detalle ==================== */
-static lv_obj_t* create_field_widget(lv_obj_t* parent, const cJSON* f);
+//static lv_obj_t* create_field_widget(lv_obj_t* parent, const cJSON* f);
 
 /* ======================= Render genérico ======================== */
 typedef struct {
@@ -138,7 +143,12 @@ static void ui_show_menu_generic()
                     std::free(ud);
                 }
             }, LV_EVENT_DELETE, ud);
+
+            // === Estilizar y decorar este ítem ===
+            const bool has_value = (val && *val);
+            style_and_decorate_list_item(btn, has_children, has_value);
         }
+        
         auto& styles = Ui::getThemeStyles();
         Ui::applyListStylesToChildren(list, styles, /*large=*/false, /*withDivider=*/true);
     } else {
@@ -180,7 +190,56 @@ void ui_build_info_menu() {
     ui_show_menu_generic();
 }
 
+// ==== Helpers locales de decoración de ítems de lista (refactor) ====
+
+/** Crea icono izquierdo (según si hay hijos) y chevron derecho (si hay hijos). */
+static void decorate_list_item_icons(lv_obj_t* btn, bool has_children) {
+    if (!btn) return;
+    auto& t = Ui::getThemeTokens();
+
+    // Izquierda: icono "tipo" (submenú vs hoja)
+    lv_obj_t* icon_left = lv_label_create(btn);
+    lv_label_set_text(icon_left, has_children ? LV_SYMBOL_SETTINGS : LV_SYMBOL_EDIT);
+    lv_label_set_long_mode(icon_left, LV_LABEL_LONG_CLIP);
+    lv_obj_set_style_text_color(icon_left, t.colorMuted, LV_PART_MAIN);
+    if (t.fontCaption) lv_obj_set_style_text_font(icon_left, t.fontCaption, LV_PART_MAIN);
+    lv_obj_align(icon_left, LV_ALIGN_LEFT_MID, +8, 0);
+
+    // Derecha: chevron sólo si hay hijos
+    if (has_children) {
+        lv_obj_t* chevron = lv_label_create(btn);
+        lv_label_set_text(chevron, LV_SYMBOL_RIGHT);
+        lv_label_set_long_mode(chevron, LV_LABEL_LONG_CLIP);
+        lv_obj_set_style_text_color(chevron, t.colorMuted, LV_PART_MAIN);
+        if (t.fontCaption) lv_obj_set_style_text_font(chevron, t.fontCaption, LV_PART_MAIN);
+        lv_obj_align(chevron, LV_ALIGN_RIGHT_MID, -8, 0);
+    }
+}
+
+/** Ajusta título (primer hijo del btn) y, si hay valor a la derecha, recorta anchos. */
+static void adjust_list_item_title_layout(lv_obj_t* btn, bool has_value) {
+    if (!btn) return;
+    lv_obj_t* title_lbl = lv_obj_get_child(btn, 0); // label creado por lv_list_add_btn
+    if (!title_lbl) return;
+
+    lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_DOT);
+    // Deja más ancho si NO hay valor; menos si sí lo hay
+    lv_obj_set_width(title_lbl, has_value ? LV_PCT(58) : LV_PCT(70));
+    // Desplaza a la derecha para no solaparse con el icono izquierdo
+    lv_obj_align(title_lbl, LV_ALIGN_LEFT_MID, +28, 0);
+}
+
+/** Helper integral: aplica estilos de ítem (altura/padding) y decora iconos+chevron+título. */
+static void style_and_decorate_list_item(lv_obj_t* btn, bool has_children, bool has_value) {
+    if (!btn) return;
+    auto& styles = Ui::getThemeStyles();
+    Ui::applyListItem(btn, styles, /*large=*/false, /*withDivider=*/true);
+    decorate_list_item_icons(btn, has_children);
+    adjust_list_item_title_layout(btn, has_value);
+}
+
 /* (helpers opcionales)
 void ui_build_tend_menu() { g_path = {"tend"}; ui_show_menu_generic(); }
 void ui_build_params_menu() { g_path = {"params"}; ui_show_menu_generic(); }
 */
+
