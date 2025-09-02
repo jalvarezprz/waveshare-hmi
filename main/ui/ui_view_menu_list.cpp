@@ -18,6 +18,7 @@ extern "C" {
 #include "ui_menu_json_utilities.h"
 #include "ui_menu_nav.h"
 #include "ui_menu_render_detail.h"
+#include "ui/theme/ui_theme_styles.h"
 
 static const char* TAG = "UI_MENU_JSON_TREE";
 
@@ -138,6 +139,8 @@ static void ui_show_menu_generic()
                 }
             }, LV_EVENT_DELETE, ud);
         }
+        auto& styles = Ui::getThemeStyles();
+        Ui::applyListStylesToChildren(list, styles, /*large=*/false, /*withDivider=*/true);
     } else {
         lv_obj_t* info = lv_label_create(cont);
         lv_label_set_text(info, "Elemento sin submenús (TODO: acción específica)");

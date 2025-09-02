@@ -3,15 +3,18 @@
 
 namespace Ui {
 
-// Tokens: constantes de diseño (paleta, radios, spacing, tipografías)
+/**
+ * @brief Tokens de diseño (paleta, tipografías, spacing, radios, alturas).
+ *        A partir de estos tokens derivan los estilos LVGL cacheados.
+ */
 struct UiThemeTokens {
     // Paleta base
-    lv_color_t colorBg;         // Fondo de pantallas
-    lv_color_t colorSurface;    // Tarjetas / contenedores
-    lv_color_t colorPrimary;    // Color principal (acciones)
-    lv_color_t colorSecondary;  // Color secundario
-    lv_color_t colorText;       // Texto principal
-    lv_color_t colorMuted;      // Texto secundario / bordes suaves
+    lv_color_t colorBg;
+    lv_color_t colorSurface;
+    lv_color_t colorPrimary;
+    lv_color_t colorSecondary;
+    lv_color_t colorText;
+    lv_color_t colorMuted;
     lv_color_t colorSuccess;
     lv_color_t colorWarning;
     lv_color_t colorError;
@@ -30,13 +33,17 @@ struct UiThemeTokens {
     uint8_t  spaceMd;
     uint8_t  spaceLg;
 
-    // Tipografías (usa las que tengas habilitadas en LVGL; por defecto, la global)
+    // Tipografías
     const lv_font_t* fontTitle;
     const lv_font_t* fontBody;
     const lv_font_t* fontCaption;
+
+    // Alturas estándar de filas para listas
+    uint16_t itemHeightMd;   ///< Fila normal, táctil (~56 px)
+    uint16_t itemHeightLg;   ///< Fila grande (~64 px)
 };
 
-// Devuelve un set de tokens por defecto (ligero, contrastado)
+/** @brief Devuelve tokens por defecto (contraste adecuado, seguros). */
 UiThemeTokens makeDefaultTokens();
 
 } // namespace Ui

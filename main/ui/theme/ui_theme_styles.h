@@ -4,39 +4,54 @@
 
 namespace Ui {
 
-// Conjunto de estilos cacheados (se inicializan una vez)
+/**
+ * @brief Conjunto de estilos cacheados (se inicializan una única vez).
+ */
 struct UiThemeStyles {
     bool initialized{false};
 
-    lv_style_t base;         // Base para pantallas
-    lv_style_t header;       // Barra superior
-    lv_style_t content;      // Área de contenido
-    lv_style_t footer;       // Barra inferior
+    // Estructura general
+    lv_style_t base;
+    lv_style_t header;
+    lv_style_t content;
+    lv_style_t footer;
 
-    lv_style_t card;         // Contenedor con borde/sombra suave
+    // Contenedores
+    lv_style_t card;
 
-    lv_style_t labelTitle;   // Títulos
-    lv_style_t labelBody;    // Texto normal
-    lv_style_t labelCaption; // Texto pequeño/muted
+    // Tipos de texto
+    lv_style_t labelTitle;
+    lv_style_t labelBody;
+    lv_style_t labelCaption;
 
-    lv_style_t btnPrimary;   // Botón principal
-    lv_style_t btnSecondary; // Botón secundario
-    lv_style_t btnGhost;     // Botón “fantasma” (sin fondo)
+    // Botones
+    lv_style_t btnPrimary;
+    lv_style_t btnSecondary;
+    lv_style_t btnGhost;
+
+    // Lista e ítems de lista
+    lv_style_t listContainer;    // contenedor de lista
+    lv_style_t listItem;         // ítem normal
+    lv_style_t listItemPressed;  // estado pressed
+    lv_style_t listItemFocused;  // foco/selección
+    lv_style_t listItemDisabled; // deshabilitado
+    lv_style_t listDivider;      // divisor inferior
 };
 
-// Inicializa estilos una única vez con los tokens dados
+// Inicialización y acceso global
 void initThemeStyles(UiThemeStyles& styles, const UiThemeTokens& t);
+UiThemeStyles&     getThemeStyles();
+const UiThemeTokens& getThemeTokens();
+void themeInitOnce();
 
-// Aplicadores de conveniencia
+// Aplicadores layout base
 void applyHeader(lv_obj_t* obj, UiThemeStyles& s);
 void applyContent(lv_obj_t* obj, UiThemeStyles& s);
 void applyFooter(lv_obj_t* obj, UiThemeStyles& s);
 
-/// Acceso global sencillo (singleton mínimo para empezar)
-UiThemeStyles& getThemeStyles();
-const UiThemeTokens& getThemeTokens();
-
-// Inicializa tokens+styles si aún no lo están
-void themeInitOnce();
+// Helpers de listas
+void applyListContainer(lv_obj_t* obj, UiThemeStyles& s);
+void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large = false, bool withDivider = true);
+void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large = false, bool withDivider = true);
 
 } // namespace Ui

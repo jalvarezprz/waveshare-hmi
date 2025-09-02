@@ -1,15 +1,15 @@
-#include "ui/theme/ui_theme_styles.h"
+#include "ui_theme_styles.h"
 
 namespace Ui {
 
 static UiThemeTokens  g_tokens;
 static UiThemeStyles  g_styles;
 
-UiThemeStyles& getThemeStyles()     { return g_styles; }
+UiThemeStyles& getThemeStyles()      { return g_styles; }
 const UiThemeTokens& getThemeTokens(){ return g_tokens; }
 
 static void style_reset(lv_style_t& s) {
-    if(s.prop_cnt) lv_style_reset(&s);
+    if (s.prop_cnt) lv_style_reset(&s);
     else lv_style_init(&s);
 }
 
@@ -88,6 +88,40 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_pad_ver(&s.btnGhost, t.spaceSm);
     lv_style_set_text_color(&s.btnGhost, t.colorText);
 
+    // ===== Listas =====
+    style_reset(s.listContainer);
+    lv_style_set_bg_color(&s.listContainer, t.colorBg);
+    lv_style_set_pad_ver(&s.listContainer, t.spaceSm);
+    lv_style_set_pad_hor(&s.listContainer, t.spaceSm);
+
+    style_reset(s.listItem);
+    lv_style_set_bg_color(&s.listItem, t.colorSurface);
+    lv_style_set_bg_opa(&s.listItem, LV_OPA_COVER);
+    lv_style_set_radius(&s.listItem, t.radiusSm);
+    lv_style_set_pad_left(&s.listItem, t.spaceSm);
+    lv_style_set_pad_right(&s.listItem, t.spaceSm);
+    lv_style_set_pad_top(&s.listItem, t.spaceSm);
+    lv_style_set_pad_bottom(&s.listItem, t.spaceSm);
+    lv_style_set_text_color(&s.listItem, t.colorText);
+
+    style_reset(s.listItemPressed);
+    lv_style_set_bg_color(&s.listItemPressed, lv_color_mix(t.colorPrimary, t.colorSurface, LV_OPA_20));
+
+    style_reset(s.listItemFocused);
+    lv_style_set_outline_width(&s.listItemFocused, 2);
+    lv_style_set_outline_color(&s.listItemFocused, t.colorPrimary);
+    lv_style_set_outline_pad(&s.listItemFocused, 2);
+
+    style_reset(s.listItemDisabled);
+    lv_style_set_bg_opa(&s.listItemDisabled, LV_OPA_50);
+    lv_style_set_text_color(&s.listItemDisabled, t.colorMuted);
+
+    style_reset(s.listDivider);
+    lv_style_set_border_width(&s.listDivider, 1);
+    lv_style_set_border_side(&s.listDivider, LV_BORDER_SIDE_BOTTOM);
+    lv_style_set_border_color(&s.listDivider, t.colorMuted);
+    lv_style_set_border_opa(&s.listDivider, LV_OPA_40);
+
     s.initialized = true;
 }
 
@@ -102,4 +136,53 @@ void themeInitOnce() {
     }
 }
 
+// ===== Helpers de listas =====
+
+static void set_row_height(lv_obj_t* obj, uint16_t h) {
+    lv_obj_set_style_min_height(obj, h, LV_PART_MAIN);
+    lv_obj_set_height(obj, LV_SIZE_CONTENT);
+    lv_obj_set_width(obj, LV_PCT(100));
+}
+
+void applyListContainer(lv_obj_t* obj, UiThemeStyles& s) {
+    if (!obj) return;
+    lv_obj_add_style(obj, &s.listContainer, LV_PART_MAIN);
+    lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(obj, getThemeTokens().spaceSm, LV_PART_MAIN);
+    lv_obj_set_width(obj, LV_PCT(100));
+}
+
+void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider) {
+    if (!obj) return;
+    const auto& t = getThemeTokens();
+    const uint16_t H = large ? t.itemHeightLg : t.itemHeightMd;
+
+    lv_obj_add_style(obj, &s.listItem, LV_PART_MAIN);
+    lv_obj_add_style(obj, &s.listItemPressed, LV_STATE_PRESSED);
+    lv_obj_add_style(obj, &s.listItemFocused, LV_STATE_FOCUSED | LV_STATE_EDITED);
+    lv_obj_add_style(obj, &s.listItemDisabled, LV_STATE_DISABLED);
+
+    if (withDivider) {
+        lv_obj_add_style(obj, &s.listDivider, LV_PART_MAIN);
+    }
+
+    set_row_height(obj, H);
+
+    lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(obj, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+}
+
+void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider) {
+    if (!parent) return;
+    applyListContainer(parent, s);
+
+    // Aplica a todos los hijos directos como ítems
+    uint32_t cnt = lv_obj_get_child_cnt(parent);
+    for (uint32_t i = 0; i < cnt; ++i) {
+        lv_obj_t* child = lv_obj_get_child(parent, i);
+        applyListItem(child, s, large, withDivider);
+    }
+}
+
 } // namespace Ui
+

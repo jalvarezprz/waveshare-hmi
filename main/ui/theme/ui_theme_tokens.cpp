@@ -5,16 +5,16 @@ namespace Ui {
 UiThemeTokens makeDefaultTokens() {
     UiThemeTokens t{};
 
-    // Paleta (clara con primario verde, en línea con tonos usados previamente)
-    t.colorBg       = lv_color_hex(0xF5F7FA);
-    t.colorSurface  = lv_color_hex(0xFFFFFF);
-    t.colorPrimary  = lv_color_hex(0x2E7D32); // verde
-    t.colorSecondary= lv_color_hex(0x1565C0); // azul secundario
-    t.colorText     = lv_color_hex(0x202124);
-    t.colorMuted    = lv_color_hex(0x9AA0A6);
-    t.colorSuccess  = lv_color_hex(0x2E7D32);
-    t.colorWarning  = lv_color_hex(0xF59E0B);
-    t.colorError    = lv_color_hex(0xD32F2F);
+    // Paleta clara (ajústala luego a tu gusto)
+    t.colorBg        = lv_color_hex(0xF5F7FA);
+    t.colorSurface   = lv_color_hex(0xFFFFFF);
+    t.colorPrimary   = lv_color_hex(0x2E7D32); // verde
+    t.colorSecondary = lv_color_hex(0x1565C0); // azul
+    t.colorText      = lv_color_hex(0x202124);
+    t.colorMuted     = lv_color_hex(0x9AA0A6);
+    t.colorSuccess   = lv_color_hex(0x2E7D32);
+    t.colorWarning   = lv_color_hex(0xF59E0B);
+    t.colorError     = lv_color_hex(0xD32F2F);
 
     t.opaEnabled  = LV_OPA_COVER;
     t.opaDisabled = LV_OPA_50;
@@ -28,10 +28,14 @@ UiThemeTokens makeDefaultTokens() {
     t.spaceMd = 12;
     t.spaceLg = 16;
 
-    // Fuentes: usa LV_FONT_DEFAULT para asegurar compilación inmediata
+    // Fuentes: por ahora usa la global; más adelante activamos Montserrat con acentos
     t.fontTitle   = LV_FONT_DEFAULT;
     t.fontBody    = LV_FONT_DEFAULT;
     t.fontCaption = LV_FONT_DEFAULT;
+
+    // Alturas estándar de ítems
+    t.itemHeightMd = 56;
+    t.itemHeightLg = 64;
 
     return t;
 }
