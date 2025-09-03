@@ -144,7 +144,7 @@ inline lv_coord_t button_pad_tb()   { return static_cast<lv_coord_t>(Button::Pad
 inline lv_coord_t button_icon_gap() { return static_cast<lv_coord_t>(Button::IconGap); }
 
 // Fuentes (fallback seguro). Cambia por tus Montserrat cuando corresponda.
-inline const lv_font_t* font_icon() { return LV_FONT_DEFAULT; }
+
 inline const lv_font_t* font_text() { return LV_FONT_DEFAULT; }
 
 /* ─────────────────────  LABELS & TYPOGRAPHY  ───────────────────── */
