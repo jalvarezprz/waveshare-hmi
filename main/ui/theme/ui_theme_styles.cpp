@@ -68,35 +68,43 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_bg_color(&s.base, t.colorBg);
     lv_style_set_text_color(&s.base, t.colorText);
 
-    // ===== Header =====
+    // ===== Header (panel) =====
     style_reset(s.header);
-    lv_style_set_bg_color(&s.header, t.colorSurface);
-    lv_style_set_pad_all(&s.header, t.spaceSm);
-    lv_style_set_border_width(&s.header, 1);
-    lv_style_set_border_color(&s.header, t.colorMuted);
+    lv_style_set_bg_color(&s.header, Ui::Tokens::panel_bg_color());
+    lv_style_set_text_color(&s.header, Ui::Tokens::panel_text_color());
+    lv_style_set_pad_all(&s.header, Ui::Tokens::panel_pad_all());
+    lv_style_set_border_width(&s.header, Ui::Tokens::panel_border_w());
+    lv_style_set_border_color(&s.header, Ui::Tokens::panel_border_color());
+
+    // ===== Content (puede quedar como fondo base si no quieres “panel”) =====
+    style_reset(s.content);
+    lv_style_set_bg_color(&s.content, t.colorBg);
+    lv_style_set_pad_all(&s.content, t.spaceMd);
 
     // ===== Content =====
     style_reset(s.content);
     lv_style_set_bg_color(&s.content, t.colorBg);
     lv_style_set_pad_all(&s.content, t.spaceMd);
 
-    // ===== Footer =====
+    // ===== Footer (panel) =====
     style_reset(s.footer);
-    lv_style_set_bg_color(&s.footer, t.colorSurface);
-    lv_style_set_pad_all(&s.footer, t.spaceSm);
-    lv_style_set_border_width(&s.footer, 1);
-    lv_style_set_border_color(&s.footer, t.colorMuted);
+    lv_style_set_bg_color(&s.footer, Ui::Tokens::panel_bg_color());
+    lv_style_set_text_color(&s.footer, Ui::Tokens::panel_text_color());
+    lv_style_set_pad_all(&s.footer, Ui::Tokens::panel_pad_all());
+    lv_style_set_border_width(&s.footer, Ui::Tokens::panel_border_w());
+    lv_style_set_border_color(&s.footer, Ui::Tokens::panel_border_color());
 
     // ===== Card =====
     style_reset(s.card);
-    lv_style_set_bg_color(&s.card, t.colorSurface);
-    lv_style_set_radius(&s.card, t.radiusMd);
-    lv_style_set_pad_all(&s.card, t.spaceMd);
-    lv_style_set_border_width(&s.card, 1);
-    lv_style_set_border_color(&s.card, t.colorMuted);
-    lv_style_set_shadow_width(&s.card, 8);
-    lv_style_set_shadow_ofs_y(&s.card, 2);
-    lv_style_set_shadow_color(&s.card, lv_color_black());
+    lv_style_set_bg_color(&s.card, Ui::Tokens::card_bg_color());
+    lv_style_set_text_color(&s.card, Ui::Tokens::card_text_color());
+    lv_style_set_radius(&s.card, Ui::Tokens::card_radius());
+    lv_style_set_pad_all(&s.card, Ui::Tokens::card_pad_all());
+    lv_style_set_border_width(&s.card, Ui::Tokens::card_border_w());
+    lv_style_set_border_color(&s.card, Ui::Tokens::card_border_color());
+    lv_style_set_shadow_width(&s.card, Ui::Tokens::card_shadow_w());
+    lv_style_set_shadow_ofs_y(&s.card, Ui::Tokens::card_shadow_ofs_y());
+    lv_style_set_shadow_color(&s.card, Ui::Tokens::card_shadow_color());
 
     // ===== Labels =====
     style_reset(s.labelTitle);

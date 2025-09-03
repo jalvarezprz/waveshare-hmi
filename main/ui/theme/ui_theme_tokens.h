@@ -50,6 +50,55 @@ namespace List {
     inline constexpr int DividerWidth = 1;
 }
 
+/* --------------------------------------------------------------------------
+ * PANELS & CARDS (tokens semánticos)
+ * --------------------------------------------------------------------------*/
+
+// Panel: barras superior/inferior y contenedores planos
+namespace Panel {
+    inline constexpr int PadAll     = Space::sm;   // padding uniforme
+    inline constexpr int BorderW    = 1;           // grosor de borde
+    // Colores derivados de primitivas:
+    //   bg   -> color_surface_variant()
+    //   text -> color_on_surface()
+    //   bord -> color_outline()
+}
+
+// Card: contenedores elevados (tarjetas)
+namespace Card {
+    inline constexpr int  Radius      = Radius::md;
+    inline constexpr int  PadAll      = Space::md;
+    inline constexpr int  BorderW     = 1;
+    inline constexpr int  ShadowW     = 8;
+    inline constexpr int  ShadowOfsY  = 2;
+    // Colores derivados:
+    //   bg        -> color_surface()
+    //   text      -> color_on_surface()
+    //   border    -> color_outline()
+    //   shadow    -> negro (o el que prefieras)
+}
+
+// Helpers LVGL (medidas)
+inline lv_coord_t panel_pad_all()      { return static_cast<lv_coord_t>(Panel::PadAll); }
+inline lv_coord_t panel_border_w()     { return static_cast<lv_coord_t>(Panel::BorderW); }
+
+inline lv_coord_t card_radius()        { return static_cast<lv_coord_t>(Card::Radius); }
+inline lv_coord_t card_pad_all()       { return static_cast<lv_coord_t>(Card::PadAll); }
+inline lv_coord_t card_border_w()      { return static_cast<lv_coord_t>(Card::BorderW); }
+inline lv_coord_t card_shadow_w()      { return static_cast<lv_coord_t>(Card::ShadowW); }
+inline lv_coord_t card_shadow_ofs_y()  { return static_cast<lv_coord_t>(Card::ShadowOfsY); }
+
+// Helpers LVGL (colores)
+inline lv_color_t panel_bg_color()     { return color_surface_variant(); }
+inline lv_color_t panel_text_color()   { return color_on_surface(); }
+inline lv_color_t panel_border_color() { return color_outline(); }
+
+inline lv_color_t card_bg_color()      { return color_surface(); }
+inline lv_color_t card_text_color()    { return color_on_surface(); }
+inline lv_color_t card_border_color()  { return color_outline(); }
+inline lv_color_t card_shadow_color()  { return lv_color_black(); } // ajustable si más tarde defines Elevation
+
+
 // Helpers LVGL: métricas y colores de lista
 inline lv_coord_t list_item_height_md() { return static_cast<lv_coord_t>(List::ItemHeightMd); }
 inline lv_coord_t list_item_height_lg() { return static_cast<lv_coord_t>(List::ItemHeightLg); }
