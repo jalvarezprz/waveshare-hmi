@@ -1,5 +1,5 @@
 #include "ui_theme_styles.h"
-#include "ui/theme/ui_theme_tokens.h"   // Primitivas core + List tokens
+#include "ui/theme/ui_theme_tokens.h"   // Primitivas core + List + Labels
 
 extern "C" {
     extern const lv_font_t montserrat_14_lat1;
@@ -101,15 +101,18 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     // ===== Labels =====
     style_reset(s.labelTitle);
     lv_style_set_text_font(&s.labelTitle, t.fontTitle);
-    lv_style_set_text_color(&s.labelTitle, t.colorText);
+    lv_style_set_text_color(&s.labelTitle, Ui::Tokens::label_primary_color());
+    lv_style_set_text_opa(&s.labelTitle,  Ui::Tokens::TextEmphasis::High);
 
     style_reset(s.labelBody);
     lv_style_set_text_font(&s.labelBody, t.fontBody);
-    lv_style_set_text_color(&s.labelBody, t.colorText);
+    lv_style_set_text_color(&s.labelBody, Ui::Tokens::label_primary_color());
+    lv_style_set_text_opa(&s.labelBody,  Ui::Tokens::TextEmphasis::High);
 
     style_reset(s.labelCaption);
     lv_style_set_text_font(&s.labelCaption, t.fontCaption);
-    lv_style_set_text_color(&s.labelCaption, t.colorMuted);
+    lv_style_set_text_color(&s.labelCaption, Ui::Tokens::label_secondary_color());
+    lv_style_set_text_opa(&s.labelCaption,  Ui::Tokens::TextEmphasis::Medium);
 
     // ===== Botones =====
     style_reset(s.btnPrimary);
