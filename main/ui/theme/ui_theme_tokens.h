@@ -82,6 +82,38 @@ inline lv_color_t color_on_surface()     { return rgba_to_lv(Color::OnSurface); 
 inline lv_color_t color_surface_variant(){ return rgba_to_lv(Color::SurfaceVariant); }
 inline lv_color_t color_outline()        { return rgba_to_lv(Color::Outline); }
 
+/* --------------------------------------------------------------------------
+ * LIST TOKENS (métricas y helpers LVGL)
+ * --------------------------------------------------------------------------*/
+namespace List {
+    // Alturas táctiles recomendadas (px)
+    inline constexpr int ItemHeightMd = 56;
+    inline constexpr int ItemHeightLg = 64;
+
+    // Padding interno de cada item (px)
+    inline constexpr int PadLR = 16;  // left/right
+    inline constexpr int PadTB = 8;   // top/bottom
+
+    // Separación vertical entre filas (si se usa en contenedor)
+    inline constexpr int GapRow = 8;
+
+    // Grosor del divisor inferior (px)
+    inline constexpr int DividerWidth = 1;
+}
+
+// Helpers LVGL: métricas como lv_coord_t
+inline lv_coord_t list_item_height_md() { return static_cast<lv_coord_t>(List::ItemHeightMd); }
+inline lv_coord_t list_item_height_lg() { return static_cast<lv_coord_t>(List::ItemHeightLg); }
+inline lv_coord_t list_pad_lr()         { return static_cast<lv_coord_t>(List::PadLR); }
+inline lv_coord_t list_pad_tb()         { return static_cast<lv_coord_t>(List::PadTB); }
+inline lv_coord_t list_gap_row()        { return static_cast<lv_coord_t>(List::GapRow); }
+inline lv_coord_t list_divider_width()  { return static_cast<lv_coord_t>(List::DividerWidth); }
+
+// Helpers LVGL: colores ya definidos en primitivas core
+inline lv_color_t list_divider_color()  { return color_outline(); }
+inline lv_color_t list_bg_color()       { return color_surface(); }
+inline lv_color_t list_item_bg_color()  { return color_surface(); }
+inline lv_color_t list_text_color()     { return color_on_surface(); }
 
 /** Wrappers consumidos por ui_component_button.cpp */
 inline lv_coord_t button_width()    { return static_cast<lv_coord_t>(Button::Width); }

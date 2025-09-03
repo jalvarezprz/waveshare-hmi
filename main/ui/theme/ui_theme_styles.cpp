@@ -1,5 +1,5 @@
 #include "ui_theme_styles.h"
-#include "ui/theme/ui_theme_tokens.h"   // <-- usamos primitivas core
+#include "ui/theme/ui_theme_tokens.h"   // Primitivas core + List tokens
 
 extern "C" {
     extern const lv_font_t montserrat_14_lat1;
@@ -12,8 +12,8 @@ namespace Ui {
 static UiThemeTokens  g_tokens;
 static UiThemeStyles  g_styles;
 
-UiThemeStyles&       getThemeStyles()       { return g_styles; }
-const UiThemeTokens& getThemeTokens()       { return g_tokens; }
+UiThemeStyles&       getThemeStyles() { return g_styles; }
+const UiThemeTokens& getThemeTokens() { return g_tokens; }
 
 static void style_reset(lv_style_t& s) {
     if (s.prop_cnt) lv_style_reset(&s);
@@ -23,15 +23,15 @@ static void style_reset(lv_style_t& s) {
 UiThemeTokens makeDefaultTokens() {
     UiThemeTokens t{};
 
-    // === Paleta base ===
+    // === Paleta base desde Tokens (core) ===
     t.colorBg      = Ui::Tokens::color_surface();          // fondo base
     t.colorSurface = Ui::Tokens::color_surface_variant();  // cards/containers
     t.colorText    = Ui::Tokens::color_on_surface();       // texto principal
 
-    // El resto se mantienen como en tu paleta actual
+    // Colores adicionales (se mantienen como en tu paleta actual por ahora)
     t.colorPrimary   = lv_color_hex(0x42A5F5); // azul claro (primario)
     t.colorSecondary = lv_color_hex(0x9C27B0); // morado (secundario)
-    t.colorMuted     = lv_color_hex(0x9E9E9E); // gris medio
+    t.colorMuted     = lv_color_hex(0x9E9E9E); // gris medio (texto secundario)
     t.colorSuccess   = lv_color_hex(0x4CAF50); // verde
     t.colorWarning   = lv_color_hex(0xFFC107); // amarillo
     t.colorError     = lv_color_hex(0xF44336); // rojo
@@ -40,7 +40,7 @@ UiThemeTokens makeDefaultTokens() {
     t.opaEnabled  = LV_OPA_COVER;
     t.opaDisabled = LV_OPA_50;
 
-    // === Radios y spacing ===
+    // === Radios y spacing desde Tokens (core) ===
     t.radiusSm = Ui::Tokens::Radius::sm;
     t.radiusMd = Ui::Tokens::Radius::md;
     t.radiusLg = Ui::Tokens::Radius::lg;
@@ -50,44 +50,44 @@ UiThemeTokens makeDefaultTokens() {
     t.spaceMd = Ui::Tokens::Space::md;
     t.spaceLg = Ui::Tokens::Space::lg;
 
-    // === Tipografías ===
+    // === Tipografías (Montserrat) ===
     t.fontTitle   = &montserrat_14_lat1;
     t.fontBody    = &montserrat_12_lat1;
     t.fontCaption = &montserrat_8_lat1;
 
-    // === Alturas estándar para listas ===
-    t.itemHeightMd = 56;
-    t.itemHeightLg = 64;
+    // === Alturas estándar para listas desde Tokens (List) ===
+    t.itemHeightMd = static_cast<uint16_t>(Ui::Tokens::list_item_height_md());
+    t.itemHeightLg = static_cast<uint16_t>(Ui::Tokens::list_item_height_lg());
 
     return t;
 }
 
 void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
-    // Base
+    // ===== Base =====
     style_reset(s.base);
     lv_style_set_bg_color(&s.base, t.colorBg);
     lv_style_set_text_color(&s.base, t.colorText);
 
-    // Header
+    // ===== Header =====
     style_reset(s.header);
     lv_style_set_bg_color(&s.header, t.colorSurface);
     lv_style_set_pad_all(&s.header, t.spaceSm);
     lv_style_set_border_width(&s.header, 1);
     lv_style_set_border_color(&s.header, t.colorMuted);
 
-    // Content
+    // ===== Content =====
     style_reset(s.content);
     lv_style_set_bg_color(&s.content, t.colorBg);
     lv_style_set_pad_all(&s.content, t.spaceMd);
 
-    // Footer
+    // ===== Footer =====
     style_reset(s.footer);
     lv_style_set_bg_color(&s.footer, t.colorSurface);
     lv_style_set_pad_all(&s.footer, t.spaceSm);
     lv_style_set_border_width(&s.footer, 1);
     lv_style_set_border_color(&s.footer, t.colorMuted);
 
-    // Card
+    // ===== Card =====
     style_reset(s.card);
     lv_style_set_bg_color(&s.card, t.colorSurface);
     lv_style_set_radius(&s.card, t.radiusMd);
@@ -98,7 +98,7 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_shadow_ofs_y(&s.card, 2);
     lv_style_set_shadow_color(&s.card, lv_color_black());
 
-    // Labels
+    // ===== Labels =====
     style_reset(s.labelTitle);
     lv_style_set_text_font(&s.labelTitle, t.fontTitle);
     lv_style_set_text_color(&s.labelTitle, t.colorText);
@@ -111,7 +111,7 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_text_font(&s.labelCaption, t.fontCaption);
     lv_style_set_text_color(&s.labelCaption, t.colorMuted);
 
-    // Botones
+    // ===== Botones =====
     style_reset(s.btnPrimary);
     lv_style_set_bg_color(&s.btnPrimary, t.colorPrimary);
     lv_style_set_bg_opa(&s.btnPrimary, t.opaEnabled);
@@ -139,23 +139,24 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
 
     // ===== Listas =====
     style_reset(s.listContainer);
-    lv_style_set_bg_color(&s.listContainer, t.colorBg);
-    lv_style_set_pad_ver(&s.listContainer, t.spaceSm);
-    lv_style_set_pad_hor(&s.listContainer, t.spaceSm);
+    lv_style_set_bg_color(&s.listContainer, Ui::Tokens::list_bg_color());
+    lv_style_set_pad_ver(&s.listContainer, Ui::Tokens::list_pad_tb());
+    lv_style_set_pad_hor(&s.listContainer, Ui::Tokens::list_pad_lr());
 
     style_reset(s.listItem);
-    lv_style_set_bg_color(&s.listItem, t.colorSurface);
+    lv_style_set_bg_color(&s.listItem, Ui::Tokens::list_item_bg_color());
     lv_style_set_bg_opa(&s.listItem, LV_OPA_COVER);
-    lv_style_set_radius(&s.listItem, t.radiusSm);
-    lv_style_set_pad_left(&s.listItem, t.spaceSm);
-    lv_style_set_pad_right(&s.listItem, t.spaceSm);
-    lv_style_set_pad_top(&s.listItem, t.spaceSm);
-    lv_style_set_pad_bottom(&s.listItem, t.spaceSm);
-    lv_style_set_text_color(&s.listItem, t.colorText);
+    lv_style_set_radius(&s.listItem, t.radiusSm); // o Ui::Tokens::Radius::sm si prefieres unificar
+    lv_style_set_pad_left(&s.listItem,  Ui::Tokens::list_pad_lr());
+    lv_style_set_pad_right(&s.listItem, Ui::Tokens::list_pad_lr());
+    lv_style_set_pad_top(&s.listItem,   Ui::Tokens::list_pad_tb());
+    lv_style_set_pad_bottom(&s.listItem,Ui::Tokens::list_pad_tb());
+    lv_style_set_text_color(&s.listItem, Ui::Tokens::list_text_color());
     lv_style_set_text_font(&s.listItem, t.fontBody);
 
     style_reset(s.listItemPressed);
-    lv_style_set_bg_color(&s.listItemPressed, lv_color_mix(t.colorPrimary, t.colorSurface, LV_OPA_20));
+    lv_style_set_bg_color(&s.listItemPressed,
+                          lv_color_mix(t.colorPrimary, Ui::Tokens::list_item_bg_color(), LV_OPA_20));
 
     style_reset(s.listItemFocused);
     lv_style_set_outline_width(&s.listItemFocused, 2);
@@ -167,17 +168,17 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_text_color(&s.listItemDisabled, t.colorMuted);
 
     style_reset(s.listDivider);
-    lv_style_set_border_width(&s.listDivider, 1);
+    lv_style_set_border_width(&s.listDivider, Ui::Tokens::list_divider_width());
     lv_style_set_border_side(&s.listDivider, LV_BORDER_SIDE_BOTTOM);
-    lv_style_set_border_color(&s.listDivider, t.colorMuted);
+    lv_style_set_border_color(&s.listDivider, Ui::Tokens::list_divider_color());
     lv_style_set_border_opa(&s.listDivider, LV_OPA_40);
 
     s.initialized = true;
 }
 
-void applyHeader(lv_obj_t* obj, UiThemeStyles& s)   { lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
-void applyContent(lv_obj_t* obj, UiThemeStyles& s)  { lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
-void applyFooter(lv_obj_t* obj, UiThemeStyles& s)   { lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
+void applyHeader (lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
+void applyContent(lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
+void applyFooter (lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
 
 void themeInitOnce() {
     if (!g_styles.initialized) {
@@ -198,14 +199,17 @@ void applyListContainer(lv_obj_t* obj, UiThemeStyles& s) {
     if (!obj) return;
     lv_obj_add_style(obj, &s.listContainer, LV_PART_MAIN);
     lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_row(obj, getThemeTokens().spaceSm, LV_PART_MAIN);
+    lv_obj_set_style_pad_row(obj, Ui::Tokens::list_gap_row(), LV_PART_MAIN);
     lv_obj_set_width(obj, LV_PCT(100));
 }
 
 void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider) {
     if (!obj) return;
-    const auto& t = getThemeTokens();
-    const uint16_t H = large ? t.itemHeightLg : t.itemHeightMd;
+
+    const uint16_t H = static_cast<uint16_t>(
+        large ? Ui::Tokens::list_item_height_lg()
+              : Ui::Tokens::list_item_height_md()
+    );
 
     lv_obj_add_style(obj, &s.listItem, LV_PART_MAIN);
     lv_obj_add_style(obj, &s.listItemPressed, LV_STATE_PRESSED);
