@@ -50,6 +50,39 @@ namespace Button {
     inline constexpr int IconGap = 8;
 }
 
+/* --------------------------------------------------------------------------
+ * PRIMITIVAS CORE (no solo botón)
+ * - Colores en RGBA 0xRRGGBBAA (lv_color_t ignora alfa; opacidad con *_opa)
+ * - Espaciado y radios en px
+ * --------------------------------------------------------------------------*/
+namespace Color {
+    inline constexpr std::uint32_t Surface        = 0x121212FF; // Fondo base oscuro
+    inline constexpr std::uint32_t OnSurface      = 0xEDEDEDFF; // Texto sobre Surface
+    inline constexpr std::uint32_t SurfaceVariant = 0x1E1E1EFF; // Variante de superficie (cards, contenedores)
+    inline constexpr std::uint32_t Outline        = 0x3C3C3CFF; // Bordes / separadores discretos
+}
+
+namespace Space {
+    inline constexpr int xs = 4;
+    inline constexpr int  sm = 8;
+    inline constexpr int  md = 12;
+    inline constexpr int  lg = 16;
+    inline constexpr int xl = 24;
+}
+
+namespace Radius {
+    inline constexpr int sm = 4;
+    inline constexpr int md = 8;
+    inline constexpr int lg = 12;
+}
+
+/* Helpers LVGL convenientes (usar según necesidad) */
+inline lv_color_t color_surface()        { return rgba_to_lv(Color::Surface); }
+inline lv_color_t color_on_surface()     { return rgba_to_lv(Color::OnSurface); }
+inline lv_color_t color_surface_variant(){ return rgba_to_lv(Color::SurfaceVariant); }
+inline lv_color_t color_outline()        { return rgba_to_lv(Color::Outline); }
+
+
 /** Wrappers consumidos por ui_component_button.cpp */
 inline lv_coord_t button_width()    { return static_cast<lv_coord_t>(Button::Width); }
 inline lv_coord_t button_height()   { return static_cast<lv_coord_t>(Button::Height); }

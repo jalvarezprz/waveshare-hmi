@@ -1,4 +1,5 @@
 #include "ui_theme_styles.h"
+#include "ui/theme/ui_theme_tokens.h"   // <-- usamos primitivas core
 
 extern "C" {
     extern const lv_font_t montserrat_14_lat1;
@@ -11,8 +12,8 @@ namespace Ui {
 static UiThemeTokens  g_tokens;
 static UiThemeStyles  g_styles;
 
-UiThemeStyles& getThemeStyles()      { return g_styles; }
-const UiThemeTokens& getThemeTokens(){ return g_tokens; }
+UiThemeStyles&       getThemeStyles()       { return g_styles; }
+const UiThemeTokens& getThemeTokens()       { return g_tokens; }
 
 static void style_reset(lv_style_t& s) {
     if (s.prop_cnt) lv_style_reset(&s);
@@ -23,12 +24,14 @@ UiThemeTokens makeDefaultTokens() {
     UiThemeTokens t{};
 
     // === Paleta base ===
-    t.colorBg        = lv_color_hex(0xFFFFFF); // fondo
-    t.colorSurface   = lv_color_hex(0xF5F5F5); // cards/containers
-    t.colorPrimary   = lv_color_hex(0x42A5F5); // azul claro (tu primario)
+    t.colorBg      = Ui::Tokens::color_surface();          // fondo base
+    t.colorSurface = Ui::Tokens::color_surface_variant();  // cards/containers
+    t.colorText    = Ui::Tokens::color_on_surface();       // texto principal
+
+    // El resto se mantienen como en tu paleta actual
+    t.colorPrimary   = lv_color_hex(0x42A5F5); // azul claro (primario)
     t.colorSecondary = lv_color_hex(0x9C27B0); // morado (secundario)
-    t.colorText      = lv_color_hex(0x212121); // casi negro (texto principal)
-    t.colorMuted     = lv_color_hex(0x9E9E9E); // gris medio (texto secundario)
+    t.colorMuted     = lv_color_hex(0x9E9E9E); // gris medio
     t.colorSuccess   = lv_color_hex(0x4CAF50); // verde
     t.colorWarning   = lv_color_hex(0xFFC107); // amarillo
     t.colorError     = lv_color_hex(0xF44336); // rojo
@@ -38,31 +41,23 @@ UiThemeTokens makeDefaultTokens() {
     t.opaDisabled = LV_OPA_50;
 
     // === Radios y spacing ===
-    t.radiusSm = 4;
-    t.radiusMd = 8;
-    t.radiusLg = 16;
+    t.radiusSm = Ui::Tokens::Radius::sm;
+    t.radiusMd = Ui::Tokens::Radius::md;
+    t.radiusLg = Ui::Tokens::Radius::lg;
 
-    t.spaceXs = 2;
-    t.spaceSm = 4;
-    t.spaceMd = 8;
-    t.spaceLg = 16;
+    t.spaceXs = Ui::Tokens::Space::xs;
+    t.spaceSm = Ui::Tokens::Space::sm;
+    t.spaceMd = Ui::Tokens::Space::md;
+    t.spaceLg = Ui::Tokens::Space::lg;
 
     // === Tipografías ===
-    // Opción A (sin fuentes propias): coger del theme activo (seguro)
-    /*
-    t.fontTitle   = lv_theme_get_font_large(nullptr);
-    t.fontBody    = lv_theme_get_font_normal(nullptr);
-    t.fontCaption = lv_theme_get_font_small(nullptr);
-    */
-
-    // Opción B (si tienes Montserrat enlazado):
     t.fontTitle   = &montserrat_14_lat1;
     t.fontBody    = &montserrat_12_lat1;
     t.fontCaption = &montserrat_8_lat1;
 
     // === Alturas estándar para listas ===
-    t.itemHeightMd = 56;  // ~alto táctil normal
-    t.itemHeightLg = 64;  // ~alto táctil grande
+    t.itemHeightMd = 56;
+    t.itemHeightLg = 64;
 
     return t;
 }
@@ -157,9 +152,8 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_pad_top(&s.listItem, t.spaceSm);
     lv_style_set_pad_bottom(&s.listItem, t.spaceSm);
     lv_style_set_text_color(&s.listItem, t.colorText);
-
     lv_style_set_text_font(&s.listItem, t.fontBody);
-    
+
     style_reset(s.listItemPressed);
     lv_style_set_bg_color(&s.listItemPressed, lv_color_mix(t.colorPrimary, t.colorSurface, LV_OPA_20));
 
@@ -181,9 +175,9 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     s.initialized = true;
 }
 
-void applyHeader(lv_obj_t* obj, UiThemeStyles& s)  { lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
-void applyContent(lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
-void applyFooter(lv_obj_t* obj, UiThemeStyles& s)  { lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
+void applyHeader(lv_obj_t* obj, UiThemeStyles& s)   { lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
+void applyContent(lv_obj_t* obj, UiThemeStyles& s)  { lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
+void applyFooter(lv_obj_t* obj, UiThemeStyles& s)   { lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
 
 void themeInitOnce() {
     if (!g_styles.initialized) {
@@ -241,4 +235,3 @@ void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, b
 }
 
 } // namespace Ui
-

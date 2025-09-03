@@ -77,7 +77,7 @@ struct UiThemeStyles {
 void initThemeStyles(UiThemeStyles& styles, const UiThemeTokens& t);
 
 /** Acceso global (definidos en .cpp) */
-UiThemeStyles&      getThemeStyles();
+UiThemeStyles&       getThemeStyles();
 const UiThemeTokens& getThemeTokens();
 
 /** Inicializa una vez (tokens + styles). Llamar al arranque. */
