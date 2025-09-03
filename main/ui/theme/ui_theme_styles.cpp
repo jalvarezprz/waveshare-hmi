@@ -1,9 +1,9 @@
 #include "ui_theme_styles.h"
 
 extern "C" {
-    extern const lv_font_t montserrat_20_lat1;
-    extern const lv_font_t montserrat_18_lat1;
-    extern const lv_font_t montserrat_16_lat1;
+    extern const lv_font_t montserrat_14_lat1;
+    extern const lv_font_t montserrat_12_lat1;
+    extern const lv_font_t montserrat_8_lat1;
 }
 
 namespace Ui {
@@ -56,9 +56,9 @@ UiThemeTokens makeDefaultTokens() {
     */
 
     // Opción B (si tienes Montserrat enlazado):
-    t.fontTitle   = &montserrat_20_lat1;
-    t.fontBody    = &montserrat_18_lat1;
-    t.fontCaption = &montserrat_16_lat1;
+    t.fontTitle   = &montserrat_14_lat1;
+    t.fontBody    = &montserrat_12_lat1;
+    t.fontCaption = &montserrat_8_lat1;
 
     // === Alturas estándar para listas ===
     t.itemHeightMd = 56;  // ~alto táctil normal
