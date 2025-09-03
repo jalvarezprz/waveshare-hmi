@@ -158,7 +158,36 @@ namespace TextEmphasis {
     inline constexpr lv_opa_t Disabled = LV_OPA_40;    // ~40%
 }
 
-// Guía semántica de tamaños (si necesitas referencia); LVGL usa fuentes compiladas
-namespace TypographyPx { inline constexpr int Title=14, Body=12, Caption=8; }
+/* --------------------------------------------------------------------------
+ * TYPOGRAPHY (ampliación semántica) + ICON FONT (opcional)
+ * --------------------------------------------------------------------------*/
+namespace TypographyPx {
+    inline constexpr int Title    = 14; // ya existía
+    inline constexpr int Body     = 12; // ya existía
+    inline constexpr int Caption  = 8;  // ya existía
+    inline constexpr int Subtitle = 13; // opcional
+    inline constexpr int Overline = 10; // opcional
+}
+
+/* Icon font (opcional). Si la tienes, activa el define y declara aquí. */
+#if defined(UI_HAVE_ICON_FONT)
+extern "C" { LV_FONT_DECLARE(ui_icon_font_16) }
+inline const lv_font_t* font_icon() { return &ui_icon_font_16; }
+#else
+/* Fallback si no hay icon font: */
+inline const lv_font_t* font_icon() { return LV_FONT_DEFAULT; }
+#endif
+
+/* --------------------------------------------------------------------------
+ * BUTTON TEXT COLORS centralizados (evitar literales en styles)
+ * --------------------------------------------------------------------------*/
+namespace ButtonColor {
+    inline constexpr std::uint32_t OnSecondary = 0xFFFFFFFF; // texto sobre secundario
+    // (Primary ya está definido como OnPrimary = 0xFFFFFFFF en tu bloque actual)
+}
+
+inline lv_color_t button_secondary_text() { return rgba_to_lv(ButtonColor::OnSecondary); }
+inline lv_color_t button_ghost_text()     { return label_primary_color(); } // mismo que texto principal
+
 
 }} // namespace Ui::Tokens
