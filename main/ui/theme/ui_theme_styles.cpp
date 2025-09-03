@@ -129,26 +129,20 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_radius(&s.btnPrimary, t.radiusMd);
     lv_style_set_pad_hor(&s.btnPrimary, t.spaceLg);
     lv_style_set_pad_ver(&s.btnPrimary, t.spaceSm);
-    lv_style_set_text_color(&s.btnPrimary, lv_color_hex(0xFFFFFF));
-
-    style_reset(s.btnSecondary);
+    lv_style_set_text_color(&s.btnPrimary, Ui::Tokens::button_primary_text());style_reset(s.btnSecondary);
     lv_style_set_bg_color(&s.btnSecondary, t.colorSecondary);
     lv_style_set_bg_opa(&s.btnSecondary, t.opaEnabled);
     lv_style_set_radius(&s.btnSecondary, t.radiusMd);
     lv_style_set_pad_hor(&s.btnSecondary, t.spaceLg);
     lv_style_set_pad_ver(&s.btnSecondary, t.spaceSm);
-    lv_style_set_text_color(&s.btnSecondary, lv_color_hex(0xFFFFFF));
-
-    style_reset(s.btnGhost);
+    lv_style_set_text_color(&s.btnSecondary, Ui::Tokens::button_secondary_text());style_reset(s.btnGhost);
     lv_style_set_bg_opa(&s.btnGhost, LV_OPA_TRANSP);
     lv_style_set_border_width(&s.btnGhost, 1);
     lv_style_set_border_color(&s.btnGhost, t.colorMuted);
     lv_style_set_radius(&s.btnGhost, t.radiusMd);
     lv_style_set_pad_hor(&s.btnGhost, t.spaceLg);
     lv_style_set_pad_ver(&s.btnGhost, t.spaceSm);
-    lv_style_set_text_color(&s.btnGhost, t.colorText);
-
-    // ===== Listas =====
+    lv_style_set_text_color(&s.btnGhost, Ui::Tokens::button_ghost_text());// ===== Listas =====
     style_reset(s.listContainer);
     lv_style_set_bg_color(&s.listContainer, Ui::Tokens::list_bg_color());
     lv_style_set_pad_ver(&s.listContainer, Ui::Tokens::list_pad_tb());
