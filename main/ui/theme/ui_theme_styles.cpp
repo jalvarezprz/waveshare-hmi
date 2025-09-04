@@ -23,18 +23,18 @@ static void style_reset(lv_style_t& s) {
 UiThemeTokens makeDefaultTokens() {
     UiThemeTokens t{};
 
-    // === Paleta base desde Tokens (core) ===
-    t.colorBg      = Ui::Tokens::color_surface();          // fondo base
-    t.colorSurface = Ui::Tokens::color_surface_variant();  // cards/containers
-    t.colorText    = Ui::Tokens::color_on_surface();       // texto principal
+        // === Paleta base desde Tokens (core + completa) ===
+    t.colorBg        = Ui::Tokens::color_surface();          // fondo base
+    t.colorSurface   = Ui::Tokens::color_surface_variant();  // cards/containers
+    t.colorText      = Ui::Tokens::color_on_surface();       // texto principal
 
-    // Colores adicionales (se mantienen como en tu paleta actual por ahora)
-    t.colorPrimary   = lv_color_hex(0x42A5F5); // azul claro (primario)
-    t.colorSecondary = lv_color_hex(0x9C27B0); // morado (secundario)
-    t.colorMuted     = lv_color_hex(0x9E9E9E); // gris medio (texto secundario)
-    t.colorSuccess   = lv_color_hex(0x4CAF50); // verde
-    t.colorWarning   = lv_color_hex(0xFFC107); // amarillo
-    t.colorError     = lv_color_hex(0xF44336); // rojo
+    // Paleta completa centralizada en Tokens
+    t.colorPrimary   = Ui::Tokens::color_primary();
+    t.colorSecondary = Ui::Tokens::color_secondary();
+    t.colorMuted     = Ui::Tokens::color_muted();
+    t.colorSuccess   = Ui::Tokens::color_success();
+    t.colorWarning   = Ui::Tokens::color_warning();
+    t.colorError     = Ui::Tokens::color_error();
 
     // === Opacidades ===
     t.opaEnabled  = LV_OPA_COVER;
