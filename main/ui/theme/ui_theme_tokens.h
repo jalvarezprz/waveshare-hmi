@@ -123,6 +123,25 @@ inline lv_color_t list_bg_color()       { return color_surface(); }
 inline lv_color_t list_item_bg_color()  { return color_surface(); }
 inline lv_color_t list_text_color()     { return color_on_surface(); }
 
+/* ───────── Interaction (opacidades/outline para estados de lista) ───────── */
+namespace Interaction {
+    inline constexpr lv_opa_t PressedTintOpa = LV_OPA_20;  // mezcla para item pressed
+    inline constexpr lv_opa_t DisabledOpa    = LV_OPA_50;  // opacidad disabled
+    inline constexpr int      FocusOutlineW  = 2;          // grosor outline
+    inline constexpr int      FocusOutlinePad= 2;          // padding del outline
+}
+
+// Wrappers LVGL usados por ui_theme_styles.cpp
+inline lv_opa_t  list_pressed_tint_opa()   { return Interaction::PressedTintOpa; }
+inline lv_opa_t  list_disabled_opa()       { return Interaction::DisabledOpa; }
+inline lv_coord_t list_focus_outline_w()   { return static_cast<lv_coord_t>(Interaction::FocusOutlineW); }
+inline lv_coord_t list_focus_outline_pad() { return static_cast<lv_coord_t>(Interaction::FocusOutlinePad); }
+
+/* Opacidad del separador de listas */
+namespace List { inline constexpr lv_opa_t DividerOpa = LV_OPA_40; } // si no existía
+inline lv_opa_t list_divider_opa() { return List::DividerOpa; }
+
+
 /* ────────────────────────────  BUTTON  ──────────────────────────── */
 
 // Medidas del botón (px)
