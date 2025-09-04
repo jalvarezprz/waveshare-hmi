@@ -14,6 +14,11 @@ static void style_reset(lv_style_t& s) {
     else            lv_style_init(&s);
 }
 
+// Helper para evitar warnings por OR entre enums distintos (part|state)
+static inline lv_style_selector_t sel_part_state(lv_part_t part, lv_state_t state) {
+    return static_cast<lv_style_selector_t>(part | state);
+}
+
 /* --------------------------------------------------------------------------
  * Tokens (valores atómicos) iniciales del Theme “legacy”.
  * Aquí mapeamos los valores a partir de Ui::Tokens para evitar duplicación.
@@ -242,42 +247,40 @@ static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, boo
 void applyButtonPrimary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnPrimary, setSize);
 
-    // Estados sin crear nuevos styles: se aplican propiedades al objeto con selector de estado.
-    // PRESSED
+    // Estados sin crear nuevos styles: aplicamos propiedades con selector tipado
     lv_obj_set_style_bg_color(btn, Ui::Tokens::button_primary_bg_pressed(),
-                              LV_PART_MAIN | LV_STATE_PRESSED);
-    // FOCUSED (outline por accesibilidad; si no quieres, elimina estas dos líneas)
+                              sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
     lv_obj_set_style_bg_color(btn, Ui::Tokens::button_primary_bg_focused(),
-                              LV_PART_MAIN | LV_STATE_FOCUSED);
+                              sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
 }
 
 void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnSecondary, setSize);
-    // PRESSED
+
     lv_obj_set_style_bg_color(btn, lv_color_darken(Ui::Tokens::color_secondary(), 20),
-                              LV_PART_MAIN | LV_STATE_PRESSED);
-    // FOCUSED
+                              sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
     lv_obj_set_style_bg_color(btn, lv_color_lighten(Ui::Tokens::color_secondary(), 20),
-                              LV_PART_MAIN | LV_STATE_FOCUSED);
+                              sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
 }
 
 void applyButtonGhost(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnGhost, setSize);
+
     // PRESSED: leve tinte del surface
     lv_obj_set_style_bg_opa  (btn, Ui::Tokens::list_pressed_tint_opa(),
-                              LV_PART_MAIN | LV_STATE_PRESSED);
+                              sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
     lv_obj_set_style_bg_color(btn,
                               lv_color_mix(Ui::Tokens::color_on_surface(),
                                            Ui::Tokens::color_surface(),
                                            Ui::Tokens::list_pressed_tint_opa()),
-                              LV_PART_MAIN | LV_STATE_PRESSED);
-    // FOCUSED: outline (usamos los tokens de focus de lista para coherencia)
+                              sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
+    // FOCUSED: outline (reutilizamos tokens de focus para coherencia)
     lv_obj_set_style_outline_width(btn, Ui::Tokens::list_focus_outline_w(),
-                                   LV_PART_MAIN | LV_STATE_FOCUSED);
+                                   sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
     lv_obj_set_style_outline_color(btn, Ui::Tokens::color_primary(),
-                                   LV_PART_MAIN | LV_STATE_FOCUSED);
+                                   sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
     lv_obj_set_style_outline_pad  (btn, Ui::Tokens::list_focus_outline_pad(),
-                                   LV_PART_MAIN | LV_STATE_FOCUSED);
+                                   sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
 }
 
 /* ============================ /Botones =================================== */

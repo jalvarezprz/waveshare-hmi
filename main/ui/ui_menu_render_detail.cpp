@@ -17,11 +17,13 @@ extern "C" {
 #include "ui_menu_render_detail.h"
 #include "ui_menu_field_factory.h"
 #include "ui/theme/ui_theme_styles.h"               // ← tokens + styles (fuentes/colores)
-#include "ui/component/ui_component_button_presets.h"  
+#include "ui/component/ui_component_button_presets.h"
 #include "ui/actions/ui_actions.h"
 
 /// Etiqueta de log para este módulo.
 static const char* TAG_DETAIL = "UI_MENU_DETAIL";
+static inline void _unused_tag_detail() { (void)TAG_DETAIL; } // añade esta línea tras la anterior
+
 
 /* ---------------------------------------------------------------------------
  * Render de la vista detalle
@@ -83,7 +85,7 @@ void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
         lv_obj_set_style_text_font(info, t.fontBody, LV_PART_MAIN);   // ← acentos OK
     }
 
-    // Botón "Atrás" usando la nueva clase Button (prueba mínima)
-    auto btnBack = ButtonPresets::Back(cont, on_back ? on_back : Ui::Actions::back_default);
+    // Botón "Atrás"
+    (void)ButtonPresets::Back(cont, on_back ? on_back : Ui::Actions::back_default);
 
 }

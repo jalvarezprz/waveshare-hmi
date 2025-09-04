@@ -96,7 +96,7 @@ void ui_show_menu_generic()
                 lv_label_set_long_mode(lbl_val, LV_LABEL_LONG_CLIP);
                 lv_obj_set_width(lbl_val, LV_SIZE_CONTENT);
                 lv_obj_align(lbl_val, LV_ALIGN_RIGHT_MID, -10, 0);
-    
+
 
                 /* Opcional: acotar ancho del label de título para evitar solapamientos */
                 lv_obj_t* title_lbl = lv_obj_get_child(btn, 0);
@@ -156,7 +156,7 @@ void ui_show_menu_generic()
             const bool has_value = (val && *val);
             style_and_decorate_list_item(btn, has_children, has_value);
         }
-        
+
         auto& styles = Ui::getThemeStyles();
         Ui::applyListStylesToChildren(list, styles, /*large=*/false, /*withDivider=*/true);
     } else {
@@ -166,7 +166,7 @@ void ui_show_menu_generic()
     }
 
     if (!Ui::Menu::ui_menu_nav_path().empty()) {
-        auto btnBack = ButtonPresets::Back(cont, Ui::Actions::back_default);
+        (void)ButtonPresets::Back(cont, Ui::Actions::back_default);
     }
 
     cJSON_Delete(root);
@@ -237,4 +237,3 @@ static void style_and_decorate_list_item(lv_obj_t* btn, bool has_children, bool 
 void ui_build_tend_menu() { g_path = {"tend"}; ui_show_menu_generic(); }
 void ui_build_params_menu() { g_path = {"params"}; ui_show_menu_generic(); }
 */
-
