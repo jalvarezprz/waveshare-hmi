@@ -1,76 +1,106 @@
 #pragma once
 /**
  * @file ui_theme_styles.h
- * @brief Estilos cacheados construidos a partir de tokens de tema.
- * @defgroup ui_theme_styles Styles de UI
- * @ingroup ui_theme
- * @{
+ * @brief ThemeStyles: recetas LVGL construidas desde Ui::Tokens (snapshot).
+ * @ingroup ui_theme_styles
+ *
+ * Notas:
+ *  - No accede a Ui::Tokens directamente fuera de la creación del snapshot.
+ *  - Expone aplicadores de estilos para superficies, listas y botones (base).
  */
 
 #include "lvgl.h"
 
 namespace Ui {
 
-/** @brief Snapshot de tokens atómicos para construir estilos. */
+/*========================== Snapshot de Tokens ========================*/
 struct UiThemeTokens {
-    // Paleta base
-    lv_color_t colorBg;
-    lv_color_t colorSurface;
-    lv_color_t colorPrimary;
-    lv_color_t colorSecondary;
-    lv_color_t colorText;
-    lv_color_t colorMuted;
-    lv_color_t colorSuccess;
-    lv_color_t colorWarning;
-    lv_color_t colorError;
+    /* Colores (roles) */
+    lv_color_t colorSurface{};
+    lv_color_t colorOnSurface{};
+    lv_color_t colorSurfaceVariant{};
+    lv_color_t colorOutline{};
+    lv_color_t colorMuted{};
+    lv_color_t colorPrimary{};
+    lv_color_t colorOnPrimary{};
+    lv_color_t colorSecondary{};
+    lv_color_t colorOnSecondary{};
+    lv_color_t colorSuccess{};
+    lv_color_t colorOnSuccess{};
+    lv_color_t colorWarning{};
+    lv_color_t colorOnWarning{};
+    lv_color_t colorError{};
+    lv_color_t colorOnError{};
+    lv_color_t colorOverlayBg{};
 
-    // Opacidades
-    lv_opa_t  opaEnabled;
-    lv_opa_t  opaDisabled;
+    /* Opacidades (roles) */
+    lv_opa_t opaEnabled{};
+    lv_opa_t opaDisabled{};
+    lv_opa_t opaHover{};
+    lv_opa_t opaPressed{};
+    lv_opa_t opaFocus{};
+    lv_opa_t opaOverlay{};
 
-    // Radios y spacing
-    uint16_t radiusSm;
-    uint16_t radiusMd;
-    uint16_t radiusLg;
+    /* Tipografía */
+    const lv_font_t* fontTitle{};
+    const lv_font_t* fontBody{};
+    const lv_font_t* fontCaption{};
+    const lv_font_t* fontIcon{};
 
-    uint8_t  spaceXs;
-    uint8_t  spaceSm;
-    uint8_t  spaceMd;
-    uint8_t  spaceLg;
+    /* Shape / layout / density */
+    lv_coord_t focusOutlineW{};
+    lv_coord_t focusOutlinePad{};
+    lv_color_t focusOutlineColor{};
 
-    // Tipografías
-    const lv_font_t* fontTitle;
-    const lv_font_t* fontBody;
-    const lv_font_t* fontCaption;
+    lv_coord_t gapRow{};
+    lv_coord_t gapCol{};
+    lv_coord_t minTouch{};
 
-    // Alturas estándar de filas para listas
-    uint16_t itemHeightMd;   ///< ~56 px
-    uint16_t itemHeightLg;   ///< ~64 px
+    /* Superficies / listas (geométricos) */
+    lv_coord_t panelPadAll{};
+    lv_coord_t panelBorderW{};
+
+    lv_coord_t cardRadius{};
+    lv_coord_t cardPadAll{};
+    lv_coord_t cardBorderW{};
+    lv_coord_t cardShadowW{};
+    lv_coord_t cardShadowOfsY{};
+    lv_color_t cardShadowColor{};
+
+    lv_coord_t listItemH_md{};
+    lv_coord_t listItemH_lg{};
+    lv_coord_t listPadLR{};
+    lv_coord_t listPadTB{};
+    lv_coord_t listGapRow{};
+    lv_coord_t listDividerW{};
+    lv_opa_t   listDividerOpa{};
+
+    /* Controles (geométricos) */
+    lv_coord_t btnWidth{};
+    lv_coord_t btnHeight{};
+    lv_coord_t btnRadius{};
+    lv_coord_t btnPadLR{};
+    lv_coord_t btnPadTB{};
+    lv_coord_t btnIconGap{};
 };
 
-/** @brief Crea tokens por defecto a partir de Ui::Tokens (tema actual). */
-UiThemeTokens makeDefaultTokens();
-
-/** @brief Conjunto de estilos LVGL cacheados (recetas). */
+/*========================== Styles cacheados ==========================*/
 struct UiThemeStyles {
-    // Base layout
+    bool initialized{false};
+
+    // Superficies
     lv_style_t base;
     lv_style_t header;
     lv_style_t content;
     lv_style_t footer;
     lv_style_t card;
 
-    // Labels
+    // Texto
     lv_style_t labelTitle;
     lv_style_t labelBody;
     lv_style_t labelCaption;
 
-    // Botones
-    lv_style_t btnPrimary;
-    lv_style_t btnSecondary;
-    lv_style_t btnGhost;
-
-    // Listas
+    // Lista
     lv_style_t listContainer;
     lv_style_t listItem;
     lv_style_t listItemPressed;
@@ -78,44 +108,33 @@ struct UiThemeStyles {
     lv_style_t listItemDisabled;
     lv_style_t listDivider;
 
-    bool initialized = false;
+    // Botones
+    lv_style_t btnPrimary;
+    lv_style_t btnSecondary;
+    lv_style_t btnGhost;
+
+    // Snapshot activo (para cálculos de estados)
+    UiThemeTokens tokens;
 };
 
-/** @brief Inicializa todos los styles a partir de los tokens. */
-void initThemeStyles(UiThemeStyles& styles, const UiThemeTokens& t);
-
-/** @name Acceso global */
-/** @{ */
+/*====================== API pública (igual que tenías) =================*/
 UiThemeStyles&       getThemeStyles();
 const UiThemeTokens& getThemeTokens();
-/** @} */
 
-/** @brief Inicializa tema una vez (tokens + styles). Llamar en arranque. */
+/* Inicialización */
 void themeInitOnce();
 
-/** @name Helpers de aplicación de estilos */
-/** @{ */
+/* Superficies */
 void applyHeader (lv_obj_t* obj, UiThemeStyles& s);
 void applyContent(lv_obj_t* obj, UiThemeStyles& s);
 void applyFooter (lv_obj_t* obj, UiThemeStyles& s);
-
 void applyListContainer(lv_obj_t* obj, UiThemeStyles& s);
 void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider);
 void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider);
-/** @} */
 
-/** @name Helpers de Botón (tamaño por tokens + estados) */
-/** @{
- * Estos helpers:
- *  - Añaden el style base (primary/secondary/ghost).
- *  - Ajustan tamaño desde Ui::Tokens::button_width/height().
- *  - Configuran estados PRESSED/FOCUSED sin ampliar UiThemeStyles.
- */
-void applyButtonPrimary  (lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
-void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
-void applyButtonGhost    (lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
-/** @} */
+/* Botones (variantes base) */
+void applyButtonPrimary  (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+void applyButtonGhost    (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
 
 } // namespace Ui
-
-/** @} */ // end of ui_theme_styles

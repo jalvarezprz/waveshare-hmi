@@ -1,209 +1,244 @@
 /**
  * @file ui_theme_styles.cpp
- * @brief Implementación de estilos cacheados construidos a partir de tokens.
- * @ingroup ui_theme_styles
+ * @brief Implementación de ThemeStyles construido desde Tokens (snapshot).
  */
 
 #include "ui_theme_styles.h"
-#include "ui_theme_tokens.h"   // Ui::Tokens
+#include "ui_theme_tokens.h"   // Solo para construir el snapshot una vez
 
 namespace Ui {
 
+/*========================== Estado global =============================*/
 static UiThemeTokens  g_tokens;
 static UiThemeStyles  g_styles;
 
-UiThemeStyles&       getThemeStyles()       { return g_styles; }
-const UiThemeTokens& getThemeTokens()       { return g_tokens; }
-
+/*========================== Helpers internos ==========================*/
 static void style_reset(lv_style_t& s) {
     if (s.prop_cnt) lv_style_reset(&s);
     else            lv_style_init(&s);
 }
 
-/** @brief Selector tipado (evita warnings por OR entre enums distintos). */
-static inline lv_style_selector_t sel_part_state(lv_part_t part, lv_state_t state) {
+/** Selector tipado (OR de part/state sin warnings). */
+static inline lv_style_selector_t sel(lv_part_t part, lv_state_t state) {
     return static_cast<lv_style_selector_t>(part | state);
 }
 
-/* --------------------------------------------------------------------------
- * Tokens (snapshot) iniciales del theme.
- * --------------------------------------------------------------------------*/
-UiThemeTokens makeDefaultTokens() {
+/* Mezclas de color para estados (usando snapshot, no Tokens directos) */
+static inline lv_color_t mix_pressed(lv_color_t base, const UiThemeTokens& t) {
+    // "Hundido": mezcla contra Surface con opacidad de pressed
+    return lv_color_mix(t.colorSurface, base, t.opaPressed);
+}
+static inline lv_color_t mix_hover(lv_color_t base, const UiThemeTokens& t) {
+    return lv_color_mix(base, t.colorSurface, t.opaHover);
+}
+
+/*========================== Snapshot desde Tokens =====================*/
+static UiThemeTokens makeSnapshotFromTokens() {
     UiThemeTokens t{};
 
-    // Paleta base desde Tokens
-    t.colorBg        = Ui::Tokens::color_surface();
-    t.colorSurface   = Ui::Tokens::color_surface_variant();
-    t.colorText      = Ui::Tokens::color_on_surface();
-
-    // Paleta completa
-    t.colorPrimary   = Ui::Tokens::color_primary();
-    t.colorSecondary = Ui::Tokens::color_secondary();
-    t.colorMuted     = Ui::Tokens::color_muted();
-    t.colorSuccess   = Ui::Tokens::color_success();
-    t.colorWarning   = Ui::Tokens::color_warning();
-    t.colorError     = Ui::Tokens::color_error();
+    // Colores (roles)
+    t.colorSurface         = Tokens::color_surface();
+    t.colorOnSurface       = Tokens::color_on_surface();
+    t.colorSurfaceVariant  = Tokens::color_surface_variant();
+    t.colorOutline         = Tokens::color_outline();
+    t.colorMuted           = Tokens::color_muted();
+    t.colorPrimary         = Tokens::color_primary();
+    t.colorOnPrimary       = Tokens::color_on_primary();
+    t.colorSecondary       = Tokens::color_secondary();
+    t.colorOnSecondary     = Tokens::color_on_secondary();
+    t.colorSuccess         = Tokens::color_success();
+    t.colorOnSuccess       = Tokens::color_on_success();
+    t.colorWarning         = Tokens::color_warning();
+    t.colorOnWarning       = Tokens::color_on_warning();
+    t.colorError           = Tokens::color_error();
+    t.colorOnError         = Tokens::color_on_error();
+    t.colorOverlayBg       = Tokens::color_overlay_bg();
 
     // Opacidades
-    t.opaEnabled  = LV_OPA_COVER;
-    t.opaDisabled = Ui::Tokens::list_disabled_opa();
+    t.opaEnabled  = Tokens::opa_enabled();
+    t.opaDisabled = Tokens::opa_disabled();
+    t.opaHover    = Tokens::opa_hover();
+    t.opaPressed  = Tokens::opa_pressed();
+    t.opaFocus    = Tokens::opa_focus();
+    t.opaOverlay  = Tokens::opa_overlay();
 
-    // Radios y spacing (desde Tokens)
-    t.radiusSm = static_cast<uint16_t>(Ui::Tokens::Radius::sm);
-    t.radiusMd = static_cast<uint16_t>(Ui::Tokens::Radius::md);
-    t.radiusLg = static_cast<uint16_t>(Ui::Tokens::Radius::lg);
+    // Tipografía
+    t.fontTitle   = Tokens::font_title();
+    t.fontBody    = Tokens::font_body();
+    t.fontCaption = Tokens::font_caption();
+    t.fontIcon    = Tokens::font_icon();
 
-    t.spaceXs  = static_cast<uint8_t>(Ui::Tokens::Space::xs);
-    t.spaceSm  = static_cast<uint8_t>(Ui::Tokens::Space::sm);
-    t.spaceMd  = static_cast<uint8_t>(Ui::Tokens::Space::md);
-    t.spaceLg  = static_cast<uint8_t>(Ui::Tokens::Space::lg);
+    // Focus / layout / density
+    t.focusOutlineW    = Tokens::focus_outline_w();
+    t.focusOutlinePad  = Tokens::focus_outline_pad();
+    t.focusOutlineColor= Tokens::focus_outline_color();
 
-    // Tipografías (helpers de tokens)
-    t.fontTitle   = Ui::Tokens::font_title();
-    t.fontBody    = Ui::Tokens::font_body();
-    t.fontCaption = Ui::Tokens::font_caption();
+    t.gapRow           = Tokens::gap_row();
+    t.gapCol           = Tokens::gap_column();
+    t.minTouch         = Tokens::min_touch();
 
-    // Listas
-    t.itemHeightMd = static_cast<uint16_t>(Ui::Tokens::list_item_height_md());
-    t.itemHeightLg = static_cast<uint16_t>(Ui::Tokens::list_item_height_lg());
+    // Superficies / listas
+    t.panelPadAll      = Tokens::panel_pad_all();
+    t.panelBorderW     = Tokens::panel_border_w();
+
+    t.cardRadius       = Tokens::card_radius();
+    t.cardPadAll       = Tokens::card_pad_all();
+    t.cardBorderW      = Tokens::card_border_w();
+    t.cardShadowW      = Tokens::card_shadow_w();
+    t.cardShadowOfsY   = Tokens::card_shadow_ofs_y();
+    t.cardShadowColor  = Tokens::card_shadow_color();
+
+    t.listItemH_md     = Tokens::list_item_height_md();
+    t.listItemH_lg     = Tokens::list_item_height_lg();
+    t.listPadLR        = Tokens::list_pad_lr();
+    t.listPadTB        = Tokens::list_pad_tb();
+    t.listGapRow       = Tokens::list_gap_row();
+    t.listDividerW     = Tokens::list_divider_width();
+    t.listDividerOpa   = Tokens::list_divider_opa();
+
+    // Controles
+    t.btnWidth         = Tokens::button_width();
+    t.btnHeight        = Tokens::button_height();
+    t.btnRadius        = Tokens::button_radius();
+    t.btnPadLR         = Tokens::button_pad_lr();
+    t.btnPadTB         = Tokens::button_pad_tb();
+    t.btnIconGap       = Tokens::button_icon_gap();
 
     return t;
 }
 
-/* --------------------------------------------------------------------------
- * Estilos (recetas) construidos a partir de los tokens anteriores.
- * --------------------------------------------------------------------------*/
-void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
-    // ===== Base =====
+/*========================== Construcción de styles =====================*/
+static void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
+    s.tokens = t;
+
+    /* ===== Base ===== */
     style_reset(s.base);
-    lv_style_set_bg_color  (&s.base, t.colorBg);
-    lv_style_set_text_color(&s.base, t.colorText);
+    lv_style_set_bg_color  (&s.base, t.colorSurface);
+    lv_style_set_text_color(&s.base, t.colorOnSurface);
 
-    // ===== Header (panel) =====
+    /* ===== Header/Footer ===== */
     style_reset(s.header);
-    lv_style_set_bg_color    (&s.header, Ui::Tokens::panel_bg_color());
-    lv_style_set_text_color  (&s.header, Ui::Tokens::panel_text_color());
-    lv_style_set_pad_all     (&s.header, Ui::Tokens::panel_pad_all());
-    lv_style_set_border_width(&s.header, Ui::Tokens::panel_border_w());
-    lv_style_set_border_color(&s.header, Ui::Tokens::panel_border_color());
+    lv_style_set_bg_color    (&s.header, t.colorSurfaceVariant);
+    lv_style_set_text_color  (&s.header, t.colorOnSurface);
+    lv_style_set_pad_all     (&s.header, t.panelPadAll);
+    lv_style_set_border_width(&s.header, t.panelBorderW);
+    lv_style_set_border_color(&s.header, t.colorOutline);
 
-    // ===== Content =====
+    s.footer = s.header; // mismas reglas
+
+    /* ===== Content ===== */
     style_reset(s.content);
-    lv_style_set_bg_color(&s.content, t.colorBg);
-    lv_style_set_pad_all (&s.content, t.spaceMd);
+    lv_style_set_bg_color(&s.content, t.colorSurface);
+    lv_style_set_pad_all (&s.content, Tokens::Space::md); // usa escala; si prefieres pasa por snapshot
 
-    // ===== Footer (panel) =====
-    style_reset(s.footer);
-    lv_style_set_bg_color    (&s.footer, Ui::Tokens::panel_bg_color());
-    lv_style_set_text_color  (&s.footer, Ui::Tokens::panel_text_color());
-    lv_style_set_pad_all     (&s.footer, Ui::Tokens::panel_pad_all());
-    lv_style_set_border_width(&s.footer, Ui::Tokens::panel_border_w());
-    lv_style_set_border_color(&s.footer, Ui::Tokens::panel_border_color());
-
-    // ===== Card =====
+    /* ===== Card ===== */
     style_reset(s.card);
-    lv_style_set_bg_color     (&s.card, Ui::Tokens::card_bg_color());
-    lv_style_set_text_color   (&s.card, Ui::Tokens::card_text_color());
-    lv_style_set_radius       (&s.card, Ui::Tokens::card_radius());
-    lv_style_set_pad_all      (&s.card, Ui::Tokens::card_pad_all());
-    lv_style_set_border_width (&s.card, Ui::Tokens::card_border_w());
-    lv_style_set_border_color (&s.card, Ui::Tokens::card_border_color());
-    lv_style_set_shadow_width (&s.card, Ui::Tokens::card_shadow_w());
-    lv_style_set_shadow_ofs_y (&s.card, Ui::Tokens::card_shadow_ofs_y());
-    lv_style_set_shadow_color (&s.card, Ui::Tokens::card_shadow_color());
+    lv_style_set_bg_color     (&s.card, t.colorSurface);
+    lv_style_set_text_color   (&s.card, t.colorOnSurface);
+    lv_style_set_radius       (&s.card, t.cardRadius);
+    lv_style_set_pad_all      (&s.card, t.cardPadAll);
+    lv_style_set_border_width (&s.card, t.cardBorderW);
+    lv_style_set_border_color (&s.card, t.colorOutline);
+    lv_style_set_shadow_width (&s.card, t.cardShadowW);
+    lv_style_set_shadow_ofs_y (&s.card, t.cardShadowOfsY);
+    lv_style_set_shadow_color (&s.card, t.cardShadowColor);
 
-    // ===== Labels =====
+    /* ===== Labels ===== */
     style_reset(s.labelTitle);
     lv_style_set_text_font (&s.labelTitle, t.fontTitle);
-    lv_style_set_text_color(&s.labelTitle, t.colorText);
+    lv_style_set_text_color(&s.labelTitle, t.colorOnSurface);
 
     style_reset(s.labelBody);
     lv_style_set_text_font (&s.labelBody, t.fontBody);
-    lv_style_set_text_color(&s.labelBody, t.colorText);
+    lv_style_set_text_color(&s.labelBody, t.colorOnSurface);
 
     style_reset(s.labelCaption);
     lv_style_set_text_font (&s.labelCaption, t.fontCaption);
     lv_style_set_text_color(&s.labelCaption, t.colorMuted);
 
-    // ===== Botones =====
+    /* ===== Listas ===== */
+    style_reset(s.listContainer);
+    lv_style_set_bg_color (&s.listContainer, t.colorSurface);
+    lv_style_set_pad_ver  (&s.listContainer, t.listPadTB);
+    lv_style_set_pad_hor  (&s.listContainer, t.listPadLR);
+
+    style_reset(s.listItem);
+    lv_style_set_bg_color  (&s.listItem, t.colorSurface);
+    lv_style_set_bg_opa    (&s.listItem, t.opaEnabled);
+    lv_style_set_radius    (&s.listItem, Tokens::Radius::sm);
+    lv_style_set_pad_left  (&s.listItem, t.listPadLR);
+    lv_style_set_pad_right (&s.listItem, t.listPadLR);
+    lv_style_set_pad_top   (&s.listItem, t.listPadTB);
+    lv_style_set_pad_bottom(&s.listItem, t.listPadTB);
+    lv_style_set_text_color(&s.listItem, t.colorOnSurface);
+    lv_style_set_text_font (&s.listItem, t.fontBody);
+
+    style_reset(s.listItemPressed);
+    lv_style_set_bg_color(&s.listItemPressed, mix_pressed(t.colorSurface, t));
+
+    style_reset(s.listItemFocused);
+    lv_style_set_outline_width(&s.listItemFocused, t.focusOutlineW);
+    lv_style_set_outline_color(&s.listItemFocused, t.focusOutlineColor);
+    lv_style_set_outline_pad (&s.listItemFocused, t.focusOutlinePad);
+
+    style_reset(s.listItemDisabled);
+    lv_style_set_bg_opa    (&s.listItemDisabled, t.opaDisabled);
+    lv_style_set_text_color(&s.listItemDisabled, t.colorMuted);
+
+    style_reset(s.listDivider);
+    lv_style_set_border_width(&s.listDivider, t.listDividerW);
+    lv_style_set_border_side (&s.listDivider, LV_BORDER_SIDE_BOTTOM);
+    lv_style_set_border_color(&s.listDivider, t.colorOutline);
+    lv_style_set_border_opa  (&s.listDivider, t.listDividerOpa);
+
+    /* ===== Botones ===== */
     style_reset(s.btnPrimary);
     lv_style_set_bg_color (&s.btnPrimary, t.colorPrimary);
     lv_style_set_bg_opa   (&s.btnPrimary, t.opaEnabled);
-    lv_style_set_radius   (&s.btnPrimary, Ui::Tokens::button_radius());
-    lv_style_set_pad_hor  (&s.btnPrimary, Ui::Tokens::button_pad_lr());
-    lv_style_set_pad_ver  (&s.btnPrimary, Ui::Tokens::button_pad_tb());
-    lv_style_set_text_color(&s.btnPrimary, Ui::Tokens::color_on_primary());
+    lv_style_set_radius   (&s.btnPrimary, t.btnRadius);
+    lv_style_set_pad_hor  (&s.btnPrimary, t.btnPadLR);
+    lv_style_set_pad_ver  (&s.btnPrimary, t.btnPadTB);
+    lv_style_set_text_color(&s.btnPrimary, t.colorOnPrimary);
 
     style_reset(s.btnSecondary);
     lv_style_set_bg_color (&s.btnSecondary, t.colorSecondary);
     lv_style_set_bg_opa   (&s.btnSecondary, t.opaEnabled);
-    lv_style_set_radius   (&s.btnSecondary, Ui::Tokens::button_radius());
-    lv_style_set_pad_hor  (&s.btnSecondary, Ui::Tokens::button_pad_lr());
-    lv_style_set_pad_ver  (&s.btnSecondary, Ui::Tokens::button_pad_tb());
-    lv_style_set_text_color(&s.btnSecondary, Ui::Tokens::color_on_secondary());
+    lv_style_set_radius   (&s.btnSecondary, t.btnRadius);
+    lv_style_set_pad_hor  (&s.btnSecondary, t.btnPadLR);
+    lv_style_set_pad_ver  (&s.btnSecondary, t.btnPadTB);
+    lv_style_set_text_color(&s.btnSecondary, t.colorOnSecondary);
 
     style_reset(s.btnGhost);
     lv_style_set_bg_opa     (&s.btnGhost, LV_OPA_TRANSP);
-    lv_style_set_border_width(&s.btnGhost, Ui::Tokens::panel_border_w());
-    lv_style_set_border_color(&s.btnGhost, Ui::Tokens::panel_border_color());
-    lv_style_set_radius     (&s.btnGhost, Ui::Tokens::button_radius());
-    lv_style_set_pad_hor    (&s.btnGhost, Ui::Tokens::button_pad_lr());
-    lv_style_set_pad_ver    (&s.btnGhost, Ui::Tokens::button_pad_tb());
-    lv_style_set_text_color (&s.btnGhost, Ui::Tokens::label_primary_color());
-
-    // ===== Listas =====
-    style_reset(s.listContainer);
-    lv_style_set_bg_color (&s.listContainer, Ui::Tokens::list_bg_color());
-    lv_style_set_pad_ver  (&s.listContainer, Ui::Tokens::list_pad_tb());
-    lv_style_set_pad_hor  (&s.listContainer, Ui::Tokens::list_pad_lr());
-
-    style_reset(s.listItem);
-    lv_style_set_bg_color  (&s.listItem, Ui::Tokens::list_item_bg_color());
-    lv_style_set_bg_opa    (&s.listItem, t.opaEnabled);
-    lv_style_set_radius    (&s.listItem, t.radiusSm);
-    lv_style_set_pad_left  (&s.listItem, Ui::Tokens::list_pad_lr());
-    lv_style_set_pad_right (&s.listItem, Ui::Tokens::list_pad_lr());
-    lv_style_set_pad_top   (&s.listItem, Ui::Tokens::list_pad_tb());
-    lv_style_set_pad_bottom(&s.listItem, Ui::Tokens::list_pad_tb());
-    lv_style_set_text_color(&s.listItem, Ui::Tokens::list_text_color());
-    lv_style_set_text_font (&s.listItem, t.fontBody);
-
-    style_reset(s.listItemPressed);
-    lv_style_set_bg_color(&s.listItemPressed,
-        lv_color_mix(t.colorPrimary, t.colorSurface, Ui::Tokens::list_pressed_tint_opa()));
-
-    style_reset(s.listItemFocused);
-    lv_style_set_outline_width(&s.listItemFocused, Ui::Tokens::list_focus_outline_w());
-    lv_style_set_outline_color(&s.listItemFocused, t.colorPrimary);
-    lv_style_set_outline_pad (&s.listItemFocused, Ui::Tokens::list_focus_outline_pad());
-
-    style_reset(s.listItemDisabled);
-    lv_style_set_bg_opa    (&s.listItemDisabled, Ui::Tokens::list_disabled_opa());
-    lv_style_set_text_color(&s.listItemDisabled, t.colorMuted);
-
-    style_reset(s.listDivider);
-    lv_style_set_border_width(&s.listDivider, Ui::Tokens::list_divider_width());
-    lv_style_set_border_side (&s.listDivider, LV_BORDER_SIDE_BOTTOM);
-    lv_style_set_border_color(&s.listDivider, Ui::Tokens::list_divider_color());
-    lv_style_set_border_opa  (&s.listDivider, Ui::Tokens::list_divider_opa());
+    lv_style_set_border_width(&s.btnGhost, t.panelBorderW);
+    lv_style_set_border_color(&s.btnGhost, t.colorOutline);
+    lv_style_set_radius      (&s.btnGhost, t.btnRadius);
+    lv_style_set_pad_hor     (&s.btnGhost, t.btnPadLR);
+    lv_style_set_pad_ver     (&s.btnGhost, t.btnPadTB);
+    lv_style_set_text_color  (&s.btnGhost, t.colorOnSurface);
 
     s.initialized = true;
 }
 
-/* -------------------------------------------------------------------------- */
-void applyHeader (lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
-void applyContent(lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
-void applyFooter (lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
+/*========================== API pública ===============================*/
+UiThemeStyles&       getThemeStyles() { return g_styles; }
+const UiThemeTokens& getThemeTokens() { return g_tokens; }
 
 void themeInitOnce() {
     if (!g_styles.initialized) {
-        g_tokens = makeDefaultTokens();
+        g_tokens = makeSnapshotFromTokens();
         initThemeStyles(g_styles, g_tokens);
     }
 }
 
-// ===== Helpers de listas =====
-static void set_row_height(lv_obj_t* obj, uint16_t h) {
+/*========================== Aplicadores públicos ======================*/
+
+void applyHeader (lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
+void applyContent(lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
+void applyFooter (lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
+
+/* ---- List helpers ---- */
+static void set_row_height(lv_obj_t* obj, lv_coord_t h) {
     lv_obj_set_style_min_height(obj, h, LV_PART_MAIN);
     lv_obj_set_height(obj, LV_SIZE_CONTENT);
     lv_obj_set_width(obj, LV_PCT(100));
@@ -213,18 +248,18 @@ void applyListContainer(lv_obj_t* obj, UiThemeStyles& s) {
     if (!obj) return;
     lv_obj_add_style(obj, &s.listContainer, LV_PART_MAIN);
     lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_row(obj, Ui::Tokens::list_gap_row(), LV_PART_MAIN);
+    lv_obj_set_style_pad_row(obj, s.tokens.listGapRow, LV_PART_MAIN);
     lv_obj_set_width(obj, LV_PCT(100));
 }
 
 void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider) {
     if (!obj) return;
-    const uint16_t H = static_cast<uint16_t>(large ? Ui::Tokens::list_item_height_lg()
-                                                   : Ui::Tokens::list_item_height_md());
+
+    const lv_coord_t H = large ? s.tokens.listItemH_lg : s.tokens.listItemH_md;
 
     lv_obj_add_style(obj, &s.listItem, LV_PART_MAIN);
     lv_obj_add_style(obj, &s.listItemPressed, LV_STATE_PRESSED);
-    lv_obj_add_style(obj, &s.listItemFocused, LV_STATE_FOCUSED | LV_STATE_EDITED);
+    lv_obj_add_style(obj, &s.listItemFocused,  LV_STATE_FOCUSED | LV_STATE_EDITED);
     lv_obj_add_style(obj, &s.listItemDisabled, LV_STATE_DISABLED);
 
     if (withDivider) {
@@ -237,54 +272,6 @@ void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider
     lv_obj_set_flex_align(obj, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 }
 
-/* ============================== Botones ================================== */
-
-static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, bool setSize) {
-    if (!btn || !style) return;
-    lv_obj_add_style(btn, style, LV_PART_MAIN);
-    if (setSize) {
-        lv_obj_set_size(btn, Ui::Tokens::button_width(), Ui::Tokens::button_height());
-    }
-}
-
-void applyButtonPrimary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
-    apply_btn_base_and_size(btn, &s.btnPrimary, setSize);
-    // Estados (sin estilos nuevos)
-    lv_obj_set_style_bg_color(btn, Ui::Tokens::button_primary_bg_pressed(),
-                              sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
-    lv_obj_set_style_bg_color(btn, Ui::Tokens::button_primary_bg_focused(),
-                              sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
-}
-
-void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
-    apply_btn_base_and_size(btn, &s.btnSecondary, setSize);
-    lv_obj_set_style_bg_color(btn, lv_color_darken(Ui::Tokens::color_secondary(), 20),
-                              sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
-    lv_obj_set_style_bg_color(btn, lv_color_lighten(Ui::Tokens::color_secondary(), 20),
-                              sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
-}
-
-void applyButtonGhost(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
-    apply_btn_base_and_size(btn, &s.btnGhost, setSize);
-    // PRESSED: leve tinte del surface
-    lv_obj_set_style_bg_opa  (btn, Ui::Tokens::list_pressed_tint_opa(),
-                              sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
-    lv_obj_set_style_bg_color(btn,
-                              lv_color_mix(Ui::Tokens::color_on_surface(),
-                                           Ui::Tokens::color_surface(),
-                                           Ui::Tokens::list_pressed_tint_opa()),
-                              sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
-    // FOCUSED: outline
-    lv_obj_set_style_outline_width(btn, Ui::Tokens::list_focus_outline_w(),
-                                   sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
-    lv_obj_set_style_outline_color(btn, Ui::Tokens::color_primary(),
-                                   sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
-    lv_obj_set_style_outline_pad  (btn, Ui::Tokens::list_focus_outline_pad(),
-                                   sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
-}
-
-/* ============================ /Botones =================================== */
-
 void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider) {
     if (!parent) return;
     applyListContainer(parent, s);
@@ -294,6 +281,72 @@ void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, b
         lv_obj_t* child = lv_obj_get_child(parent, i);
         applyListItem(child, s, large, withDivider);
     }
+}
+
+/* ---- Botones ---- */
+static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, const UiThemeTokens& t, bool setSize) {
+    if (!btn || !style) return;
+    lv_obj_add_style(btn, style, LV_PART_MAIN);
+    if (setSize) {
+        lv_obj_set_size(btn, t.btnWidth, t.btnHeight);
+    }
+}
+
+void applyButtonPrimary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    apply_btn_base_and_size(btn, &s.btnPrimary, s.tokens, setSize);
+    // Estados calculados desde snapshot (sin Ui::Tokens directos):
+    lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorPrimary, s.tokens),
+                              sel(LV_PART_MAIN, LV_STATE_PRESSED));
+
+    // Focus ring global
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+
+    // Disabled
+    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled,
+                            sel(LV_PART_MAIN, LV_STATE_DISABLED));
+}
+
+void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    apply_btn_base_and_size(btn, &s.btnSecondary, s.tokens, setSize);
+
+    lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorSecondary, s.tokens),
+                              sel(LV_PART_MAIN, LV_STATE_PRESSED));
+
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+
+    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled,
+                            sel(LV_PART_MAIN, LV_STATE_DISABLED));
+}
+
+void applyButtonGhost(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    apply_btn_base_and_size(btn, &s.btnGhost, s.tokens, setSize);
+
+    // PRESSED: tinte suave del surface
+    lv_obj_set_style_bg_opa  (btn, s.tokens.opaPressed,
+                              sel(LV_PART_MAIN, LV_STATE_PRESSED));
+    lv_obj_set_style_bg_color(btn, lv_color_mix(s.tokens.colorOnSurface,
+                                                s.tokens.colorSurface,
+                                                s.tokens.opaPressed),
+                              sel(LV_PART_MAIN, LV_STATE_PRESSED));
+    // FOCUSED: outline global
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad,
+                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+
+    lv_obj_set_style_text_font(btn, s.tokens.fontBody, LV_PART_MAIN);
 }
 
 } // namespace Ui
