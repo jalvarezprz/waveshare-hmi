@@ -93,4 +93,14 @@ void applyListContainer(lv_obj_t* obj, UiThemeStyles& s);
 void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider);
 void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider);
 
+/** ────────────────  Helpers de Botón (tokens tamaño + estados) ───────────────
+ * Estos helpers:
+ *  - Añaden el style base correspondiente (primary/secondary/ghost).
+ *  - Ajustan tamaño desde tokens Ui::Tokens::button_width/height().
+ *  - Configuran colores de fondo para PRESSED/FOCUSED sin crear nuevos styles.
+ */
+void applyButtonPrimary  (lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
+void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
+void applyButtonGhost    (lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
+
 } // namespace Ui

@@ -119,26 +119,26 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     style_reset(s.btnPrimary);
     lv_style_set_bg_color (&s.btnPrimary, t.colorPrimary);
     lv_style_set_bg_opa   (&s.btnPrimary, t.opaEnabled);
-    lv_style_set_radius   (&s.btnPrimary, t.radiusMd);
-    lv_style_set_pad_hor  (&s.btnPrimary, t.spaceLg);
-    lv_style_set_pad_ver  (&s.btnPrimary, t.spaceSm);
+    lv_style_set_radius   (&s.btnPrimary, Ui::Tokens::button_radius());     // tokens específicos
+    lv_style_set_pad_hor  (&s.btnPrimary, Ui::Tokens::button_pad_lr());     // tokens específicos
+    lv_style_set_pad_ver  (&s.btnPrimary, Ui::Tokens::button_pad_tb());     // tokens específicos
     lv_style_set_text_color(&s.btnPrimary, Ui::Tokens::color_on_primary());
 
     style_reset(s.btnSecondary);
     lv_style_set_bg_color (&s.btnSecondary, t.colorSecondary);
     lv_style_set_bg_opa   (&s.btnSecondary, t.opaEnabled);
-    lv_style_set_radius   (&s.btnSecondary, t.radiusMd);
-    lv_style_set_pad_hor  (&s.btnSecondary, t.spaceLg);
-    lv_style_set_pad_ver  (&s.btnSecondary, t.spaceSm);
+    lv_style_set_radius   (&s.btnSecondary, Ui::Tokens::button_radius());   // tokens específicos
+    lv_style_set_pad_hor  (&s.btnSecondary, Ui::Tokens::button_pad_lr());   // tokens específicos
+    lv_style_set_pad_ver  (&s.btnSecondary, Ui::Tokens::button_pad_tb());   // tokens específicos
     lv_style_set_text_color(&s.btnSecondary, Ui::Tokens::color_on_secondary());
 
     style_reset(s.btnGhost);
     lv_style_set_bg_opa     (&s.btnGhost, LV_OPA_TRANSP);
     lv_style_set_border_width(&s.btnGhost, Ui::Tokens::panel_border_w());
     lv_style_set_border_color(&s.btnGhost, Ui::Tokens::panel_border_color());
-    lv_style_set_radius     (&s.btnGhost, t.radiusMd);
-    lv_style_set_pad_hor    (&s.btnGhost, t.spaceLg);
-    lv_style_set_pad_ver    (&s.btnGhost, t.spaceSm);
+    lv_style_set_radius     (&s.btnGhost, Ui::Tokens::button_radius());     // tokens específicos
+    lv_style_set_pad_hor    (&s.btnGhost, Ui::Tokens::button_pad_lr());     // tokens específicos
+    lv_style_set_pad_ver    (&s.btnGhost, Ui::Tokens::button_pad_tb());     // tokens específicos
     lv_style_set_text_color (&s.btnGhost, Ui::Tokens::label_primary_color());
 
     // ===== Listas =====
@@ -226,6 +226,61 @@ void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider
     lv_obj_set_flex_flow (obj, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(obj, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 }
+
+/* ============================== Botones ================================== */
+
+static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, bool setSize) {
+    if (!btn || !style) return;
+    // Añade style base a MAIN
+    lv_obj_add_style(btn, style, LV_PART_MAIN);
+    // Tamaño desde tokens
+    if (setSize) {
+        lv_obj_set_size(btn, Ui::Tokens::button_width(), Ui::Tokens::button_height());
+    }
+}
+
+void applyButtonPrimary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    apply_btn_base_and_size(btn, &s.btnPrimary, setSize);
+
+    // Estados sin crear nuevos styles: se aplican propiedades al objeto con selector de estado.
+    // PRESSED
+    lv_obj_set_style_bg_color(btn, Ui::Tokens::button_primary_bg_pressed(),
+                              LV_PART_MAIN | LV_STATE_PRESSED);
+    // FOCUSED (outline por accesibilidad; si no quieres, elimina estas dos líneas)
+    lv_obj_set_style_bg_color(btn, Ui::Tokens::button_primary_bg_focused(),
+                              LV_PART_MAIN | LV_STATE_FOCUSED);
+}
+
+void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    apply_btn_base_and_size(btn, &s.btnSecondary, setSize);
+    // PRESSED
+    lv_obj_set_style_bg_color(btn, lv_color_darken(Ui::Tokens::color_secondary(), 20),
+                              LV_PART_MAIN | LV_STATE_PRESSED);
+    // FOCUSED
+    lv_obj_set_style_bg_color(btn, lv_color_lighten(Ui::Tokens::color_secondary(), 20),
+                              LV_PART_MAIN | LV_STATE_FOCUSED);
+}
+
+void applyButtonGhost(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    apply_btn_base_and_size(btn, &s.btnGhost, setSize);
+    // PRESSED: leve tinte del surface
+    lv_obj_set_style_bg_opa  (btn, Ui::Tokens::list_pressed_tint_opa(),
+                              LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_color(btn,
+                              lv_color_mix(Ui::Tokens::color_on_surface(),
+                                           Ui::Tokens::color_surface(),
+                                           Ui::Tokens::list_pressed_tint_opa()),
+                              LV_PART_MAIN | LV_STATE_PRESSED);
+    // FOCUSED: outline (usamos los tokens de focus de lista para coherencia)
+    lv_obj_set_style_outline_width(btn, Ui::Tokens::list_focus_outline_w(),
+                                   LV_PART_MAIN | LV_STATE_FOCUSED);
+    lv_obj_set_style_outline_color(btn, Ui::Tokens::color_primary(),
+                                   LV_PART_MAIN | LV_STATE_FOCUSED);
+    lv_obj_set_style_outline_pad  (btn, Ui::Tokens::list_focus_outline_pad(),
+                                   LV_PART_MAIN | LV_STATE_FOCUSED);
+}
+
+/* ============================ /Botones =================================== */
 
 void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider) {
     if (!parent) return;
