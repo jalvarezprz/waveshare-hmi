@@ -21,6 +21,7 @@ extern "C" {
 #include "ui/theme/ui_theme_styles.h"
 #include "ui/component/ui_component_button_presets.h"
 #include "ui/actions/ui_actions.h"
+#include "ui/view/ui_menu_render_grid.h"
 
 // Forward declaration para que el handler pueda llamar a esta función
 void ui_show_menu_generic();
@@ -51,10 +52,14 @@ typedef struct {
 
 void ui_show_menu_generic()
 {
-    lv_obj_clean(lv_scr_act());
+    // Limpiamos pantalla actual (mantén esta semántica si el router realoca luego al scaffold)
+    // lv_obj_clean(lv_scr_act());
 
-    cJSON* root = ui_menu_json_load(); if (!root) return;
+    // Cargamos el árbol JSON completo
+    cJSON* root = ui_menu_json_load();
+    if (!root) return;
 
+    // Localizamos, según la ruta actual, el array de hijos y el título
     cJSON* children = nullptr;
     const char* title_txt = "Menú";
     if (!Ui::Menu::ui_menu_nav_find(root, &children, &title_txt)) {
@@ -63,114 +68,33 @@ void ui_show_menu_generic()
         return;
     }
 
-    lv_obj_t* cont = lv_obj_create(lv_scr_act());
-    lv_obj_set_size(cont, 780, 440);
-    lv_obj_center(cont);
-
-    lv_obj_t* title = lv_label_create(cont);
-    lv_label_set_text(title, title_txt ? title_txt : "Menú");
-    lv_obj_set_style_text_font(title, Ui::getThemeTokens().fontBody, LV_PART_MAIN);
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
-
+    // ─────────────────────────────────────────────────────────────────────
+    // NUEVO: construir un nodo temporal { "title": ..., "items": [...] }
+    // para alimentar al renderer grid.
+    // Usamos cJSON_Duplicate(children, 1) (deep copy) para no modificar root.
+    // ─────────────────────────────────────────────────────────────────────
     if (children && cJSON_IsArray(children)) {
-        lv_obj_t* list = lv_list_create(cont);
-        lv_obj_set_size(list, 740, 320);
-        lv_obj_align(list, LV_ALIGN_CENTER, 0, 10);
+        cJSON* tmp_node = cJSON_CreateObject();
+        cJSON_AddStringToObject(tmp_node, "title", title_txt ? title_txt : "Menú");
+        cJSON_AddItemToObject(tmp_node, "items", cJSON_Duplicate(children, /*recurse=*/1));
 
-        cJSON* it = nullptr;
-        cJSON_ArrayForEach(it, children) {
-            const char* id   = cJSON_GetStringValue(cJSON_GetObjectItem(it, "id"));
-            const char* text = cJSON_GetStringValue(cJSON_GetObjectItem(it, "title"));
-            cJSON* items     = cJSON_GetObjectItem(it, "items");
-            bool has_children = items && cJSON_IsArray(items);
+        // Render grid (monta en el contenedor configurado por ui_router_mount_set())
+        ui_menu_render_grid_from_node(tmp_node);
 
-            lv_obj_t* btn = lv_list_add_btn(list, NULL, text ? text : "?");
-
-            /* Representación dinámica en listas: si hay "value" en el item, muéstralo a la derecha */
-            const char* val = cJSON_GetStringValue(cJSON_GetObjectItem(it, "value"));
-            if (val) {
-                lv_obj_set_width(btn, LV_PCT(100));
-                lv_obj_t* lbl_val = lv_label_create(btn);
-                lv_label_set_text(lbl_val, val);
-                lv_obj_set_style_text_font(lbl_val, Ui::getThemeTokens().fontBody, LV_PART_MAIN);
-                lv_label_set_long_mode(lbl_val, LV_LABEL_LONG_CLIP);
-                lv_obj_set_width(lbl_val, LV_SIZE_CONTENT);
-                lv_obj_align(lbl_val, LV_ALIGN_RIGHT_MID, -10, 0);
-
-
-                /* Opcional: acotar ancho del label de título para evitar solapamientos */
-                lv_obj_t* title_lbl = lv_obj_get_child(btn, 0);
-                if (title_lbl) {
-                    lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_DOT);
-                    lv_obj_set_style_text_font(title_lbl, Ui::getThemeTokens().fontBody, LV_PART_MAIN);
-                    lv_obj_set_width(title_lbl, LV_PCT(70));
-                }
-            }
-
-            MenuItemUD* ud = (MenuItemUD*) std::malloc(sizeof(MenuItemUD));
-            ud->id = id ? ::strdup(id) : NULL;   // <- corregido
-            ud->has_children = has_children;
-
-            lv_obj_add_event_cb(btn, [](lv_event_t* e){
-                MenuItemUD* ud = (MenuItemUD*) lv_event_get_user_data(e);
-                if (!ud || !ud->id) return;
-
-                /* Si estamos en raíz y es protegido, pedimos PIN antes de entrar */
-                if (Ui::Menu::ui_menu_nav_path().empty() && Ui::Menu::ui_menu_nav_is_protected_root_id(ud->id)) {
-                    ui_show_pin_dialog(2410, [id_copy = std::string(ud->id)](bool ok){
-                        if (!ok) return;
-                        Ui::Menu::ui_menu_nav_push(id_copy);
-                        ui_show_menu_generic();
-                    });
-                    return;
-                }
-
-                if (ud->has_children) {
-                    Ui::Menu::ui_menu_nav_push(ud->id);
-                    ui_show_menu_generic();
-                } else {
-                    /* Hoja: ¿es una vista "detail"? */
-                    cJSON* root_local = ui_menu_json_load();
-                    if (root_local) {
-                        const cJSON* node = Ui::Menu::ui_menu_nav_find_leaf(root_local, ud->id);
-                        const char* view = node ? cJSON_GetStringValue(cJSON_GetObjectItem((cJSON*)node, "view")) : nullptr;
-                        if (node && view && std::strcmp(view, "detail")==0) {
-                            ui_menu_render_detail_from_node(node, ui_detail_back_bridge);
-                        } else {
-                            ESP_LOGI(TAG, "Leaf selected: %s (sin view:\"detail\")", ud->id);
-                        }
-                        cJSON_Delete(root_local);
-                    }
-                }
-            }, LV_EVENT_CLICKED, ud);
-
-            lv_obj_add_event_cb(btn, [](lv_event_t* e){
-                MenuItemUD* ud = (MenuItemUD*) lv_event_get_user_data(e);
-                if (ud) {
-                    if (ud->id) std::free(ud->id);
-                    std::free(ud);
-                }
-            }, LV_EVENT_DELETE, ud);
-
-            // === Estilizar y decorar este ítem ===
-            const bool has_value = (val && *val);
-            style_and_decorate_list_item(btn, has_children, has_value);
-        }
-
-        auto& styles = Ui::getThemeStyles();
-        Ui::applyListStylesToChildren(list, styles, /*large=*/false, /*withDivider=*/true);
+        // Limpiamos temporales
+        cJSON_Delete(tmp_node);
     } else {
-        lv_obj_t* info = lv_label_create(cont);
-        lv_label_set_text(info, "Elemento sin submenús (TODO: acción específica)");
-        lv_obj_align(info, LV_ALIGN_CENTER, 0, 0);
+        // Nodo sin hijos: usa la representación existente de "detalle"
+        ui_menu_render_detail_from_node(root, ui_detail_back_bridge);
     }
 
-    if (!Ui::Menu::ui_menu_nav_path().empty()) {
-        (void)ButtonPresets::Back(cont, Ui::Actions::back_default);
-    }
-
+    // Liberar el árbol original
     cJSON_Delete(root);
+
+    // IMPORTANTE: terminamos aquí para no ejecutar el código de la lista anterior
+    return;
 }
+
 
 /* ===================== Entry points públicos ==================== */
 void ui_build_main_menu() {
