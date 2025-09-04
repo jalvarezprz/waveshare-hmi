@@ -9,6 +9,7 @@
 #include <cmath>
 #include <string>
 #include <cstring>
+#include "ui/component/ui_component_button_presets.h"
 
 extern "C" {
 #include "cJSON.h"
@@ -86,6 +87,5 @@ void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
     }
 
     // Botón "Atrás"
-    (void)ButtonPresets::Back(cont, on_back ? on_back : Ui::Actions::back_default);
-
+    (void)Ui::Component::ButtonPresets::Back(cont, on_back ? on_back : Ui::Actions::back_default);
 }

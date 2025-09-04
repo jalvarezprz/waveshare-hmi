@@ -1,96 +1,93 @@
+/**
+ * @file ui_component_button_presets.cpp
+ * @brief Implementacion de presets (catalogo de negocio) para botones.
+ * @ingroup ui_component_button_presets
+ */
+
 #include "ui/component/ui_component_button_presets.h"
 #include "lvgl.h"
 
+namespace Ui::Component::ButtonPresets {
+using namespace Ui::Component::Button;
+
 /**
- * @file button_presets.cpp
- * @brief Implementación de factorías de botón basadas en tokens/estilos.
- * @ingroup ui_widgets
+ * @brief Helper interno para construir un preset con Props minimos.
+ * @param parent Padre LVGL.
+ * @param s      ThemeStyles activo.
+ * @param txt    Texto del boton.
+ * @param ic     Icono (LV_SYMBOL_*).
+ * @param v      Variante visual.
+ * @param toggle Si es conmutador.
+ * @param cb     Callbacks.
+ * @return Handle del boton.
  */
-#include "ui_component_button_presets.h"
-#include "ui/theme/ui_theme_styles.h"
-#include "ui/theme/ui_theme_tokens.h"
-#include <cstring>
-
-namespace {
-
-// Callback thin-wrapper para CLICKED usando user_data.
-static void clicked_cb_thunk(lv_event_t* e)
-{
-    if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
-    using Fn = void(*)(void);
-    auto fn = reinterpret_cast<Fn>(lv_event_get_user_data(e));
-    if (fn) fn();
+static inline Handle make(lv_obj_t* parent, Ui::UiThemeStyles& s,
+                          const char* txt, const char* ic,
+                          Variant v, bool toggle, const Callbacks& cb) {
+    Props p{ .text=txt, .icon=ic, .variant=v, .toggle=toggle };
+    return Button::create(parent, s, p, cb);
 }
 
-// Crea layout de contenido (icono + texto) dentro del botón.
-static void add_icon_and_text(lv_obj_t* btn, const char* text, const char* icon)
-{
-    // Layout interno
-    lv_obj_set_flex_flow(btn, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(btn, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_gap(btn, Ui::Tokens::button_icon_gap(), LV_PART_MAIN);
+/* ===== API completa ===== */
 
-    // Icono (opcional)
-    if (icon && icon[0] != '\0') {
-        lv_obj_t* icon_lbl = lv_label_create(btn);
-        lv_obj_set_style_text_font(icon_lbl, Ui::Tokens::font_icon(), LV_PART_MAIN);
-        lv_label_set_text(icon_lbl, icon);
-    }
-
-    // Texto (obligatorio)
-    lv_obj_t* txt_lbl = lv_label_create(btn);
-    lv_obj_set_style_text_font(txt_lbl, Ui::Tokens::font_body(), LV_PART_MAIN);
-    lv_label_set_text(txt_lbl, (text && text[0] != '\0') ? text : "");
+Button::Handle Yes (lv_obj_t* parent, Ui::UiThemeStyles& s, Button::Callbacks cb) {
+    return make(parent, s, "Si", LV_SYMBOL_OK, Variant::Success, false, cb);
+}
+Button::Handle No  (lv_obj_t* parent, Ui::UiThemeStyles& s, Button::Callbacks cb) {
+    return make(parent, s, "No", LV_SYMBOL_CLOSE, Variant::Destructive, false, cb);
+}
+Button::Handle Back(lv_obj_t* parent, Ui::UiThemeStyles& s, Button::Callbacks cb) {
+    return make(parent, s, "Atras", LV_SYMBOL_LEFT, Variant::Ghost, false, cb);
+}
+Button::Handle Next(lv_obj_t* parent, Ui::UiThemeStyles& s, Button::Callbacks cb) {
+    return make(parent, s, "Siguiente", LV_SYMBOL_RIGHT, Variant::Primary, false, cb);
 }
 
-} // namespace
+/* ===== Helpers de conveniencia ===== */
 
-namespace ButtonPresets {
-
-lv_obj_t* Back(lv_obj_t* parent, void (*onClick)(void))
-{
-    Ui::themeInitOnce();
-    auto& styles = Ui::getThemeStyles();
-
-    // Botón tipo ghost
-    lv_obj_t* btn = lv_btn_create(parent);
-    Ui::applyButtonGhost(btn, styles, /*setSize=*/true);
-    add_icon_and_text(btn, "Atrás", LV_SYMBOL_LEFT);
-
-    if (onClick) {
-        lv_obj_add_event_cb(btn, clicked_cb_thunk, LV_EVENT_ALL, reinterpret_cast<void*>(onClick));
-    }
-    return btn;
+static inline Button::Callbacks cb_from(void (*onClick)(void)) {
+    if (!onClick) return {};
+    return Button::Callbacks{
+        .onClick = [onClick](Button::Handle&, void*) { onClick(); }
+    };
 }
 
-lv_obj_t* Primary(lv_obj_t* parent, const char* text, const char* icon, void (*onClick)(void))
-{
-    Ui::themeInitOnce();
-    auto& styles = Ui::getThemeStyles();
+/* Overloads SIN callback */
 
-    lv_obj_t* btn = lv_btn_create(parent);
-    Ui::applyButtonPrimary(btn, styles, /*setSize=*/true);
-    add_icon_and_text(btn, text, icon);
-
-    if (onClick) {
-        lv_obj_add_event_cb(btn, clicked_cb_thunk, LV_EVENT_ALL, reinterpret_cast<void*>(onClick));
-    }
-    return btn;
+Button::Handle Yes  (lv_obj_t* parent) {
+    auto& s = Ui::getThemeStyles();
+    return Yes(parent, s, {});
+}
+Button::Handle No   (lv_obj_t* parent) {
+    auto& s = Ui::getThemeStyles();
+    return No(parent, s, {});
+}
+Button::Handle Back (lv_obj_t* parent) {
+    auto& s = Ui::getThemeStyles();
+    return Back(parent, s, {});
+}
+Button::Handle Next (lv_obj_t* parent) {
+    auto& s = Ui::getThemeStyles();
+    return Next(parent, s, {});
 }
 
-lv_obj_t* Secondary(lv_obj_t* parent, const char* text, const char* icon, void (*onClick)(void))
-{
-    Ui::themeInitOnce();
-    auto& styles = Ui::getThemeStyles();
+/* Overloads CON callback simple */
 
-    lv_obj_t* btn = lv_btn_create(parent);
-    Ui::applyButtonSecondary(btn, styles, /*setSize=*/true);
-    add_icon_and_text(btn, text, icon);
-
-    if (onClick) {
-        lv_obj_add_event_cb(btn, clicked_cb_thunk, LV_EVENT_ALL, reinterpret_cast<void*>(onClick));
-    }
-    return btn;
+Button::Handle Yes  (lv_obj_t* parent, void (*onClick)(void)) {
+    auto& s = Ui::getThemeStyles();
+    return Yes(parent, s, cb_from(onClick));
+}
+Button::Handle No   (lv_obj_t* parent, void (*onClick)(void)) {
+    auto& s = Ui::getThemeStyles();
+    return No(parent, s, cb_from(onClick));
+}
+Button::Handle Back (lv_obj_t* parent, void (*onClick)(void)) {
+    auto& s = Ui::getThemeStyles();
+    return Back(parent, s, cb_from(onClick));
+}
+Button::Handle Next (lv_obj_t* parent, void (*onClick)(void)) {
+    auto& s = Ui::getThemeStyles();
+    return Next(parent, s, cb_from(onClick));
 }
 
-} // namespace ButtonPresets
+} // namespace Ui::Component::ButtonPresets
