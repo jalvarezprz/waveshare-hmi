@@ -1,9 +1,17 @@
 #pragma once
+/**
+ * @file ui_theme_styles.h
+ * @brief Estilos cacheados construidos a partir de tokens de tema.
+ * @defgroup ui_theme_styles Styles de UI
+ * @ingroup ui_theme
+ * @{
+ */
+
 #include "lvgl.h"
 
 namespace Ui {
 
-/** ─────────────────────  TOKENS (valores atómicos)  ───────────────────── **/
+/** @brief Snapshot de tokens atómicos para construir estilos. */
 struct UiThemeTokens {
     // Paleta base
     lv_color_t colorBg;
@@ -40,10 +48,10 @@ struct UiThemeTokens {
     uint16_t itemHeightLg;   ///< ~64 px
 };
 
-/** Devuelve tokens por defecto (paleta/fuentes reales). Implementado en .cpp */
+/** @brief Crea tokens por defecto a partir de Ui::Tokens (tema actual). */
 UiThemeTokens makeDefaultTokens();
 
-/** ─────────────────────  STYLES (recetas cacheadas)  ───────────────────── **/
+/** @brief Conjunto de estilos LVGL cacheados (recetas). */
 struct UiThemeStyles {
     // Base layout
     lv_style_t base;
@@ -73,34 +81,41 @@ struct UiThemeStyles {
     bool initialized = false;
 };
 
-/** Inicializa todos los styles a partir de los tokens (implementado en .cpp) */
+/** @brief Inicializa todos los styles a partir de los tokens. */
 void initThemeStyles(UiThemeStyles& styles, const UiThemeTokens& t);
 
-/** Acceso global (definidos en .cpp) */
+/** @name Acceso global */
+/** @{ */
 UiThemeStyles&       getThemeStyles();
 const UiThemeTokens& getThemeTokens();
+/** @} */
 
-/** Inicializa una vez (tokens + styles). Llamar al arranque. */
+/** @brief Inicializa tema una vez (tokens + styles). Llamar en arranque. */
 void themeInitOnce();
 
-/** Helpers de aplicación de estilos (implementados en .cpp) */
+/** @name Helpers de aplicación de estilos */
+/** @{ */
 void applyHeader (lv_obj_t* obj, UiThemeStyles& s);
 void applyContent(lv_obj_t* obj, UiThemeStyles& s);
 void applyFooter (lv_obj_t* obj, UiThemeStyles& s);
 
-// List helpers
 void applyListContainer(lv_obj_t* obj, UiThemeStyles& s);
 void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider);
 void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider);
+/** @} */
 
-/** ────────────────  Helpers de Botón (tokens tamaño + estados) ───────────────
+/** @name Helpers de Botón (tamaño por tokens + estados) */
+/** @{
  * Estos helpers:
- *  - Añaden el style base correspondiente (primary/secondary/ghost).
- *  - Ajustan tamaño desde tokens Ui::Tokens::button_width/height().
- *  - Configuran colores de fondo para PRESSED/FOCUSED sin crear nuevos styles.
+ *  - Añaden el style base (primary/secondary/ghost).
+ *  - Ajustan tamaño desde Ui::Tokens::button_width/height().
+ *  - Configuran estados PRESSED/FOCUSED sin ampliar UiThemeStyles.
  */
 void applyButtonPrimary  (lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
 void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
 void applyButtonGhost    (lv_obj_t* btn, UiThemeStyles& s, bool setSize = true);
+/** @} */
 
 } // namespace Ui
+
+/** @} */ // end of ui_theme_styles

@@ -1,5 +1,11 @@
+/**
+ * @file ui_theme_styles.cpp
+ * @brief Implementación de estilos cacheados construidos a partir de tokens.
+ * @ingroup ui_theme_styles
+ */
+
 #include "ui_theme_styles.h"
-#include "ui_theme_tokens.h"   // <— usamos Ui::Tokens
+#include "ui_theme_tokens.h"   // Ui::Tokens
 
 namespace Ui {
 
@@ -14,24 +20,23 @@ static void style_reset(lv_style_t& s) {
     else            lv_style_init(&s);
 }
 
-// Helper para evitar warnings por OR entre enums distintos (part|state)
+/** @brief Selector tipado (evita warnings por OR entre enums distintos). */
 static inline lv_style_selector_t sel_part_state(lv_part_t part, lv_state_t state) {
     return static_cast<lv_style_selector_t>(part | state);
 }
 
 /* --------------------------------------------------------------------------
- * Tokens (valores atómicos) iniciales del Theme “legacy”.
- * Aquí mapeamos los valores a partir de Ui::Tokens para evitar duplicación.
+ * Tokens (snapshot) iniciales del theme.
  * --------------------------------------------------------------------------*/
 UiThemeTokens makeDefaultTokens() {
     UiThemeTokens t{};
 
-    // === Paleta base desde Tokens (core + completa) ===
-    t.colorBg        = Ui::Tokens::color_surface();          // fondo base
-    t.colorSurface   = Ui::Tokens::color_surface_variant();  // cards/containers
-    t.colorText      = Ui::Tokens::color_on_surface();       // texto principal
+    // Paleta base desde Tokens
+    t.colorBg        = Ui::Tokens::color_surface();
+    t.colorSurface   = Ui::Tokens::color_surface_variant();
+    t.colorText      = Ui::Tokens::color_on_surface();
 
-    // Paleta completa centralizada en Tokens
+    // Paleta completa
     t.colorPrimary   = Ui::Tokens::color_primary();
     t.colorSecondary = Ui::Tokens::color_secondary();
     t.colorMuted     = Ui::Tokens::color_muted();
@@ -39,11 +44,11 @@ UiThemeTokens makeDefaultTokens() {
     t.colorWarning   = Ui::Tokens::color_warning();
     t.colorError     = Ui::Tokens::color_error();
 
-    // === Opacidades ===
+    // Opacidades
     t.opaEnabled  = LV_OPA_COVER;
-    t.opaDisabled = Ui::Tokens::list_disabled_opa(); // coherente con “disabled” en listas
+    t.opaDisabled = Ui::Tokens::list_disabled_opa();
 
-    // === Radios y spacing (desde Tokens) ===
+    // Radios y spacing (desde Tokens)
     t.radiusSm = static_cast<uint16_t>(Ui::Tokens::Radius::sm);
     t.radiusMd = static_cast<uint16_t>(Ui::Tokens::Radius::md);
     t.radiusLg = static_cast<uint16_t>(Ui::Tokens::Radius::lg);
@@ -53,12 +58,12 @@ UiThemeTokens makeDefaultTokens() {
     t.spaceMd  = static_cast<uint8_t>(Ui::Tokens::Space::md);
     t.spaceLg  = static_cast<uint8_t>(Ui::Tokens::Space::lg);
 
-    // === Tipografías === (usar helpers de tokens; resuelven condicionales)
+    // Tipografías (helpers de tokens)
     t.fontTitle   = Ui::Tokens::font_title();
     t.fontBody    = Ui::Tokens::font_body();
     t.fontCaption = Ui::Tokens::font_caption();
 
-    // === Alturas estándar para listas ===
+    // Listas
     t.itemHeightMd = static_cast<uint16_t>(Ui::Tokens::list_item_height_md());
     t.itemHeightLg = static_cast<uint16_t>(Ui::Tokens::list_item_height_lg());
 
@@ -124,26 +129,26 @@ void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     style_reset(s.btnPrimary);
     lv_style_set_bg_color (&s.btnPrimary, t.colorPrimary);
     lv_style_set_bg_opa   (&s.btnPrimary, t.opaEnabled);
-    lv_style_set_radius   (&s.btnPrimary, Ui::Tokens::button_radius());     // tokens específicos
-    lv_style_set_pad_hor  (&s.btnPrimary, Ui::Tokens::button_pad_lr());     // tokens específicos
-    lv_style_set_pad_ver  (&s.btnPrimary, Ui::Tokens::button_pad_tb());     // tokens específicos
+    lv_style_set_radius   (&s.btnPrimary, Ui::Tokens::button_radius());
+    lv_style_set_pad_hor  (&s.btnPrimary, Ui::Tokens::button_pad_lr());
+    lv_style_set_pad_ver  (&s.btnPrimary, Ui::Tokens::button_pad_tb());
     lv_style_set_text_color(&s.btnPrimary, Ui::Tokens::color_on_primary());
 
     style_reset(s.btnSecondary);
     lv_style_set_bg_color (&s.btnSecondary, t.colorSecondary);
     lv_style_set_bg_opa   (&s.btnSecondary, t.opaEnabled);
-    lv_style_set_radius   (&s.btnSecondary, Ui::Tokens::button_radius());   // tokens específicos
-    lv_style_set_pad_hor  (&s.btnSecondary, Ui::Tokens::button_pad_lr());   // tokens específicos
-    lv_style_set_pad_ver  (&s.btnSecondary, Ui::Tokens::button_pad_tb());   // tokens específicos
+    lv_style_set_radius   (&s.btnSecondary, Ui::Tokens::button_radius());
+    lv_style_set_pad_hor  (&s.btnSecondary, Ui::Tokens::button_pad_lr());
+    lv_style_set_pad_ver  (&s.btnSecondary, Ui::Tokens::button_pad_tb());
     lv_style_set_text_color(&s.btnSecondary, Ui::Tokens::color_on_secondary());
 
     style_reset(s.btnGhost);
     lv_style_set_bg_opa     (&s.btnGhost, LV_OPA_TRANSP);
     lv_style_set_border_width(&s.btnGhost, Ui::Tokens::panel_border_w());
     lv_style_set_border_color(&s.btnGhost, Ui::Tokens::panel_border_color());
-    lv_style_set_radius     (&s.btnGhost, Ui::Tokens::button_radius());     // tokens específicos
-    lv_style_set_pad_hor    (&s.btnGhost, Ui::Tokens::button_pad_lr());     // tokens específicos
-    lv_style_set_pad_ver    (&s.btnGhost, Ui::Tokens::button_pad_tb());     // tokens específicos
+    lv_style_set_radius     (&s.btnGhost, Ui::Tokens::button_radius());
+    lv_style_set_pad_hor    (&s.btnGhost, Ui::Tokens::button_pad_lr());
+    lv_style_set_pad_ver    (&s.btnGhost, Ui::Tokens::button_pad_tb());
     lv_style_set_text_color (&s.btnGhost, Ui::Tokens::label_primary_color());
 
     // ===== Listas =====
@@ -236,9 +241,7 @@ void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider
 
 static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, bool setSize) {
     if (!btn || !style) return;
-    // Añade style base a MAIN
     lv_obj_add_style(btn, style, LV_PART_MAIN);
-    // Tamaño desde tokens
     if (setSize) {
         lv_obj_set_size(btn, Ui::Tokens::button_width(), Ui::Tokens::button_height());
     }
@@ -246,8 +249,7 @@ static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, boo
 
 void applyButtonPrimary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnPrimary, setSize);
-
-    // Estados sin crear nuevos styles: aplicamos propiedades con selector tipado
+    // Estados (sin estilos nuevos)
     lv_obj_set_style_bg_color(btn, Ui::Tokens::button_primary_bg_pressed(),
                               sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
     lv_obj_set_style_bg_color(btn, Ui::Tokens::button_primary_bg_focused(),
@@ -256,7 +258,6 @@ void applyButtonPrimary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
 
 void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnSecondary, setSize);
-
     lv_obj_set_style_bg_color(btn, lv_color_darken(Ui::Tokens::color_secondary(), 20),
                               sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
     lv_obj_set_style_bg_color(btn, lv_color_lighten(Ui::Tokens::color_secondary(), 20),
@@ -265,7 +266,6 @@ void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
 
 void applyButtonGhost(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnGhost, setSize);
-
     // PRESSED: leve tinte del surface
     lv_obj_set_style_bg_opa  (btn, Ui::Tokens::list_pressed_tint_opa(),
                               sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
@@ -274,7 +274,7 @@ void applyButtonGhost(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
                                            Ui::Tokens::color_surface(),
                                            Ui::Tokens::list_pressed_tint_opa()),
                               sel_part_state(LV_PART_MAIN, LV_STATE_PRESSED));
-    // FOCUSED: outline (reutilizamos tokens de focus para coherencia)
+    // FOCUSED: outline
     lv_obj_set_style_outline_width(btn, Ui::Tokens::list_focus_outline_w(),
                                    sel_part_state(LV_PART_MAIN, LV_STATE_FOCUSED));
     lv_obj_set_style_outline_color(btn, Ui::Tokens::color_primary(),
@@ -289,7 +289,6 @@ void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, b
     if (!parent) return;
     applyListContainer(parent, s);
 
-    // Aplica a todos los hijos directos como ítems
     uint32_t cnt = lv_obj_get_child_cnt(parent);
     for (uint32_t i = 0; i < cnt; ++i) {
         lv_obj_t* child = lv_obj_get_child(parent, i);
