@@ -31,6 +31,7 @@ lv_obj_t* create_button_primary(lv_obj_t* parent, const char* text, lv_event_cb_
     Ui::applyButtonPrimary(btn, styles, /*setSize=*/true);
 
     // Estados via tokens (sin LV_OPA_* sueltos)
+    /*
     lv_obj_set_style_bg_color(btn,
                               Ui::Tokens::button_primary_bg_pressed(),
                               sel(LV_PART_MAIN, LV_STATE_PRESSED));
@@ -38,6 +39,7 @@ lv_obj_t* create_button_primary(lv_obj_t* parent, const char* text, lv_event_cb_
     lv_obj_set_style_bg_color(btn,
                               Ui::Tokens::button_primary_bg_focused(),
                               sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    */
 
     // Texto
     if (text && *text) {

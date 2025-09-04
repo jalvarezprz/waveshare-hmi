@@ -248,24 +248,6 @@ inline lv_color_t list_bg_color()      { return color_surface(); }
 inline lv_color_t list_item_bg_color() { return color_surface(); }
 inline lv_color_t list_text_color()    { return color_on_surface(); }
 
-/*───────────────────────  DEPRECATED (compat)  ───────────────────────
- * Alias temporales para no romper estilos actuales.
- * ELIMINAR cuando ThemeStyles migre a roles globales y snapshot.
- */
-inline lv_opa_t  list_disabled_opa()       { return opa_disabled(); }   // DEPRECATED
-inline lv_opa_t  list_pressed_tint_opa()   { return opa_pressed(); }    // DEPRECATED
-inline lv_coord_t list_focus_outline_w()   { return focus_outline_w(); }   // DEPRECATED
-inline lv_coord_t list_focus_outline_pad() { return focus_outline_pad(); } // DEPRECATED
-inline lv_color_t list_divider_color()     { return color_outline(); }  // DEPRECATED
-inline lv_color_t label_primary_color()    { return color_on_surface(); } // DEPRECATED
-
-inline lv_color_t button_primary_bg_pressed() { // DEPRECATED
-    return lv_color_mix(color_surface(), color_primary(), opa_pressed());
-}
-inline lv_color_t button_primary_bg_focused() { // DEPRECATED
-    return lv_color_mix(color_primary(), color_surface(), opa_hover());
-}
-
 /*────────────────────────────  FIN TOKENS  ───────────────────────────*/
 
 }} // namespace Ui::Tokens
