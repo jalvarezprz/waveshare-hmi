@@ -6,14 +6,10 @@
 
 #include "ui/theme/ui_theme_styles.h"
 #include "ui/component/ui_component_button.h"
+#include "ui/component/ui_component_common.h"
 #include "lvgl.h"
 
 namespace Ui::Component::Button {
-
-/** @brief Selector tipado (OR de part/state sin warnings). */
-static inline lv_style_selector_t sel(lv_part_t part, lv_state_t state) {
-    return static_cast<lv_style_selector_t>(part | state);
-}
 
 /**
  * @brief Aplica la variante visual seleccionada usando ThemeStyles.
@@ -25,33 +21,38 @@ static inline lv_style_selector_t sel(lv_part_t part, lv_state_t state) {
  * Nota: Los estados PRESSED/FOCUSED/Disabled se derivan de las recetas.
  */
 static void apply_variant(lv_obj_t* btn, UiThemeStyles& s, Variant v, bool setSize) {
+    using Ui::Component::Common::sel;
+
     switch (v) {
         case Variant::Primary:    Ui::applyButtonPrimary  (btn, s, setSize); break;
         case Variant::Secondary:  Ui::applyButtonSecondary(btn, s, setSize); break;
         case Variant::Ghost:      Ui::applyButtonGhost    (btn, s, setSize); break;
-        case Variant::Destructive:{
+
+        case Variant::Destructive: {
             Ui::applyButtonSecondary(btn, s, setSize);
-            lv_obj_set_style_bg_color(btn, s.tokens.colorError, LV_PART_MAIN);
+            lv_obj_set_style_bg_color  (btn, s.tokens.colorError, LV_PART_MAIN);
             lv_obj_set_style_text_color(btn, s.tokens.colorOnError, LV_PART_MAIN);
-            lv_obj_set_style_bg_color(btn,
+            lv_obj_set_style_bg_color  (btn,
                 lv_color_mix(s.tokens.colorSurface, s.tokens.colorError, s.tokens.opaPressed),
                 sel(LV_PART_MAIN, LV_STATE_PRESSED));
             break;
         }
+
         case Variant::Success: {
             Ui::applyButtonSecondary(btn, s, setSize);
-            lv_obj_set_style_bg_color(btn, s.tokens.colorSuccess, LV_PART_MAIN);
+            lv_obj_set_style_bg_color  (btn, s.tokens.colorSuccess, LV_PART_MAIN);
             lv_obj_set_style_text_color(btn, s.tokens.colorOnSuccess, LV_PART_MAIN);
-            lv_obj_set_style_bg_color(btn,
+            lv_obj_set_style_bg_color  (btn,
                 lv_color_mix(s.tokens.colorSurface, s.tokens.colorSuccess, s.tokens.opaPressed),
                 sel(LV_PART_MAIN, LV_STATE_PRESSED));
             break;
         }
+
         case Variant::Warning: {
             Ui::applyButtonSecondary(btn, s, setSize);
-            lv_obj_set_style_bg_color(btn, s.tokens.colorWarning, LV_PART_MAIN);
+            lv_obj_set_style_bg_color  (btn, s.tokens.colorWarning, LV_PART_MAIN);
             lv_obj_set_style_text_color(btn, s.tokens.colorOnWarning, LV_PART_MAIN);
-            lv_obj_set_style_bg_color(btn,
+            lv_obj_set_style_bg_color  (btn,
                 lv_color_mix(s.tokens.colorSurface, s.tokens.colorWarning, s.tokens.opaPressed),
                 sel(LV_PART_MAIN, LV_STATE_PRESSED));
             break;
@@ -69,9 +70,9 @@ Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Cal
     h.root = lv_btn_create(parent);
 
     // Flags y estados iniciales
-    if (p.toggle)  lv_obj_add_flag(h.root, LV_OBJ_FLAG_CHECKABLE);
+    if (p.toggle)   lv_obj_add_flag (h.root, LV_OBJ_FLAG_CHECKABLE);
     if (!p.enabled) lv_obj_add_state(h.root, LV_STATE_DISABLED);
-    if (p.checked) lv_obj_add_state(h.root, LV_STATE_CHECKED);
+    if (p.checked)  lv_obj_add_state(h.root, LV_STATE_CHECKED);
 
     // Variante visual
     apply_variant(h.root, styles, p.variant, /*setSize=*/true);
@@ -101,7 +102,7 @@ Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Cal
         // (opcional) spinner...
     }
 
-    // Eventos -> callbacks
+    // Eventos -> callbacks (puente simple)
     if (cb.onClick) {
         lv_obj_add_event_cb(h.root, [](lv_event_t* e){
             auto* obj  = lv_event_get_target(e);
