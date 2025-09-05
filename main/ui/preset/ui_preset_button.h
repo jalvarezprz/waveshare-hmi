@@ -1,8 +1,8 @@
 #pragma once
 /**
- * @file ui_component_button_presets.h
+ * @file ui_preset_button.h
  * @brief Catalogo de presets de boton (nombres de negocio).
- * @defgroup ui_component_button_presets Presets Button
+ * @defgroup ui_preset_button Presets Button
  * @ingroup ui_component_button
  * @{
  *
@@ -19,7 +19,11 @@
 #include "ui/theme/ui_theme_styles.h"
 #include "ui/component/ui_component_button.h"
 
-namespace Ui::Component::ButtonPresets {
+namespace Ui::Preset::Button {
+
+// Aliases a los tipos del componente para no escribir rutas largas
+using Handle    = Ui::Component::Button::Handle;
+using Callbacks = Ui::Component::Button::Callbacks;
 
 /* ===== API completa (flexible) ===== */
 
@@ -57,5 +61,5 @@ Button::Handle No    (lv_obj_t* parent, void (*onClick)(void));
 Button::Handle Back  (lv_obj_t* parent, void (*onClick)(void));
 Button::Handle Next  (lv_obj_t* parent, void (*onClick)(void));
 
-/** @} */ // end of group ui_component_button_presets
-} // namespace Ui::Component::ButtonPresets
+/** @} */ // end of group ui_preset_button
+} // namespace Ui::Preset::Button

@@ -9,7 +9,6 @@
 #include <cmath>
 #include <string>
 #include <cstring>
-#include "ui/component/ui_component_button_presets.h"
 
 extern "C" {
 #include "cJSON.h"
@@ -18,7 +17,7 @@ extern "C" {
 #include "ui_menu_render_detail.h"
 #include "ui_menu_field_factory.h"
 #include "ui/theme/ui_theme_styles.h"               // ← tokens + styles (fuentes/colores)
-#include "ui/component/ui_component_button_presets.h"
+#include "ui/preset/ui_preset_button.h"
 #include "ui/actions/ui_actions.h"
 
 /// Etiqueta de log para este módulo.
@@ -87,5 +86,5 @@ void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
     }
 
     // Botón "Atrás"
-    (void)Ui::Component::ButtonPresets::Back(cont, on_back ? on_back : Ui::Actions::back_default);
+    (void)Ui::Preset::Button::Back(cont, on_back ? on_back : Ui::Actions::back_default);
 }

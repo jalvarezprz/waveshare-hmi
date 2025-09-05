@@ -1,13 +1,13 @@
 /**
- * @file ui_component_button_presets.cpp
+ * @file ui_preset_button.cpp
  * @brief Implementacion de presets (catalogo de negocio) para botones.
- * @ingroup ui_component_button_presets
+ * @ingroup ui_preset_button
  */
 
-#include "ui/component/ui_component_button_presets.h"
+#include "ui/preset/ui_preset_button.h"
 #include "lvgl.h"
 
-namespace Ui::Component::ButtonPresets {
+namespace Ui::Preset::Button {
 using namespace Ui::Component::Button;
 
 /**
@@ -90,4 +90,4 @@ Button::Handle Next (lv_obj_t* parent, void (*onClick)(void)) {
     return Next(parent, s, cb_from(onClick));
 }
 
-} // namespace Ui::Component::ButtonPresets
+} // namespace Ui::Preset::Button
