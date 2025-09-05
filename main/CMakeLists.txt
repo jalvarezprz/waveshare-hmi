@@ -23,7 +23,7 @@ idf_component_register(
         "ui/preset/ui_preset_slider.cpp"
         "ui/component/ui_component_button.cpp"
         "ui/component/ui_component_label.cpp"
-        "ui/component/ui_component_slider.cpp"
+    #   "ui/component/ui_component_slider.cpp"
         "ui/theme/ui_theme_c_api.cpp"
         "ui/theme/ui_theme_styles.cpp"
         "ui/theme/ui_theme_tokens.cpp"
@@ -35,6 +35,7 @@ idf_component_register(
         "ui/theme/fonts/montserrat_18_lat1.c"
         "ui/theme/fonts/montserrat_20_lat1.c"
         "ui/layout/ui_layout_scaffold.cpp"
+        "ui/mockup/ui_mockup_menu.cpp"
     INCLUDE_DIRS
         "."
         "ui"
@@ -44,4 +45,7 @@ idf_component_register(
         json
 )
 
-target_compile_definitions(${COMPONENT_LIB} PRIVATE LV_LVGL_H_INCLUDE_SIMPLE)
+target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    LV_LVGL_H_INCLUDE_SIMPLE
+    UI_HAVE_MONTSERRAT_LAT1
+)
