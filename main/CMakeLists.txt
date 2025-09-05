@@ -19,6 +19,7 @@ idf_component_register(
         "ui/actions/ui_actions.cpp"
         "ui/preset/ui_preset_button.cpp"
         "ui/preset/ui_preset_switch.cpp"
+        "ui/preset/ui_preset_label.cpp"
         "ui/component/ui_component_button.cpp"
         "ui/component/ui_component_label.cpp"
         "ui/theme/ui_theme_c_api.cpp"
