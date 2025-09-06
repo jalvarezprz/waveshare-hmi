@@ -42,16 +42,19 @@ static UiThemeTokens makeSnapshotFromTokens() {
     t.colorSurfaceVariant  = Tokens::color_surface_variant();
     t.colorOutline         = Tokens::color_outline();
     t.colorMuted           = Tokens::color_muted();
+
     t.colorPrimary         = Tokens::color_primary();
     t.colorOnPrimary       = Tokens::color_on_primary();
     t.colorSecondary       = Tokens::color_secondary();
     t.colorOnSecondary     = Tokens::color_on_secondary();
+
     t.colorSuccess         = Tokens::color_success();
     t.colorOnSuccess       = Tokens::color_on_success();
     t.colorWarning         = Tokens::color_warning();
     t.colorOnWarning       = Tokens::color_on_warning();
     t.colorError           = Tokens::color_error();
     t.colorOnError         = Tokens::color_on_error();
+
     t.colorOverlayBg       = Tokens::color_overlay_bg();
 
     // Opacidades
@@ -69,40 +72,40 @@ static UiThemeTokens makeSnapshotFromTokens() {
     t.fontIcon    = Tokens::font_icon();
 
     // Focus / layout / density
-    t.focusOutlineW    = Tokens::focus_outline_w();
-    t.focusOutlinePad  = Tokens::focus_outline_pad();
-    t.focusOutlineColor= Tokens::focus_outline_color();
+    t.focusOutlineW     = Tokens::focus_outline_w();
+    t.focusOutlinePad   = Tokens::focus_outline_pad();
+    t.focusOutlineColor = Tokens::focus_outline_color();
 
-    t.gapRow           = Tokens::gap_row();
-    t.gapCol           = Tokens::gap_column();
-    t.minTouch         = Tokens::min_touch();
+    t.gapRow            = Tokens::gap_row();
+    t.gapCol            = Tokens::gap_column();
+    t.minTouch          = Tokens::min_touch();
 
     // Superficies / listas
-    t.panelPadAll      = Tokens::panel_pad_all();
-    t.panelBorderW     = Tokens::panel_border_w();
+    t.panelPadAll       = Tokens::panel_pad_all();
+    t.panelBorderW      = Tokens::panel_border_w();
 
-    t.cardRadius       = Tokens::card_radius();
-    t.cardPadAll       = Tokens::card_pad_all();
-    t.cardBorderW      = Tokens::card_border_w();
-    t.cardShadowW      = Tokens::card_shadow_w();
-    t.cardShadowOfsY   = Tokens::card_shadow_ofs_y();
-    t.cardShadowColor  = Tokens::card_shadow_color();
+    t.cardRadius        = Tokens::card_radius();
+    t.cardPadAll        = Tokens::card_pad_all();
+    t.cardBorderW       = Tokens::card_border_w();
+    t.cardShadowW       = Tokens::card_shadow_w();
+    t.cardShadowOfsY    = Tokens::card_shadow_ofs_y();
+    t.cardShadowColor   = Tokens::card_shadow_color();
 
-    t.listItemH_md     = Tokens::list_item_height_md();
-    t.listItemH_lg     = Tokens::list_item_height_lg();
-    t.listPadLR        = Tokens::list_pad_lr();
-    t.listPadTB        = Tokens::list_pad_tb();
-    t.listGapRow       = Tokens::list_gap_row();
-    t.listDividerW     = Tokens::list_divider_width();
-    t.listDividerOpa   = Tokens::list_divider_opa();
+    t.listItemH_md      = Tokens::list_item_height_md();
+    t.listItemH_lg      = Tokens::list_item_height_lg();
+    t.listPadLR         = Tokens::list_pad_lr();
+    t.listPadTB         = Tokens::list_pad_tb();
+    t.listGapRow        = Tokens::list_gap_row();
+    t.listDividerW      = Tokens::list_divider_width();
+    t.listDividerOpa    = Tokens::list_divider_opa();
 
     // Controles
-    t.btnWidth         = Tokens::button_width();
-    t.btnHeight        = Tokens::button_height();
-    t.btnRadius        = Tokens::button_radius();
-    t.btnPadLR         = Tokens::button_pad_lr();
-    t.btnPadTB         = Tokens::button_pad_tb();
-    t.btnIconGap       = Tokens::button_icon_gap();
+    t.btnWidth          = Tokens::button_width();
+    t.btnHeight         = Tokens::button_height();
+    t.btnRadius         = Tokens::button_radius();
+    t.btnPadLR          = Tokens::button_pad_lr();
+    t.btnPadTB          = Tokens::button_pad_tb();
+    t.btnIconGap        = Tokens::button_icon_gap();
 
     return t;
 }
@@ -129,7 +132,8 @@ static void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     /* ===== Content ===== */
     style_reset(s.content);
     lv_style_set_bg_color(&s.content, t.colorSurface);
-    lv_style_set_pad_all (&s.content, Tokens::Space::md); // usa escala; si prefieres pasa por snapshot
+    // Si prefieres no referenciar Tokens::Space aquí, usa t.gapRow/t.panelPadAll como convención
+    lv_style_set_pad_all (&s.content, t.panelPadAll);
 
     /* ===== Card ===== */
     style_reset(s.card);
@@ -165,7 +169,7 @@ static void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     style_reset(s.listItem);
     lv_style_set_bg_color  (&s.listItem, t.colorSurface);
     lv_style_set_bg_opa    (&s.listItem, t.opaEnabled);
-    lv_style_set_radius    (&s.listItem, Tokens::Radius::sm);
+    lv_style_set_radius    (&s.listItem, 4); // o Tokens::Radius::sm si quieres snapshotearlo
     lv_style_set_pad_left  (&s.listItem, t.listPadLR);
     lv_style_set_pad_right (&s.listItem, t.listPadLR);
     lv_style_set_pad_top   (&s.listItem, t.listPadTB);
@@ -233,9 +237,9 @@ void themeInitOnce() {
 
 /*========================== Aplicadores públicos ======================*/
 
-void applyHeader (lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
-void applyContent(lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
-void applyFooter (lv_obj_t* obj, UiThemeStyles& s) { lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
+void applyHeader (lv_obj_t* obj, UiThemeStyles& s) { if (obj) lv_obj_add_style(obj, &s.header,  LV_PART_MAIN); }
+void applyContent(lv_obj_t* obj, UiThemeStyles& s) { if (obj) lv_obj_add_style(obj, &s.content, LV_PART_MAIN); }
+void applyFooter (lv_obj_t* obj, UiThemeStyles& s) { if (obj) lv_obj_add_style(obj, &s.footer,  LV_PART_MAIN); }
 
 /* ---- List helpers ---- */
 static void set_row_height(lv_obj_t* obj, lv_coord_t h) {
@@ -294,7 +298,7 @@ static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, con
 
 void applyButtonPrimary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnPrimary, s.tokens, setSize);
-    // Estados calculados desde snapshot (sin Ui::Tokens directos):
+    // Estados calculados desde snapshot:
     lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorPrimary, s.tokens),
                               sel(LV_PART_MAIN, LV_STATE_PRESSED));
 
