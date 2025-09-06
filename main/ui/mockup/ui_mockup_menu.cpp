@@ -13,7 +13,8 @@
 #include <cstring>
 #include <cstdio>   // std::snprintf
 
-#include "ui/theme/ui_theme_styles.h"   // para usar estilos/base si lo necesitas
+#include "ui/theme/ui_theme_styles.h"          // estilos/base
+#include "ui/component/ui_component_button.h"  // ← AÑADIDO: componente Button
 
 static const char* TAG = "UI_MOCKUP_MENU_GRID_4x4";
 
@@ -25,6 +26,9 @@ static lv_obj_t* s_title     = nullptr;
 // Prototipos
 extern "C" void ui_mockup_menu_load(void);
 extern "C" void ui_mockup_menu_unload(void);
+
+// Prototipo de la fila de demo de variantes (debe existir antes de build_ui)
+static void add_variant_demo_row(lv_obj_t* parent);
 
 // Helpers mínimos
 static void set_pad(lv_obj_t* obj, lv_coord_t pad)         { lv_obj_set_style_pad_all(obj, pad, 0); }
@@ -82,6 +86,9 @@ static lv_obj_t* create_cell_button(lv_obj_t* parent, const char* caption, lv_ev
     return btn;
 }
 
+// -----------------------------------------------------------------------------
+// Construcción de la UI
+// -----------------------------------------------------------------------------
 static void build_ui()
 {
     // Parámetros del grid
@@ -118,10 +125,11 @@ static void build_ui()
     };
     static lv_coord_t row_dsc[] = {
         LV_GRID_CONTENT,          // fila 0: título
-        LV_GRID_FR(1),            // fila 1
+        LV_GRID_CONTENT,          // fila 1: fila de demo (Destructive/Success/Warning)
         LV_GRID_FR(1),            // fila 2
         LV_GRID_FR(1),            // fila 3
         LV_GRID_FR(1),            // fila 4
+        LV_GRID_FR(1),            // fila 5
         LV_GRID_TEMPLATE_LAST
     };
     lv_obj_set_grid_dsc_array(s_container, col_dsc, row_dsc);
@@ -136,7 +144,10 @@ static void build_ui()
     lv_obj_set_style_pad_bottom(s_title, 4, 0);
     lv_obj_set_style_text_color(s_title, lv_color_hex(0x0000FF), 0);
 
-    // ---------------- Celdas 4x4 (filas 1..4, cols 0..3) ----------------
+    // ---------------- Fila de demo (fila 1, span 4 columnas) ----------
+    add_variant_demo_row(s_container);
+
+    // ---------------- Celdas 4x4 (filas 2..5, cols 0..3) --------------
     int idx = 0;
     for (int r = 0; r < ROWS; ++r) {
         for (int c = 0; c < COLS; ++c) {
@@ -146,10 +157,10 @@ static void build_ui()
 
             lv_obj_t* root = create_cell_button(s_container, caption, on_button_clicked, (void*)strdup(caption));
 
-            // Ubicar en grid: fila base es 1 (porque 0 la ocupa el título)
+            // Ubicar en grid: fila base ahora es 2 (0=título, 1=fila demo)
             lv_obj_set_grid_cell(root,
                                  LV_GRID_ALIGN_STRETCH, c, 1,      // columna c
-                                 LV_GRID_ALIGN_STRETCH, 1 + r, 1); // fila 1+r
+                                 LV_GRID_ALIGN_STRETCH, 2 + r, 1); // fila 2+r
         }
     }
 
@@ -177,4 +188,59 @@ void ui_mockup_menu_unload(void)
     s_screen    = nullptr;
     s_container = nullptr;
     s_title     = nullptr;
+}
+
+// -----------------------------------------------------------------------------
+// Fila de demo con los 3 botones de nuevas variantes (Destructive/Success/Warning)
+// -----------------------------------------------------------------------------
+static void add_variant_demo_row(lv_obj_t* parent)
+{
+    auto& S = Ui::getThemeStyles();
+
+    // Contenedor horizontal para agrupar los 3 botones
+    lv_obj_t* row = lv_obj_create(parent);
+    lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(row, 0, 0);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_gap(row, S.tokens.btnIconGap, 0);
+
+    // Colocación en la grid: fila 1 (debajo del título), span 4 columnas
+    lv_obj_set_grid_cell(
+        row,
+        LV_GRID_ALIGN_STRETCH, 0, 4,   // col 0, span 4
+        LV_GRID_ALIGN_START,   1, 1    // fila 1
+    );
+
+    // Botón Destructive
+    {
+        Ui::Component::Button::Props p;
+        p.text    = "Eliminar";
+        p.icon    = LV_SYMBOL_TRASH;
+        p.variant = Ui::Component::Button::Variant::Destructive;
+        auto h = Ui::Component::Button::create(row, S, p);
+        (void)h;
+    }
+
+    // Botón Success
+    {
+        Ui::Component::Button::Props p;
+        p.text    = "Aceptar";
+        p.icon    = LV_SYMBOL_OK;
+        p.variant = Ui::Component::Button::Variant::Success;
+        auto h = Ui::Component::Button::create(row, S, p);
+        (void)h;
+    }
+
+    // Botón Warning
+    {
+        Ui::Component::Button::Props p;
+        p.text    = "Atención";
+        p.icon    = LV_SYMBOL_WARNING;
+        p.variant = Ui::Component::Button::Variant::Warning;
+        auto h = Ui::Component::Button::create(row, S, p);
+        (void)h;
+    }
 }
