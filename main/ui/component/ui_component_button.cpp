@@ -21,42 +21,13 @@ namespace Ui::Component::Button {
  * Nota: Los estados PRESSED/FOCUSED/Disabled se derivan de las recetas.
  */
 static void apply_variant(lv_obj_t* btn, UiThemeStyles& s, Variant v, bool setSize) {
-    using Ui::Component::Common::sel;
-
     switch (v) {
-        case Variant::Primary:    Ui::applyButtonPrimary  (btn, s, setSize); break;
-        case Variant::Secondary:  Ui::applyButtonSecondary(btn, s, setSize); break;
-        case Variant::Ghost:      Ui::applyButtonGhost    (btn, s, setSize); break;
-
-        case Variant::Destructive: {
-            Ui::applyButtonSecondary(btn, s, setSize);
-            lv_obj_set_style_bg_color  (btn, s.tokens.colorError, LV_PART_MAIN);
-            lv_obj_set_style_text_color(btn, s.tokens.colorOnError, LV_PART_MAIN);
-            lv_obj_set_style_bg_color  (btn,
-                lv_color_mix(s.tokens.colorSurface, s.tokens.colorError, s.tokens.opaPressed),
-                sel(LV_PART_MAIN, LV_STATE_PRESSED));
-            break;
-        }
-
-        case Variant::Success: {
-            Ui::applyButtonSecondary(btn, s, setSize);
-            lv_obj_set_style_bg_color  (btn, s.tokens.colorSuccess, LV_PART_MAIN);
-            lv_obj_set_style_text_color(btn, s.tokens.colorOnSuccess, LV_PART_MAIN);
-            lv_obj_set_style_bg_color  (btn,
-                lv_color_mix(s.tokens.colorSurface, s.tokens.colorSuccess, s.tokens.opaPressed),
-                sel(LV_PART_MAIN, LV_STATE_PRESSED));
-            break;
-        }
-
-        case Variant::Warning: {
-            Ui::applyButtonSecondary(btn, s, setSize);
-            lv_obj_set_style_bg_color  (btn, s.tokens.colorWarning, LV_PART_MAIN);
-            lv_obj_set_style_text_color(btn, s.tokens.colorOnWarning, LV_PART_MAIN);
-            lv_obj_set_style_bg_color  (btn,
-                lv_color_mix(s.tokens.colorSurface, s.tokens.colorWarning, s.tokens.opaPressed),
-                sel(LV_PART_MAIN, LV_STATE_PRESSED));
-            break;
-        }
+        case Variant::Primary:     Ui::applyButtonPrimary    (btn, s, setSize); break;
+        case Variant::Secondary:   Ui::applyButtonSecondary  (btn, s, setSize); break;
+        case Variant::Ghost:       Ui::applyButtonGhost      (btn, s, setSize); break;
+        case Variant::Destructive: Ui::applyButtonDestructive(btn, s, setSize); break; // ← ahora en styles
+        case Variant::Success:     Ui::applyButtonSuccess    (btn, s, setSize); break; // ← ahora en styles
+        case Variant::Warning:     Ui::applyButtonWarning    (btn, s, setSize); break; // ← ahora en styles
     }
 }
 
@@ -184,7 +155,7 @@ void setIcon(Handle& h, UiThemeStyles& s, const char* icon, IconPos pos) {
         lv_obj_set_style_text_font(h.icon, s.tokens.fontIcon, LV_PART_MAIN);
     }
     lv_label_set_text(h.icon, icon);
-    // Reorden segun pos (simple; si necesitas robustez, guarda orden en user data)
+    // Reorden segun pos
     if (h.icon && h.label) {
         if (pos == IconPos::Right) lv_obj_move_to_index(h.label, 0);
         else                       lv_obj_move_to_index(h.icon, 0);

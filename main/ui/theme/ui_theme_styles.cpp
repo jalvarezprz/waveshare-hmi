@@ -132,7 +132,6 @@ static void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     /* ===== Content ===== */
     style_reset(s.content);
     lv_style_set_bg_color(&s.content, t.colorSurface);
-    // Si prefieres no referenciar Tokens::Space aquí, usa t.gapRow/t.panelPadAll como convención
     lv_style_set_pad_all (&s.content, t.panelPadAll);
 
     /* ===== Card ===== */
@@ -169,7 +168,7 @@ static void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     style_reset(s.listItem);
     lv_style_set_bg_color  (&s.listItem, t.colorSurface);
     lv_style_set_bg_opa    (&s.listItem, t.opaEnabled);
-    lv_style_set_radius    (&s.listItem, 4); // o Tokens::Radius::sm si quieres snapshotearlo
+    lv_style_set_radius    (&s.listItem, 4);
     lv_style_set_pad_left  (&s.listItem, t.listPadLR);
     lv_style_set_pad_right (&s.listItem, t.listPadLR);
     lv_style_set_pad_top   (&s.listItem, t.listPadTB);
@@ -195,7 +194,7 @@ static void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_border_color(&s.listDivider, t.colorOutline);
     lv_style_set_border_opa  (&s.listDivider, t.listDividerOpa);
 
-    /* ===== Botones ===== */
+    /* ===== Botones (bases) ===== */
     style_reset(s.btnPrimary);
     lv_style_set_bg_color (&s.btnPrimary, t.colorPrimary);
     lv_style_set_bg_opa   (&s.btnPrimary, t.opaEnabled);
@@ -276,18 +275,8 @@ void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider
     lv_obj_set_flex_align(obj, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 }
 
-void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider) {
-    if (!parent) return;
-    applyListContainer(parent, s);
+/*========================== Botones: variantes ========================*/
 
-    uint32_t cnt = lv_obj_get_child_cnt(parent);
-    for (uint32_t i = 0; i < cnt; ++i) {
-        lv_obj_t* child = lv_obj_get_child(parent, i);
-        applyListItem(child, s, large, withDivider);
-    }
-}
-
-/* ---- Botones ---- */
 static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, const UiThemeTokens& t, bool setSize) {
     if (!btn || !style) return;
     lv_obj_add_style(btn, style, LV_PART_MAIN);
@@ -298,21 +287,18 @@ static inline void apply_btn_base_and_size(lv_obj_t* btn, lv_style_t* style, con
 
 void applyButtonPrimary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnPrimary, s.tokens, setSize);
-    // Estados calculados desde snapshot:
+
+    // PRESSED
     lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorPrimary, s.tokens),
                               sel(LV_PART_MAIN, LV_STATE_PRESSED));
 
-    // Focus ring global
-    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
-    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
-    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    // FOCUS
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
 
-    // Disabled
-    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled,
-                            sel(LV_PART_MAIN, LV_STATE_DISABLED));
+    // DISABLED
+    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled, sel(LV_PART_MAIN, LV_STATE_DISABLED));
 }
 
 void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
@@ -321,36 +307,95 @@ void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorSecondary, s.tokens),
                               sel(LV_PART_MAIN, LV_STATE_PRESSED));
 
-    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
-    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
-    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
 
-    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled,
-                            sel(LV_PART_MAIN, LV_STATE_DISABLED));
+    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled, sel(LV_PART_MAIN, LV_STATE_DISABLED));
 }
 
 void applyButtonGhost(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     apply_btn_base_and_size(btn, &s.btnGhost, s.tokens, setSize);
 
     // PRESSED: tinte suave del surface
-    lv_obj_set_style_bg_opa  (btn, s.tokens.opaPressed,
-                              sel(LV_PART_MAIN, LV_STATE_PRESSED));
+    lv_obj_set_style_bg_opa  (btn, s.tokens.opaPressed, sel(LV_PART_MAIN, LV_STATE_PRESSED));
     lv_obj_set_style_bg_color(btn, lv_color_mix(s.tokens.colorOnSurface,
                                                 s.tokens.colorSurface,
                                                 s.tokens.opaPressed),
                               sel(LV_PART_MAIN, LV_STATE_PRESSED));
-    // FOCUSED: outline global
-    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
-    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
-    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad,
-                                   sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+
+    // FOCUS
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
 
     lv_obj_set_style_text_font(btn, s.tokens.fontBody, LV_PART_MAIN);
+}
+
+/* ---- NUEVAS variantes movidas desde el componente ---- */
+
+void applyButtonDestructive(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    // Base: geometría de Secondary (mismo padding/radius), recoloreado a Error
+    apply_btn_base_and_size(btn, &s.btnSecondary, s.tokens, setSize);
+
+    // MAIN
+    lv_obj_set_style_bg_color  (btn, s.tokens.colorError,    LV_PART_MAIN);
+    lv_obj_set_style_text_color(btn, s.tokens.colorOnError,  LV_PART_MAIN);
+
+    // PRESSED
+    lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorError, s.tokens),
+                              sel(LV_PART_MAIN, LV_STATE_PRESSED));
+
+    // FOCUS (anillo común)
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+
+    // DISABLED
+    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled, sel(LV_PART_MAIN, LV_STATE_DISABLED));
+}
+
+void applyButtonSuccess(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    apply_btn_base_and_size(btn, &s.btnSecondary, s.tokens, setSize);
+
+    lv_obj_set_style_bg_color  (btn, s.tokens.colorSuccess,   LV_PART_MAIN);
+    lv_obj_set_style_text_color(btn, s.tokens.colorOnSuccess, LV_PART_MAIN);
+
+    lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorSuccess, s.tokens),
+                              sel(LV_PART_MAIN, LV_STATE_PRESSED));
+
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+
+    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled, sel(LV_PART_MAIN, LV_STATE_DISABLED));
+}
+
+void applyButtonWarning(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
+    apply_btn_base_and_size(btn, &s.btnSecondary, s.tokens, setSize);
+
+    lv_obj_set_style_bg_color  (btn, s.tokens.colorWarning,   LV_PART_MAIN);
+    lv_obj_set_style_text_color(btn, s.tokens.colorOnWarning, LV_PART_MAIN);
+
+    lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorWarning, s.tokens),
+                              sel(LV_PART_MAIN, LV_STATE_PRESSED));
+
+    lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+    lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
+
+    lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled, sel(LV_PART_MAIN, LV_STATE_DISABLED));
+}
+
+void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider) {
+    if (!parent) return;
+    applyListContainer(parent, s);
+
+    uint32_t cnt = lv_obj_get_child_cnt(parent);
+    for (uint32_t i = 0; i < cnt; ++i) {
+        lv_obj_t* child = lv_obj_get_child(parent, i);
+        applyListItem(child, s, large, withDivider);
+    }
 }
 
 } // namespace Ui

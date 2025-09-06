@@ -118,7 +118,7 @@ struct UiThemeStyles {
     lv_style_t listItemDisabled;
     lv_style_t listDivider;
 
-    // Botones
+    // Botones (bases)
     lv_style_t btnPrimary;
     lv_style_t btnSecondary;
     lv_style_t btnGhost;
@@ -127,8 +127,8 @@ struct UiThemeStyles {
 };
 
 /*===================== Ciclo de vida =====================*/
-void           themeInitOnce();
-UiThemeStyles& getThemeStyles();
+void                 themeInitOnce();
+UiThemeStyles&       getThemeStyles();
 const UiThemeTokens& getThemeTokens();
 
 /*===================== Aplicadores de estilo =====================*/
@@ -142,9 +142,14 @@ void applyListContainer(lv_obj_t* obj, UiThemeStyles& s);
 void applyListItem(lv_obj_t* obj, UiThemeStyles& s, bool large, bool withDivider);
 void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider);
 
-// Botones
-void applyButtonPrimary  (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
-void applyButtonSecondary(lv_obj_t* btn, UiThemeStyles& s, bool setSize);
-void applyButtonGhost    (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+// Botones (variantes)
+void applyButtonPrimary    (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+void applyButtonSecondary  (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+void applyButtonGhost      (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+
+// NUEVO: variantes trasladadas a styles
+void applyButtonDestructive(lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+void applyButtonSuccess    (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+void applyButtonWarning    (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
 
 } // namespace Ui
