@@ -15,6 +15,7 @@
 
 #include "ui/theme/ui_theme_styles.h"          // estilos/base
 #include "ui/component/ui_component_button.h"  // ← AÑADIDO: componente Button
+#include "ui/preset/ui_preset_button.h"
 
 static const char* TAG = "UI_MOCKUP_MENU_GRID_4x4";
 
@@ -148,25 +149,57 @@ static void build_ui()
     add_variant_demo_row(s_container);
 
     // ---------------- Celdas 4x4 (filas 2..5, cols 0..3) --------------
+    // ---------------- Celdas 4x4 (filas 2..5, cols 0..3) --------------
     int idx = 0;
     for (int r = 0; r < ROWS; ++r) {
         for (int c = 0; c < COLS; ++c) {
             ++idx;
+
+            // ←—— Usa el preset REAL solo en la primera celda (idx==1) para validar
+            // ←—— Usa el preset REAL solo en la primera celda (idx==1) para validar
+            if (idx == 1) {
+                Ui::Preset::ButtonMenu::Props p;
+                p.text    = "Parámetros";
+                p.iconId  = "lv:settings";
+                p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
+
+                // Callbacks para ver logs
+                p.callbacks.onClick = [](Ui::Component::Button::Handle&, void*) {
+                    ESP_LOGI(TAG, "MenuButton: CLICK en 'Parámetros'");
+                };
+                p.callbacks.onLong = [](Ui::Component::Button::Handle&, void*) {
+                    ESP_LOGI(TAG, "MenuButton: LONG PRESS en 'Parámetros'");
+                };
+                p.callbacks.onToggle = [](Ui::Component::Button::Handle&, bool checked, void*) {
+                    ESP_LOGI(TAG, "MenuButton: TOGGLE -> %s", checked ? "ON" : "OFF");
+                };
+
+                auto H = Ui::Preset::ButtonMenu::create(s_container, Ui::getThemeStyles(), p);
+                lv_obj_t* root = H.base.root;
+
+                // Ubicar en grid: fila base ahora es 2 (0=título, 1=fila demo)
+                lv_obj_set_grid_cell(root,
+                                    LV_GRID_ALIGN_STRETCH, c, 1,      // columna c
+                                    LV_GRID_ALIGN_STRETCH, 2 + r, 1); // fila 2+r
+                continue; // ← importante
+}
+
+
+            // Resto de celdas siguen con el botón “mock”
             char caption[24];
             std::snprintf(caption, sizeof(caption), "Item %d", idx);
 
             lv_obj_t* root = create_cell_button(s_container, caption, on_button_clicked, (void*)strdup(caption));
 
-            // Ubicar en grid: fila base ahora es 2 (0=título, 1=fila demo)
             lv_obj_set_grid_cell(root,
-                                 LV_GRID_ALIGN_STRETCH, c, 1,      // columna c
-                                 LV_GRID_ALIGN_STRETCH, 2 + r, 1); // fila 2+r
+                                LV_GRID_ALIGN_STRETCH, c, 1,
+                                LV_GRID_ALIGN_STRETCH, 2 + r, 1);
         }
     }
 
-    // Cargar pantalla
-    lv_scr_load(s_screen);
-}
+        // Cargar pantalla
+        lv_scr_load(s_screen);
+    }
 
 // API pública
 void ui_mockup_menu_load(void)

@@ -86,5 +86,5 @@ void ui_menu_render_detail_from_node(const cJSON* node, void (*on_back)(void))
     }
 
     // Botón "Atrás"
-    (void)Ui::Preset::Button::Back(cont, on_back ? on_back : Ui::Actions::back_default);
+    //(void)Ui::Preset::Button::Back(cont, on_back ? on_back : Ui::Actions::back_default);
 }
