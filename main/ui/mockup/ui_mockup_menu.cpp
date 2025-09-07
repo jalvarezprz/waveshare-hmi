@@ -126,11 +126,16 @@ static void build_ui()
 // API pública
 void ui_mockup_menu_load(void)
 {
+    // 1) Forzar que el snapshot (tokens->styles) refleje los cambios recientes (p. ej., Primary)
+    Ui::themeReload();
+
+    // 2) Si la pantalla ya existía, destruirla para que al reconstruir se apliquen los estilos nuevos
     if (s_screen) {
-        lv_scr_load(s_screen);
-        ESP_LOGW(TAG, "ui_mockup_menu_load(): ya creada; recargando.");
-        return;
+        lv_obj_del(s_screen);
+        s_screen = nullptr;
+        ESP_LOGW(TAG, "ui_mockup_menu_load(): pantalla previa destruida; reconstruyendo con tema recargado.");
     }
+
     ESP_LOGI(TAG, "Cargando mockup 4x4 (MenuButton)...");
     build_ui();
 }

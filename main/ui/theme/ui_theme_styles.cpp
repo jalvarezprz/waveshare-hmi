@@ -231,14 +231,27 @@ static void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
 }
 
 /*========================== API pública ===============================*/
-UiThemeStyles&       getThemeStyles() { return g_styles; }
-const UiThemeTokens& getThemeTokens() { return g_tokens; }
+UiThemeStyles& getThemeStyles() {
+    themeInitOnce();
+    return g_styles;
+}
+
+const UiThemeTokens& getThemeTokens() {
+    themeInitOnce();
+    return g_tokens;
+}
 
 void themeInitOnce() {
     if (!g_styles.initialized) {
         g_tokens = makeSnapshotFromTokens();
         initThemeStyles(g_styles, g_tokens);
+        g_styles.initialized = true;   // <-- AÑADIR ESTA LÍNEA
     }
+}
+
+void themeReload() {
+    g_styles.initialized = false;
+    themeInitOnce();
 }
 
 /*========================== Aplicadores públicos ======================*/

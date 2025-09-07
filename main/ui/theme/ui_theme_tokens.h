@@ -20,62 +20,57 @@ namespace Ui { namespace Tokens {
 
 /*────────────────────────────  UTILIDADES  ───────────────────────────*/
 
-/** Convierte RGBA 0xRRGGBBAA a lv_color_t (RGB; alfa se ignora en LVGL). */
-static inline lv_color_t rgba_to_lv(uint32_t rgba) {
-    return lv_color_hex(rgba & 0x00FFFFFFu);
-}
-
 /*────────────────────────────  COLORES  ──────────────────────────────*/
 /** Roles cromáticos semánticos (valores por defecto tipo “dark”). */
 namespace Color {
     // Superficies
-    inline constexpr uint32_t Surface        = 0x121212FF;
-    inline constexpr uint32_t OnSurface      = 0xEDEDEDFF;
-    inline constexpr uint32_t SurfaceVariant = 0x1E1E1EFF;
-    inline constexpr uint32_t Outline        = 0x3C3C3CFF;
-    inline constexpr uint32_t Muted          = 0x9E9E9EFF;
+    inline constexpr uint32_t Surface        = 0x121212;
+    inline constexpr uint32_t OnSurface      = 0xEDEDED;
+    inline constexpr uint32_t SurfaceVariant = 0x1E1E1E;
+    inline constexpr uint32_t Outline        = 0x3C3C3C;
+    inline constexpr uint32_t Muted          = 0x9E9E9E;
 
     // Acciones / marca
-    inline constexpr uint32_t Primary        = 0x42A5F5FF;
-    inline constexpr uint32_t OnPrimary      = 0xFFFFFFFF;
+    inline constexpr uint32_t Primary        = 0x6C1DE0;
+    inline constexpr uint32_t OnPrimary      = 0xFFFFFF;
 
-    inline constexpr uint32_t Secondary      = 0x9C27B0FF;
-    inline constexpr uint32_t OnSecondary    = 0xFFFFFFFF;
+    inline constexpr uint32_t Secondary      = 0x9C27B0;
+    inline constexpr uint32_t OnSecondary    = 0xFFFFFF;
 
     // Semáforo / estado
-    inline constexpr uint32_t Success        = 0x4CAF50FF;
-    inline constexpr uint32_t OnSuccess      = 0xFFFFFFFF;
+    inline constexpr uint32_t Success        = 0x4CAF50;
+    inline constexpr uint32_t OnSuccess      = 0xFFFFFF;
 
-    inline constexpr uint32_t Warning        = 0xFFC107FF;
+    inline constexpr uint32_t Warning        = 0xFFC107;
     inline constexpr uint32_t OnWarning      = 0x212121FF;
 
-    inline constexpr uint32_t Error          = 0xF44336FF;
-    inline constexpr uint32_t OnError        = 0xFFFFFFFF;
+    inline constexpr uint32_t Error          = 0xF44336;
+    inline constexpr uint32_t OnError        = 0xFFFFFF;
 
     // Overlay
-    inline constexpr uint32_t OverlayBg      = 0x000000FF;
+    inline constexpr uint32_t OverlayBg      = 0x000000;
 }
 
 /** Helpers LVGL (conversión a lv_color_t). */
-inline lv_color_t color_surface()         { return rgba_to_lv(Color::Surface); }
-inline lv_color_t color_on_surface()      { return rgba_to_lv(Color::OnSurface); }
-inline lv_color_t color_surface_variant() { return rgba_to_lv(Color::SurfaceVariant); }
-inline lv_color_t color_outline()         { return rgba_to_lv(Color::Outline); }
-inline lv_color_t color_muted()           { return rgba_to_lv(Color::Muted); }
+inline lv_color_t color_surface()         { return lv_color_hex(Color::Surface); }
+inline lv_color_t color_on_surface()      { return lv_color_hex(Color::OnSurface); }
+inline lv_color_t color_surface_variant() { return lv_color_hex(Color::SurfaceVariant); }
+inline lv_color_t color_outline()         { return lv_color_hex(Color::Outline); }
+inline lv_color_t color_muted()           { return lv_color_hex(Color::Muted); }
 
-inline lv_color_t color_primary()         { return rgba_to_lv(Color::Primary); }
-inline lv_color_t color_on_primary()      { return rgba_to_lv(Color::OnPrimary); }
-inline lv_color_t color_secondary()       { return rgba_to_lv(Color::Secondary); }
-inline lv_color_t color_on_secondary()    { return rgba_to_lv(Color::OnSecondary); }
+inline lv_color_t color_primary()         { return lv_color_hex(Color::Primary);}
+inline lv_color_t color_on_primary()      { return lv_color_hex(Color::OnPrimary); }
+inline lv_color_t color_secondary()       { return lv_color_hex(Color::Secondary); }
+inline lv_color_t color_on_secondary()    { return lv_color_hex(Color::OnSecondary); }
 
-inline lv_color_t color_success()         { return rgba_to_lv(Color::Success); }
-inline lv_color_t color_on_success()      { return rgba_to_lv(Color::OnSuccess); }
-inline lv_color_t color_warning()         { return rgba_to_lv(Color::Warning); }
-inline lv_color_t color_on_warning()      { return rgba_to_lv(Color::OnWarning); }
-inline lv_color_t color_error()           { return rgba_to_lv(Color::Error); }
-inline lv_color_t color_on_error()        { return rgba_to_lv(Color::OnError); }
+inline lv_color_t color_success()         { return lv_color_hex(Color::Success); }
+inline lv_color_t color_on_success()      { return lv_color_hex(Color::OnSuccess); }
+inline lv_color_t color_warning()         { return lv_color_hex(Color::Warning); }
+inline lv_color_t color_on_warning()      { return lv_color_hex(Color::OnWarning); }
+inline lv_color_t color_error()           { return lv_color_hex(Color::Error); }
+inline lv_color_t color_on_error()        { return lv_color_hex(Color::OnError); }
 
-inline lv_color_t color_overlay_bg()      { return rgba_to_lv(Color::OverlayBg); }
+inline lv_color_t color_overlay_bg()      { return lv_color_hex(Color::OverlayBg); }
 
 /*──────────────────────────  OPACIDADES  ─────────────────────────────*/
 namespace Opa {

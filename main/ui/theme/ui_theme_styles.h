@@ -142,6 +142,13 @@ struct UiThemeStyles {
 void                 themeInitOnce();
 UiThemeStyles&       getThemeStyles();
 const UiThemeTokens& getThemeTokens();
+/**
+ * @brief Fuerza la recarga del tema (reconstruye snapshot de tokens y estilos).
+ * Úsala cuando cambies valores en ui_theme_tokens.h (p. ej., Color::Primary)
+ * y quieras que se reflejen al construir nuevas pantallas/componentes.
+ */
+void themeReload();
+
 
 /*===================== Aplicadores de estilo =====================*/
 // Barras / contenidos
