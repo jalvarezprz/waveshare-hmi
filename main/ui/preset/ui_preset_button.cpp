@@ -122,33 +122,26 @@ Handle create(lv_obj_t* parent, UiThemeStyles& s, const Props& p)
 {
     Ui::themeInitOnce();
 
-    // 0) Declarar el Handle del preset ANTES de usarlo
-    Handle h{};  // <<< ESTA LÍNEA ES IMPRESCINDIBLE
+    Handle h{};
 
     // 1) Props del componente base
     Ui::Component::Button::Props bp{};
     bp.text     = p.text;
     bp.icon     = normalize_icon_text(p.iconId);
     bp.variant  = p.variant;
-    bp.size     = p.size;
+    //bp.size     = p.size;
     bp.iconPos  = Ui::Component::Button::IconPos::Left;
     bp.enabled  = !p.disabled;
     bp.toggle   = p.selected;
     bp.checked  = p.selected;
     bp.loading  = p.loading;
-    // (si tu componente base NO tiene .action, deja esto comentado)
-    // bp.action   = p.action;
+
+    // ✅ Propagar contexto y acción declarativa
+    bp.userData = p.userData;
+    bp.action   = p.action;
 
     // 2) Callbacks a pasar al componente base
     Ui::Component::Button::Callbacks cb = p.callbacks;
-
-    // (opcional) Si quieres que p.action dispare el router:
-    // #include "ui/router/ui_router.h" arriba
-    // if (p.action && *p.action) {
-    //     cb.onClick = [act = p.action](Ui::Component::Button::Handle&, void*) {
-    //         Ui::Router::dispatch(act);
-    //     };
-    // }
 
     // 3) Crear el componente base
     h.base = Ui::Component::Button::create(parent, s, bp, cb);
@@ -222,11 +215,13 @@ bool setVariant(Handle& h, UiThemeStyles& s, Variant v)
     return true;
 }
 
-bool setSize(Handle& h, UiThemeStyles& s, Size /*sz*/)
+/*
+bool setSize(Handle& h, UiThemeStyles& s, Size)
 {
     apply_menu_layout_column(h.base, s);
     return true;
 }
+*/
 
 void focus(Handle& h) { Ui::Component::Button::focus(h.base); }
 

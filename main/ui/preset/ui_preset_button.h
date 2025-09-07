@@ -24,37 +24,38 @@ namespace Ui::Preset::ButtonMenu {
 
 /** API pública del preset (reutiliza enums del componente Button). */
 using Variant = Ui::Component::Button::Variant;
-using Size    = Ui::Component::Button::Size;
+//using Size    = Ui::Component::Button::Size;
 
 /** Propiedades de creación. */
 struct Props {
-    const char* text       = nullptr;   ///< Etiqueta principal (1–2 líneas).
-    const char* iconId     = nullptr;   ///< “lv:settings”, “lv:home”, … o texto simbólico.
-    const char* hint       = nullptr;   ///< Subtítulo (opcional, 1 línea).
-    int         badgeCount = -1;        ///< -1 sin badge; 0..99; >=100 → "99+".
-    bool        showDot    = false;     ///< Si badgeCount < 0 y showDot=true → punto •.
+    const char* text    = nullptr;
+    const char* iconId  = nullptr;
+    Variant     variant = Variant::Primary;
 
-    Variant     variant    = Variant::Primary;
-    Size        size       = Size::Medium;
-    bool        selected   = false;
-    bool        disabled   = false;
-    bool        loading    = false;
+    /** Acción declarativa opcional (si se define, tiene prioridad sobre onClick). */
+    const char* action   = nullptr;
 
-    /// Acción declarativa para Router; prioridad sobre callbacks.
-    const char* action     = nullptr;
+    /** Contexto opaco de usuario que se pasará a los callbacks. */
+    void*       userData = nullptr;
 
-    // Callbacks del componente base (usados solo si action == nullptr)
+    /** Callbacks a propagar al componente base. */
     Ui::Component::Button::Callbacks callbacks{};
+
+    // Otros campos existentes de tu preset
+    //Size        size     = Size::Normal;
+    bool        disabled = false;
+    bool        selected = false;
+    bool        loading  = false;
+    const char* hint     = nullptr;
+    int         badgeCount = -1;
+    bool        showDot    = false;
 };
 
 /** Manejador del preset. */
 struct Handle {
-    // Subyacente (componente Button)
-    Ui::Component::Button::Handle base{};
-
-    // Elementos extra del preset
-    lv_obj_t* hintLbl = nullptr;  ///< Label de hint (opcional)
-    lv_obj_t* badge   = nullptr;  ///< Badge / dot (opcional)
+    Ui::Component::Button::Handle base;
+    lv_obj_t* badge   = nullptr;
+    lv_obj_t* hintLbl = nullptr;
 };
 
 /*---------------------- API ----------------------*/
@@ -63,16 +64,15 @@ struct Handle {
 Handle create(lv_obj_t* parent, UiThemeStyles& s, const Props& p);
 
 /** Setters de conveniencia. */
-bool setText     (Handle& h, UiThemeStyles& s, const char* text);
-bool setIcon     (Handle& h, UiThemeStyles& s, const char* iconId);
-bool setHint     (Handle& h, UiThemeStyles& s, const char* hint);
-bool setBadge    (Handle& h, UiThemeStyles& s, int count, bool showDot);
-bool setSelected (Handle& h, UiThemeStyles& s, bool v);
-bool setDisabled (Handle& h, UiThemeStyles& s, bool v);
-bool setVariant  (Handle& h, UiThemeStyles& s, Variant v);
-bool setSize     (Handle& h, UiThemeStyles& s, Size sz);
 
-/** Enfoque de accesibilidad. */
-void focus(Handle& h);
+bool setText    (Handle& h, UiThemeStyles& s, const char* text);
+bool setIcon    (Handle& h, UiThemeStyles& s, const char* iconId);
+bool setHint    (Handle& h, UiThemeStyles& s, const char* hint);
+bool setBadge   (Handle& h, UiThemeStyles& s, int count, bool showDot);
+bool setSelected(Handle& h, UiThemeStyles& s, bool v);
+bool setDisabled(Handle& h, UiThemeStyles& s, bool v);
+bool setVariant (Handle& h, UiThemeStyles& s, Variant v);
+//bool setSize    (Handle& h, UiThemeStyles& s, Size sz);
+void focus      (Handle& h);
 
 } // namespace Ui::Preset::ButtonMenu

@@ -31,6 +31,77 @@ extern "C" void ui_mockup_menu_unload(void);
 static void add_variant_demo_row(lv_obj_t* parent);
 
 // -----------------------------------------------------------------------------
+// Helpers de creación de celdas (Ítem 1, Ítem 2, genérico)
+// Colocar este bloque antes de build_ui()
+// -----------------------------------------------------------------------------
+namespace {
+
+static void place_in_grid(lv_obj_t* root, int r, int c) {
+    lv_obj_set_grid_cell(root,
+                         LV_GRID_ALIGN_STRETCH, c, 1,
+                         LV_GRID_ALIGN_STRETCH, 2 + r, 1);
+}
+
+static void create_item1(lv_obj_t* container, int r, int c, int idx) {
+    char caption[24];
+    std::snprintf(caption, sizeof(caption), "Ítem %d", idx);
+
+    Ui::Preset::ButtonMenu::Props p{};
+    p.text    = strdup(caption);                  // vida útil > stack
+    p.iconId  = "lv:settings";                    // ID semántico (el preset lo traduce)
+    p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
+
+    // Callbacks (se propagan al componente base dentro del preset)
+    const char* labelCopy = p.text;
+    p.callbacks.onClick = [labelCopy](Ui::Component::Button::Handle&, void*) {
+        ESP_LOGI("TEST", "CLICK en botón de prueba: '%s'", labelCopy);
+    };
+    p.callbacks.onLong  = [labelCopy](Ui::Component::Button::Handle&, void*) {
+        ESP_LOGI("TEST", "LONG PRESS en botón de prueba: '%s'", labelCopy);
+    };
+    // Nota: NO fijamos p.action para que prevalezcan los callbacks.
+
+    auto H = Ui::Preset::ButtonMenu::create(container, Ui::getThemeStyles(), p);
+    place_in_grid(H.base.root, r, c);
+}
+
+
+static void create_item2(lv_obj_t* container, int r, int c, int idx) {
+    char caption[24];
+    std::snprintf(caption, sizeof(caption), "Ítem %d", idx);
+
+    // Ítem 2: preset ButtonMenu con navegación por Router (action)
+    Ui::Preset::ButtonMenu::Props p{};
+    p.text    = strdup(caption);
+    p.iconId  = "lv:settings";
+    p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
+    p.action  = strdup("NAV:/demo");
+
+    auto H = Ui::Preset::ButtonMenu::create(container, Ui::getThemeStyles(), p);
+    place_in_grid(H.base.root, r, c);
+}
+
+static void create_item_generic(lv_obj_t* container, int r, int c, int idx) {
+    char caption[24];
+    std::snprintf(caption, sizeof(caption), "Ítem %d", idx);
+
+    Ui::Preset::ButtonMenu::Props p{};
+    p.text    = strdup(caption);
+    p.iconId  = "lv:settings";
+    p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
+
+    char actionBuf[32];
+    std::snprintf(actionBuf, sizeof(actionBuf), "NAV:/item/%d", idx);
+    p.action = strdup(actionBuf);
+
+    auto H = Ui::Preset::ButtonMenu::create(container, Ui::getThemeStyles(), p);
+    place_in_grid(H.base.root, r, c);
+}
+
+} // namespace
+
+
+// -----------------------------------------------------------------------------
 // Construcción de la UI
 // -----------------------------------------------------------------------------
 static void build_ui()
@@ -95,50 +166,14 @@ static void build_ui()
     add_variant_demo_row(s_container);
 
     // ---------------- Celdas 4x4 (filas 2..5, cols 0..3) --------------
+
     int idx = 0;
     for (int r = 0; r < ROWS; ++r) {
         for (int c = 0; c < COLS; ++c) {
             ++idx;
-
-            char caption[24];
-            std::snprintf(caption, sizeof(caption), "Ítem %d", idx);
-
-            Ui::Preset::ButtonMenu::Props p{};
-            // strdup asegura que el texto vive más allá del bucle
-            p.text    = strdup(caption);
-            p.iconId  = "lv:settings";
-            p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
-
-            // Acción declarativa (router)
-            char actionBuf[32];
-            std::snprintf(actionBuf, sizeof(actionBuf), "NAV:/item/%d", idx);
-            p.action = strdup(actionBuf); // para pruebas, en real vendrá del JSON
-
-            // 👉 Solo para idx=1 añadimos callback explícito
-            if (idx == 1) {
-
-                const char* labelCopy = p.text; // capturamos el puntero duplicado
-
-                p.callbacks.onClick = [labelCopy](Ui::Component::Button::Handle& /*h*/, void* /*user*/) {
-                    ESP_LOGI("TEST", "CLICK en botón de prueba: '%s'", labelCopy);
-                };
-
-                p.callbacks.onLong = [labelCopy](Ui::Component::Button::Handle&, void*) {
-                    ESP_LOGI("TEST", "LONG PRESS en botón de prueba: '%s'", labelCopy);
-                };
-
-                p.callbacks.onToggle = [labelCopy](Ui::Component::Button::Handle&, bool checked, void*) {
-                ESP_LOGI("TEST", "TOGGLE en botón de prueba: '%s' -> %s",
-                         labelCopy, checked ? "ON" : "OFF");
-            };
-            }
-
-            auto H = Ui::Preset::ButtonMenu::create(s_container, Ui::getThemeStyles(), p);
-            lv_obj_t* root = H.base.root;
-
-            lv_obj_set_grid_cell(root,
-                                LV_GRID_ALIGN_STRETCH, c, 1,
-                                LV_GRID_ALIGN_STRETCH, 2 + r, 1);
+            if (idx == 1) { create_item1(s_container, r, c, idx); continue; }
+            if (idx == 2) { create_item2(s_container, r, c, idx); continue; }
+            create_item_generic(s_container, r, c, idx);
         }
     }
 

@@ -31,7 +31,7 @@ namespace Color {
     inline constexpr uint32_t Muted          = 0x9E9E9E;
 
     // Acciones / marca
-    inline constexpr uint32_t Primary        = 0xAB07E1;
+    inline constexpr uint32_t Primary        = 0x2FAD32;
     inline constexpr uint32_t OnPrimary      = 0xFFFFFF;
 
     inline constexpr uint32_t Secondary      = 0x9C27B0;
