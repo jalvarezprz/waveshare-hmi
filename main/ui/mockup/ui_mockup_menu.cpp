@@ -88,6 +88,8 @@ static void build_ui()
     lv_obj_set_style_pad_bottom(s_title, 4, 0);
     lv_obj_set_style_text_color(s_title, lv_color_hex(0x0000FF), 0);
 
+    lv_obj_set_style_text_font(s_title, font_title(), 0);   // 👈 aquí asignas tu tipografía
+
     // ---------------- Fila de demo (fila 1) ----------------
     add_variant_demo_row(s_container);
 

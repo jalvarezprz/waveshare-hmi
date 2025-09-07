@@ -42,7 +42,7 @@ namespace Color {
     inline constexpr uint32_t OnSuccess      = 0xFFFFFF;
 
     inline constexpr uint32_t Warning        = 0xFFC107;
-    inline constexpr uint32_t OnWarning      = 0x212121FF;
+    inline constexpr uint32_t OnWarning      = 0x212121;
 
     inline constexpr uint32_t Error          = 0xF44336;
     inline constexpr uint32_t OnError        = 0xFFFFFF;
@@ -102,27 +102,16 @@ namespace Density { inline constexpr int MinTouch = 44; } // px
 inline lv_coord_t min_touch() { return static_cast<lv_coord_t>(Density::MinTouch); }
 
 /*────────────────────────────  TIPOGRAFÍA  ───────────────────────────*/
-#if defined(UI_HAVE_MONTSERRAT_LAT1)
+
 extern "C" {
-    LV_FONT_DECLARE(montserrat_16_lat1)
     LV_FONT_DECLARE(montserrat_14_lat1)
     LV_FONT_DECLARE(montserrat_12_lat1)
+    LV_FONT_DECLARE(montserrat_10_lat1)
 }
-inline const lv_font_t* font_title()   { return &montserrat_16_lat1; }
-inline const lv_font_t* font_body()    { return &montserrat_14_lat1; }
-inline const lv_font_t* font_caption() { return &montserrat_12_lat1; }
-#else
-inline const lv_font_t* font_title()   { return LV_FONT_DEFAULT; }
-inline const lv_font_t* font_body()    { return LV_FONT_DEFAULT; }
-inline const lv_font_t* font_caption() { return LV_FONT_DEFAULT; }
-#endif
 
-#if defined(UI_HAVE_ICON_FONT)
-extern "C" { LV_FONT_DECLARE(ui_icon_font_16) }
-inline const lv_font_t* font_icon() { return &ui_icon_font_16; }
-#else
-inline const lv_font_t* font_icon() { return LV_FONT_DEFAULT; }
-#endif
+inline const lv_font_t* font_title()   { return &montserrat_14_lat1; }
+inline const lv_font_t* font_body()    { return &montserrat_12_lat1; }
+inline const lv_font_t* font_caption() { return &montserrat_10_lat1; }
 
 /*────────────────────────────  FOCUS RING  ───────────────────────────*/
 namespace Focus {

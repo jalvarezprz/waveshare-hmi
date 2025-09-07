@@ -47,5 +47,4 @@ idf_component_register(
 
 target_compile_definitions(${COMPONENT_LIB} PRIVATE
     LV_LVGL_H_INCLUDE_SIMPLE
-    UI_HAVE_MONTSERRAT_LAT1
 )
