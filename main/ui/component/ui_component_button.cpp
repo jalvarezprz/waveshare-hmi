@@ -7,15 +7,17 @@
 #include "ui/theme/ui_theme_styles.h"
 #include "ui/component/ui_component_button.h"
 #include "ui/component/ui_component_common.h"
+#include "ui/ui_router.h"   // NUEVO: para Router::dispatch(action)
 #include "lvgl.h"
 #include <cstring>
-#include <new>   // ← placement new
+#include <new>   // placement new
 
 namespace Ui::Component::Button {
 
 struct _CbHolder {
     Callbacks cb{};
     void*     userData = nullptr;
+    const char* action = nullptr;  ///< NUEVO: acción declarativa opcional
     _CbHolder() = default;
     ~_CbHolder() = default;
 };
@@ -36,6 +38,10 @@ static void apply_variant(lv_obj_t* btn, UiThemeStyles& s, Variant v, bool setSi
 
 /**
  * @copydoc Ui::Component::Button::create
+ *
+ * Prioridad de callbacks:
+ *  - Si Props::action está definido → se usa Router::dispatch(action).
+ *  - Si no hay action → se usan los callbacks clásicos (onClick, onToggle, onLong).
  */
 Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Callbacks& cb) {
     Ui::themeInitOnce();
@@ -73,60 +79,69 @@ Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Cal
     // Loading
     if (p.loading) {
         lv_obj_add_state(h.root, LV_STATE_DISABLED);
-        // (opcional) spinner...
+        // (opcional: spinner)
     }
 
-    // --- Callbacks persistentes con construcción/ destrucción correctas ---
+    // --- Callbacks / Action ---
     _CbHolder* holder = nullptr;
-    if (cb.onClick || cb.onLong || (p.toggle && cb.onToggle)) {
-        // Reservar memoria con LVGL y CONSTRUIR el objeto (_CbHolder) con placement new
+    if (p.action || cb.onClick || cb.onLong || (p.toggle && cb.onToggle)) {
         void* mem = lv_mem_alloc(sizeof(_CbHolder));
         if (mem) {
-            holder = new (mem) _CbHolder();  // llama al ctor
-            holder->cb       = cb;           // copia segura (std::function ya construido)
+            holder = new (mem) _CbHolder();
+            holder->cb       = cb;
             holder->userData = p.userData;
+            holder->action   = p.action; // NUEVO
         }
     }
 
     if (holder) {
-        // Liberación: llamar al destructor y luego free
+        // Liberación: destructor + free
         lv_obj_add_event_cb(h.root, [](lv_event_t* e){
             auto* ud = static_cast<_CbHolder*>(lv_event_get_user_data(e));
             if (ud) {
-                ud->~_CbHolder();       // dtor: libera std::function
-                lv_mem_free(ud);        // free de la reserva LVGL
+                ud->~_CbHolder();
+                lv_mem_free(ud);
             }
         }, LV_EVENT_DELETE, holder);
     }
 
-    // Eventos -> callbacks
-    if (holder && holder->cb.onClick) {
+    // Eventos
+    if (holder) {
+        // Click
         lv_obj_add_event_cb(h.root, [](lv_event_t* e){
             auto* obj = lv_event_get_target(e);
             auto* ud  = static_cast<_CbHolder*>(lv_event_get_user_data(e));
             if (!ud) return;
             Handle hh{ obj, nullptr, nullptr };
-            ud->cb.onClick(hh, ud->userData);
+            if (ud->action && *ud->action) {
+                Ui::Router::dispatch(ud->action);
+            } else if (ud->cb.onClick) {
+                ud->cb.onClick(hh, ud->userData);
+            }
         }, LV_EVENT_CLICKED, holder);
-    }
-    if (holder && p.toggle && holder->cb.onToggle) {
-        lv_obj_add_event_cb(h.root, [](lv_event_t* e){
-            auto* obj = lv_event_get_target(e);
-            auto* ud  = static_cast<_CbHolder*>(lv_event_get_user_data(e));
-            if (!ud) return;
-            Handle hh{ obj, nullptr, nullptr };
-            bool checked = lv_obj_has_state(obj, LV_STATE_CHECKED);
-            ud->cb.onToggle(hh, checked, ud->userData);
-        }, LV_EVENT_VALUE_CHANGED, holder);
-    }
-    if (holder && holder->cb.onLong) {
-        lv_obj_add_event_cb(h.root, [](lv_event_t* e){
-            auto* obj = lv_event_get_target(e);
-            auto* ud  = static_cast<_CbHolder*>(lv_event_get_user_data(e));
-            if (!ud) return;
-            Handle hh{ obj, nullptr, nullptr };
-            ud->cb.onLong(hh, ud->userData);
-        }, LV_EVENT_LONG_PRESSED, holder);
+
+        // Toggle
+        if (p.toggle) {
+            lv_obj_add_event_cb(h.root, [](lv_event_t* e){
+                auto* obj = lv_event_get_target(e);
+                auto* ud  = static_cast<_CbHolder*>(lv_event_get_user_data(e));
+                if (!ud) return;
+                Handle hh{ obj, nullptr, nullptr };
+                bool checked = lv_obj_has_state(obj, LV_STATE_CHECKED);
+                if (ud->cb.onToggle) ud->cb.onToggle(hh, checked, ud->userData);
+            }, LV_EVENT_VALUE_CHANGED, holder);
+        }
+
+        // Long press
+        if (cb.onLong) {
+            lv_obj_add_event_cb(h.root, [](lv_event_t* e){
+                auto* obj = lv_event_get_target(e);
+                auto* ud  = static_cast<_CbHolder*>(lv_event_get_user_data(e));
+                if (!ud) return;
+                Handle hh{ obj, nullptr, nullptr };
+                ud->cb.onLong(hh, ud->userData);
+            }, LV_EVENT_LONG_PRESSED, holder);
+        }
     }
 
     return h;

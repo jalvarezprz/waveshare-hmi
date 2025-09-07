@@ -84,6 +84,13 @@ struct UiThemeTokens {
     lv_coord_t btnPadLR;
     lv_coord_t btnPadTB;
     lv_coord_t btnIconGap;
+
+    // --- NUEVO: Badges ---
+    lv_coord_t badgePadH;     ///< Padding horizontal del badge (p.ej. 6)
+    lv_coord_t badgePadV;     ///< Padding vertical   del badge (p.ej. 2)
+    lv_coord_t badgeRadius;   ///< Radio del badge (p.ej. 10)
+    lv_coord_t badgeOffsetX;  ///< Offset X desde esquina TOP_RIGHT (p.ej. -6)
+    lv_coord_t badgeOffsetY;  ///< Offset Y desde esquina TOP_RIGHT (p.ej. 6)
 };
 
 /**
@@ -122,6 +129,11 @@ struct UiThemeStyles {
     lv_style_t btnPrimary;
     lv_style_t btnSecondary;
     lv_style_t btnGhost;
+
+    // NUEVO: variantes trasladadas a styles
+    lv_style_t btnDestructive;
+    lv_style_t btnSuccess;
+    lv_style_t btnWarning;
 
     bool initialized = false;
 };

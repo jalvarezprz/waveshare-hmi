@@ -11,6 +11,8 @@
  * Notas:
  *  - Este preset reconfigura el layout del Button a columna (icono encima del texto).
  *  - Badge en esquina superior derecha del root.
+ *  - Si Props::action está definido, el botón despacha esa acción vía Router
+ *    en lugar de usar callbacks.
  */
 
 #include "lvgl.h"
@@ -38,7 +40,10 @@ struct Props {
     bool        disabled   = false;
     bool        loading    = false;
 
-    // Callbacks del componente base
+    /// Acción declarativa para Router; prioridad sobre callbacks.
+    const char* action     = nullptr;
+
+    // Callbacks del componente base (usados solo si action == nullptr)
     Ui::Component::Button::Callbacks callbacks{};
 };
 

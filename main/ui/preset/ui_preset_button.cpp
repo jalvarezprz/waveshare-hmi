@@ -4,12 +4,15 @@
  */
 
 #include "ui/preset/ui_preset_button.h"
+#include "ui/component/ui_component_button.h"
+#include "ui/theme/ui_theme_styles.h"
+
 #include <cstring>
 #include <cstdio>
 
 namespace Ui::Preset::ButtonMenu {
 
-/*===================== Helpers locales =====================*/
+/*===================== Helpers =====================*/
 
 /** Normaliza un identificador "lv:xxx" a LV_SYMBOL_XXX; si no, usa el literal. */
 static const char* normalize_icon_text(const char* iconId)
@@ -44,17 +47,14 @@ static void apply_menu_layout_column(Ui::Component::Button::Handle& base, UiThem
     lv_obj_t* root = base.root;
     if (!root) return;
 
-    // Layout vertical centrado (icono arriba, texto abajo)
     lv_obj_set_flex_flow (root, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(root, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_pad_row(root, s.tokens.btnIconGap, LV_PART_MAIN);
 
-    // Asegurar tamaño táctil mínimo
     if (s.tokens.minTouch > 0) {
         lv_obj_set_style_min_height(root, s.tokens.minTouch, LV_PART_MAIN);
     }
 
-    // Textos centrados
     if (base.label) {
         lv_obj_set_style_text_align(base.label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         lv_label_set_long_mode(base.label, LV_LABEL_LONG_DOT);
@@ -78,9 +78,9 @@ static void build_or_update_badge(Handle& h, UiThemeStyles& s, int count, bool s
         lv_obj_set_style_bg_color  (h.badge, s.tokens.colorPrimary,   LV_PART_MAIN);
         lv_obj_set_style_bg_opa    (h.badge, s.tokens.opaEnabled,     LV_PART_MAIN);
         lv_obj_set_style_text_color(h.badge, s.tokens.colorOnPrimary, LV_PART_MAIN);
-        lv_obj_set_style_pad_hor   (h.badge, 6, LV_PART_MAIN);
-        lv_obj_set_style_pad_ver   (h.badge, 2, LV_PART_MAIN);
-        lv_obj_set_style_radius    (h.badge, 10, LV_PART_MAIN);
+        lv_obj_set_style_pad_hor   (h.badge, s.tokens.badgePadH,      LV_PART_MAIN);
+        lv_obj_set_style_pad_ver   (h.badge, s.tokens.badgePadV,      LV_PART_MAIN);
+        lv_obj_set_style_radius    (h.badge, s.tokens.badgeRadius,    LV_PART_MAIN);
     }
 
     if (count >= 0) {
@@ -95,7 +95,8 @@ static void build_or_update_badge(Handle& h, UiThemeStyles& s, int count, bool s
         lv_label_set_text(h.badge, "•");
     }
 
-    lv_obj_align(h.badge, LV_ALIGN_TOP_RIGHT, -6, 6);
+    lv_obj_align(h.badge, LV_ALIGN_TOP_RIGHT,
+                 s.tokens.badgeOffsetX, s.tokens.badgeOffsetY);
 }
 
 /** Crea/actualiza el hint. */
@@ -121,7 +122,10 @@ Handle create(lv_obj_t* parent, UiThemeStyles& s, const Props& p)
 {
     Ui::themeInitOnce();
 
-    // 1) Crear componente base Button (icono + texto)
+    // 0) Declarar el Handle del preset ANTES de usarlo
+    Handle h{};  // <<< ESTA LÍNEA ES IMPRESCINDIBLE
+
+    // 1) Props del componente base
     Ui::Component::Button::Props bp{};
     bp.text     = p.text;
     bp.icon     = normalize_icon_text(p.iconId);
@@ -132,18 +136,28 @@ Handle create(lv_obj_t* parent, UiThemeStyles& s, const Props& p)
     bp.toggle   = p.selected;
     bp.checked  = p.selected;
     bp.loading  = p.loading;
+    // (si tu componente base NO tiene .action, deja esto comentado)
+    // bp.action   = p.action;
 
-    Handle h{};
-    h.base = Ui::Component::Button::create(parent, s, bp, p.callbacks);
+    // 2) Callbacks a pasar al componente base
+    Ui::Component::Button::Callbacks cb = p.callbacks;
 
-    // 2) Layout de menú (columna)
+    // (opcional) Si quieres que p.action dispare el router:
+    // #include "ui/router/ui_router.h" arriba
+    // if (p.action && *p.action) {
+    //     cb.onClick = [act = p.action](Ui::Component::Button::Handle&, void*) {
+    //         Ui::Router::dispatch(act);
+    //     };
+    // }
+
+    // 3) Crear el componente base
+    h.base = Ui::Component::Button::create(parent, s, bp, cb);
+
+    // 4) Ajustes del preset
     apply_menu_layout_column(h.base, s);
-
-    // 3) Hint + Badge
     build_or_update_hint (h, s, p.hint);
     build_or_update_badge(h, s, p.badgeCount, p.showDot);
 
-    // 4) Disabled/Selected finales (por coherencia)
     Ui::Component::Button::setEnabled(h.base, s, !p.disabled);
     Ui::Component::Button::setChecked (h.base, s,  p.selected);
 

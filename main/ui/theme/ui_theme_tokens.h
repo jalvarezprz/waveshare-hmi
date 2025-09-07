@@ -185,15 +185,19 @@ inline lv_coord_t button_pad_lr()   { return static_cast<lv_coord_t>(ButtonTok::
 inline lv_coord_t button_pad_tb()   { return static_cast<lv_coord_t>(ButtonTok::PadTB); }
 inline lv_coord_t button_icon_gap() { return static_cast<lv_coord_t>(ButtonTok::IconGap); }
 
-namespace SwitchTok {
-    inline constexpr int TrackW = 50;
-    inline constexpr int TrackH = 28;
-    inline constexpr int Knob   = 22; // diámetro
+/* ──────────────── NUEVO: BADGE (pads, radio, offset) ──────────────── */
+namespace BadgeTok {
+    inline constexpr int PadH    = 6;   // px
+    inline constexpr int PadV    = 2;   // px
+    inline constexpr int Radius  = 10;  // px
+    inline constexpr int OffsetX = -6;  // px (desde TOP_RIGHT)
+    inline constexpr int OffsetY = 6;   // px (desde TOP_RIGHT)
 }
-namespace SliderTok {
-    inline constexpr int TrackH = 8;
-    inline constexpr int Knob   = 18;
-}
+inline lv_coord_t badge_pad_h()    { return static_cast<lv_coord_t>(BadgeTok::PadH); }
+inline lv_coord_t badge_pad_v()    { return static_cast<lv_coord_t>(BadgeTok::PadV); }
+inline lv_coord_t badge_radius()   { return static_cast<lv_coord_t>(BadgeTok::Radius); }
+inline lv_coord_t badge_offset_x() { return static_cast<lv_coord_t>(BadgeTok::OffsetX); }
+inline lv_coord_t badge_offset_y() { return static_cast<lv_coord_t>(BadgeTok::OffsetY); }
 
 /*────────────────────────  SUPERFICIES: ÁTOMOS  ──────────────────────*/
 namespace PanelTok {

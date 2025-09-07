@@ -107,6 +107,13 @@ static UiThemeTokens makeSnapshotFromTokens() {
     t.btnPadTB          = Tokens::button_pad_tb();
     t.btnIconGap        = Tokens::button_icon_gap();
 
+    // Badges
+    t.badgePadH    = Tokens::badge_pad_h();
+    t.badgePadV    = Tokens::badge_pad_v();
+    t.badgeRadius  = Tokens::badge_radius();
+    t.badgeOffsetX = Tokens::badge_offset_x();
+    t.badgeOffsetY = Tokens::badge_offset_y();
+
     return t;
 }
 
