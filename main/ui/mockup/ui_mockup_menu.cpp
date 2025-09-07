@@ -88,7 +88,8 @@ static void build_ui()
     lv_obj_set_style_pad_bottom(s_title, 4, 0);
     lv_obj_set_style_text_color(s_title, lv_color_hex(0x0000FF), 0);
 
-    lv_obj_set_style_text_font(s_title, font_title(), 0);   // 👈 aquí asignas tu tipografía
+    lv_obj_add_style(s_title, &Ui::getThemeStyles().labelTitle, 0);
+
 
     // ---------------- Fila de demo (fila 1) ----------------
     add_variant_demo_row(s_container);
@@ -100,7 +101,7 @@ static void build_ui()
             ++idx;
 
             char caption[24];
-            std::snprintf(caption, sizeof(caption), "Item %d", idx);
+            std::snprintf(caption, sizeof(caption), "Ítem %d", idx);
 
             Ui::Preset::ButtonMenu::Props p{};
             p.text    = caption;

@@ -113,6 +113,8 @@ inline const lv_font_t* font_title()   { return &montserrat_14_lat1; }
 inline const lv_font_t* font_body()    { return &montserrat_12_lat1; }
 inline const lv_font_t* font_caption() { return &montserrat_10_lat1; }
 
+inline const lv_font_t* font_icon()    { return LV_FONT_DEFAULT; }
+
 /*────────────────────────────  FOCUS RING  ───────────────────────────*/
 namespace Focus {
     inline constexpr int OutlineW   = 2;
