@@ -104,7 +104,8 @@ static void build_ui()
             std::snprintf(caption, sizeof(caption), "Ítem %d", idx);
 
             Ui::Preset::ButtonMenu::Props p{};
-            p.text    = caption;
+            // strdup asegura que el texto vive más allá del bucle
+            p.text    = strdup(caption);
             p.iconId  = "lv:settings";
             p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
 
@@ -112,6 +113,25 @@ static void build_ui()
             char actionBuf[32];
             std::snprintf(actionBuf, sizeof(actionBuf), "NAV:/item/%d", idx);
             p.action = strdup(actionBuf); // para pruebas, en real vendrá del JSON
+
+            // 👉 Solo para idx=1 añadimos callback explícito
+            if (idx == 1) {
+
+                const char* labelCopy = p.text; // capturamos el puntero duplicado
+
+                p.callbacks.onClick = [labelCopy](Ui::Component::Button::Handle& /*h*/, void* /*user*/) {
+                    ESP_LOGI("TEST", "CLICK en botón de prueba: '%s'", labelCopy);
+                };
+
+                p.callbacks.onLong = [labelCopy](Ui::Component::Button::Handle&, void*) {
+                    ESP_LOGI("TEST", "LONG PRESS en botón de prueba: '%s'", labelCopy);
+                };
+
+                p.callbacks.onToggle = [labelCopy](Ui::Component::Button::Handle&, bool checked, void*) {
+                ESP_LOGI("TEST", "TOGGLE en botón de prueba: '%s' -> %s",
+                         labelCopy, checked ? "ON" : "OFF");
+            };
+            }
 
             auto H = Ui::Preset::ButtonMenu::create(s_container, Ui::getThemeStyles(), p);
             lv_obj_t* root = H.base.root;
