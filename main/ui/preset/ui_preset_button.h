@@ -7,12 +7,6 @@
  *  - Botón de menú con anatomía icono (arriba) + texto (debajo) + hint opcional + badge.
  *  - Consumo exclusivo de UiThemeStyles (no Tokens directos).
  *  - Reutiliza el núcleo del componente Button (estados/variants/size/callbacks).
- *
- * Notas:
- *  - Este preset reconfigura el layout del Button a columna (icono encima del texto).
- *  - Badge en esquina superior derecha del root.
- *  - Si Props::action está definido, el botón despacha esa acción vía Router
- *    en lugar de usar callbacks.
  */
 
 #include "lvgl.h"

@@ -7,7 +7,6 @@
 #include "ui/theme/ui_theme_styles.h"
 #include "ui/component/ui_component_button.h"
 #include "ui/component/ui_component_common.h"
-#include "ui/ui_router.h"   // NUEVO: para Router::dispatch(action)
 #include "lvgl.h"
 #include <cstring>
 #include <new>   // placement new
@@ -113,9 +112,8 @@ Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Cal
             auto* ud  = static_cast<_CbHolder*>(lv_event_get_user_data(e));
             if (!ud) return;
             Handle hh{ obj, nullptr, nullptr };
-            if (ud->action && *ud->action) {
-                //Ui::Router::dispatch(ud->action);
-            } else if (ud->cb.onClick) {
+            // Sin router aquí: el componente solo emite eventos
+            if (ud->cb.onClick) {
                 ud->cb.onClick(hh, ud->userData);
             }
         }, LV_EVENT_CLICKED, holder);
