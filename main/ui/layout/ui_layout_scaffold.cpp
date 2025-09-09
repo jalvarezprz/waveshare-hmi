@@ -1,5 +1,6 @@
 #include "ui/layout/ui_layout_scaffold.h"
 #include "ui/theme/ui_theme_styles.h"
+#include "ui/preset/ui_preset_button.h"
 #include "esp_log.h"
 
 static const char* TAG = "UI_SCAFFOLD";
@@ -7,7 +8,7 @@ static const char* TAG = "UI_SCAFFOLD";
 // Punteros globales del Scaffold
 static lv_obj_t* s_screen  = nullptr;
 static lv_obj_t* s_header  = nullptr;
-static lv_obj_t* s_btnBack = nullptr;
+static Ui::Preset::ButtonBack::Handle s_btnBack;
 static lv_obj_t* s_title   = nullptr;
 static lv_obj_t* s_content = nullptr;
 
@@ -47,10 +48,12 @@ static void build_once() {
     lv_obj_set_flex_align(s_header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     // Botón Back
-    s_btnBack = lv_btn_create(s_header);
-    lv_obj_t* lblBack = lv_label_create(s_btnBack);
-    lv_label_set_text(lblBack, LV_SYMBOL_LEFT "  Atrás");
-    lv_obj_add_event_cb(s_btnBack, on_back_event, LV_EVENT_CLICKED, nullptr);
+    Ui::Preset::ButtonBack::Props pb;
+    pb.callbacks.onClick = [](Ui::Component::Button::Handle&, void*) {
+        on_back_event(nullptr);
+    };
+    s_btnBack = Ui::Preset::ButtonBack::create(s_header, Ui::getThemeStyles(), pb);
+    lv_obj_align(s_btnBack.base.root, LV_ALIGN_LEFT_MID, 8, 0);
 
     // Título
     s_title = lv_label_create(s_header);
@@ -84,10 +87,13 @@ void ui_layout_scaffold_set_title(const char* title) {
     lv_label_set_text(s_title, title ? title : "");
 }
 
-void ui_layout_scaffold_set_back_enabled(bool enabled) {
-    if (!s_btnBack) return;
-    if (enabled) lv_obj_clear_state(s_btnBack, LV_STATE_DISABLED);
-    else         lv_obj_add_state(s_btnBack, LV_STATE_DISABLED);
+void ui_layout_scaffold_set_back_enabled(bool enabled)
+{
+    // s_btnBack es Ui::Preset::ButtonBack::Handle
+    if (!s_btnBack.base.root) return;
+
+    // Usa la API del preset para (des)habilitar respetando el tema/estilos
+    Ui::Preset::ButtonBack::setDisabled(s_btnBack, Ui::getThemeStyles(), !enabled);
 }
 
 void ui_layout_scaffold_set_back_handler(ui_back_cb_t cb, void* user) {
