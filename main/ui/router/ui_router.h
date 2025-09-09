@@ -6,6 +6,7 @@ extern "C" {
 
 /** Despacha una acción. Soporta:
  *   - NAV:/screen/<id>  → navega y pinta la pantalla <id>
+ *   - NAV:/back         → vuelve a la pantalla anterior
  *   - DO:/...           → (por ahora) loguea; no cambia de pantalla
  */
 void ui_router_dispatch(const char* action);

@@ -21,6 +21,8 @@ void ui_layout_scaffold_set_back_enabled(bool enabled);
 typedef void (*ui_back_cb_t)(void* user);
 void ui_layout_scaffold_set_back_handler(ui_back_cb_t cb, void* user);
 
+void ui_layout_scaffold_show_back(bool show);
+
 #ifdef __cplusplus
 }
 #endif

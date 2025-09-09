@@ -100,4 +100,19 @@ void ui_layout_scaffold_set_back_handler(ui_back_cb_t cb, void* user) {
     s_back_cb = cb;
     s_back_ud = user;
 }
+
+void ui_layout_scaffold_show_back(bool show)
+{
+    if (!s_btnBack.base.root) return;
+
+    if (show) {
+        lv_obj_clear_flag(s_btnBack.base.root, LV_OBJ_FLAG_HIDDEN);
+        Ui::Preset::ButtonBack::setDisabled(s_btnBack, Ui::getThemeStyles(), false);
+    } else {
+        // Evita que el foco navegue a un control oculto
+        Ui::Preset::ButtonBack::setDisabled(s_btnBack, Ui::getThemeStyles(), true);
+        lv_obj_add_flag(s_btnBack.base.root, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
 }
