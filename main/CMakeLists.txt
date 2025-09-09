@@ -36,6 +36,9 @@ idf_component_register(
         "ui/theme/fonts/montserrat_20_lat1.c"
         "ui/layout/ui_layout_scaffold.cpp"
         "ui/mockup/ui_mockup_menu.cpp"
+        "ui/menu/ui_menu_tree.cpp"
+        "ui/menu/ui_menu_loader.cpp"
+        "ui/menu/ui_menu_loader_smoke_test.cpp"
     INCLUDE_DIRS
         "."
         "ui"

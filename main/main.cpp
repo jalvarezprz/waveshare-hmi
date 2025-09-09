@@ -20,6 +20,7 @@
 #include "ui/layout/ui_layout_scaffold.h"
 #include "ui/ui_router.h"
 #include "ui/ui_router_mount.h"
+#include "ui/menu/ui_menu_loader.h"
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -29,6 +30,7 @@
 // Mockup (usar y tirar): implementado en main/ui/mockup/ui_mockup_menu.cpp
 // --------------------------------------------------------------------
 extern "C" void ui_mockup_menu_load(void);
+extern "C" void ui_menu_loader_run_smoke_test(void);
 
 extern "C" void app_main(void)
 {
@@ -66,7 +68,9 @@ extern "C" void app_main(void)
     // Pantalla simple con grid y 3 botones: "Inicio", "Parámetros", "Salir".
     // Sirve para validar layout/espaciados/eventos sin pasar por Router.
     // ================================================================
-    ui_mockup_menu_load();
+    // ui_mockup_menu_load();
+    // ui_menu_loader_run_tests();
+    ui_menu_loader_run_smoke_test();
 #endif
 
     // Desbloquea LVGL
