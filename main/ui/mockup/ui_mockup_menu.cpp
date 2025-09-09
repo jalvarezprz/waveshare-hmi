@@ -26,10 +26,9 @@
 #include "ui/menu/ui_menu_loader.h"
 #include "ui/menu/ui_menu_tree.h"
 
-static const char* TAG = "UI_MOCKUP_MENU";
+#include "ui/router/ui_router.h"
 
-// Router (se invoca internamente desde el preset si p.action está definido)
-extern "C" void ui_router_dispatch(const char* action);
+static const char* TAG = "UI_MOCKUP_MENU";
 
 // Punteros de UI
 static lv_obj_t* s_screen    = nullptr;
@@ -143,16 +142,14 @@ static lv_obj_t* build_menu_grid(lv_obj_t* parent, const ScreenSpecification& sp
         p.iconId  = strdup_cxx(resolve_icon_id(el.icon.empty() ? std::string("info") : el.icon));
         p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
 
-        // Si hay action, delegamos en el preset (llamará a ui_router_dispatch)
-        if (!el.action.empty()) {
-            p.action = strdup_cxx(el.action);
-        } else {
-            // Si no hay action, al menos deja un log en onClick
-            const char* labelCopy = p.text;
-            p.callbacks.onClick = [labelCopy](Ui::Component::Button::Handle&, void*) {
-                ESP_LOGW(TAG, "Elemento sin action: '%s'", labelCopy ? labelCopy : "(null)");
-            };
-        }
+        auto act = el.action;  // copia por valor: vida del lambda asegurada
+        p.callbacks.onClick = [act](Ui::Component::Button::Handle&, void*) {
+            if (!act.empty()) {
+                ui_router_dispatch(act.c_str());   // "NAV:/..." o "DO:/..."
+            } else {
+                ESP_LOGW(TAG, "Elemento sin action");
+            }
+        };
 
         auto H = Ui::Preset::ButtonMenu::create(s_container, S, p);
         grid_place(H.base.root, r, c);

@@ -12,7 +12,9 @@ idf_component_register(
         "ui/ui_view_menu_list.cpp"
         "ui/view/ui_view_menu_grid.cpp"
         "ui/view/ui_menu_render_grid.cpp"
-        "ui/ui_router.cpp"
+        "ui/view/ui_view_factory.cpp"       # Nuevo
+        "ui/router/ui_router.cpp"           # Nuevo
+    #   "ui/ui_router.cpp"
         "ui/ui_router_adapter.cpp"
         "ui/ui_router_mount.cpp"
         "ui/ui_pin.cpp"

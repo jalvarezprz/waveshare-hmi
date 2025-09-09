@@ -114,7 +114,7 @@ Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Cal
             if (!ud) return;
             Handle hh{ obj, nullptr, nullptr };
             if (ud->action && *ud->action) {
-                Ui::Router::dispatch(ud->action);
+                //Ui::Router::dispatch(ud->action);
             } else if (ud->cb.onClick) {
                 ud->cb.onClick(hh, ud->userData);
             }
