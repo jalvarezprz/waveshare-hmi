@@ -11,7 +11,7 @@ struct ElementSpecification {
     std::string id;        // slug único dentro de la pantalla
     std::string title;     // texto visible
     std::string icon;      // nombre de icono (opcional)
-    std::string action;    // "NAV:/..." | "DO:/..." (o derivado de objeto de acción)
+    std::string action;    // "NAV:/..." = Navega; | "DO:/..." = Haz, opera, ejecuta algo,...
     bool        enabled = true;
     bool        visible = true;
     bool        confirm = false;   // si requiere confirmación previa (para DO:/)
