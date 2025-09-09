@@ -41,6 +41,7 @@ idf_component_register(
         "ui/menu/ui_menu_tree.cpp"
         "ui/menu/ui_menu_loader.cpp"
         "ui/menu/ui_menu_loader_smoke_test.cpp"
+        "ui/layout/ui_layout_scaffold.cpp"
     INCLUDE_DIRS
         "."
         "ui"

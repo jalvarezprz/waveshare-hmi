@@ -36,6 +36,33 @@ static std::string resolve_icon_id(const std::string& token) {
     return token; // deja pasar tal cual
 }
 
+// Engancha NAV/DO a un objeto LVGL sin depender del preset.
+// Copia 'act' en heap y la libera al borrar el objeto.
+static void bind_action_click(lv_obj_t* obj, const std::string& act) {
+    if (!obj || act.empty()) return;
+
+    // Copia estable en heap (liberada en LV_EVENT_DELETE)
+    char* payload = (char*)lv_mem_alloc(act.size() + 1);
+    if (!payload) return;
+    std::memcpy(payload, act.c_str(), act.size() + 1);
+
+    lv_obj_add_event_cb(obj, [](lv_event_t* e){
+        auto* s = (const char*)lv_event_get_user_data(e);
+        if (!s) return;
+
+        switch (lv_event_get_code(e)) {
+            case LV_EVENT_CLICKED:
+                ui_router_dispatch(s);     // ← dispara NAV:/... o DO:/...
+                break;
+            case LV_EVENT_DELETE:
+                lv_mem_free((void*)s);     // liberar copia
+                break;
+            default:
+                break;
+        }
+    }, LV_EVENT_ALL, payload);
+}
+
 /* -------------------- menu_grid -------------------- */
 static lv_obj_t* build_menu_grid(lv_obj_t* parent, const ScreenSpecification& spec) {
     auto& S = Ui::getThemeStyles();
@@ -121,6 +148,7 @@ static lv_obj_t* build_menu_list(lv_obj_t* parent, const ScreenSpecification& sp
 
         auto H = Ui::Preset::ButtonMenu::create(cont, S, p);
         lv_obj_set_width(H.base.root, LV_PCT(100));
+        bind_action_click(H.base.root, el.action);
     }
 
     return cont;

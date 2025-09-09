@@ -18,7 +18,7 @@
 #include "ui/theme/ui_theme_c_api.h"
 #include "ui/theme/ui_theme_styles.h"
 #include "ui/layout/ui_layout_scaffold.h"
-#include "ui/ui_router.h"
+#include "ui/router/ui_router.h"
 #include "ui/ui_router_mount.h"
 #include "ui/menu/ui_menu_loader.h"
 
@@ -68,7 +68,8 @@ extern "C" void app_main(void)
     // Pantalla simple con grid y 3 botones: "Inicio", "Parámetros", "Salir".
     // Sirve para validar layout/espaciados/eventos sin pasar por Router.
     // ================================================================
-    ui_mockup_menu_load();
+    // ui_mockup_menu_load();
+    ui_router_go_screen("main");
     // ui_menu_loader_run_tests();
     // ui_menu_loader_run_smoke_test();
 #endif

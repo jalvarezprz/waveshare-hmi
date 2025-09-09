@@ -1,55 +1,97 @@
-#include "ui_layout_scaffold.h"
+#include "ui/layout/ui_layout_scaffold.h"
+#include "ui/theme/ui_theme_styles.h"
+#include "esp_log.h"
 
-namespace Ui {
+static const char* TAG = "UI_SCAFFOLD";
 
-void UiLayoutScaffold::build(lv_obj_t* root) {
-    if (!root) return;
+// Punteros globales del Scaffold
+static lv_obj_t* s_screen  = nullptr;
+static lv_obj_t* s_header  = nullptr;
+static lv_obj_t* s_btnBack = nullptr;
+static lv_obj_t* s_title   = nullptr;
+static lv_obj_t* s_content = nullptr;
 
-    // Asegura que el theme está inicializado (idempotente)
-    Ui::themeInitOnce();
+// Back handler (inyectado desde fuera; nada de router aquí)
+static ui_back_cb_t s_back_cb = nullptr;
+static void*        s_back_ud = nullptr;
 
-    if (!header_)  header_  = lv_obj_create(root);
-    if (!content_) content_ = lv_obj_create(root);
-    if (!footer_)  footer_  = lv_obj_create(root);
-
-    applyLayout_(root);
-    applyStyles_();
+static void on_back_event(lv_event_t* e) {
+    (void)e;
+    if (s_back_cb) s_back_cb(s_back_ud);
 }
 
-void UiLayoutScaffold::setBarsHeight(int16_t headerHeight, int16_t footerHeight) {
-    headerHeightPx_ = headerHeight;
-    footerHeightPx_ = footerHeight;
+static void build_once() {
+    if (s_screen) return;
 
-    if (header_) lv_obj_set_height(header_, headerHeightPx_);
-    if (footer_) lv_obj_set_height(footer_, footerHeightPx_);
-    // Content ajusta por flex-grow; no necesita altura fija
+    auto& S = Ui::getThemeStyles();
+
+    s_screen = lv_obj_create(nullptr);
+    lv_obj_clear_flag(s_screen, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_pad_all(s_screen, 8, 0);
+
+    // Layout: grid 1 columna, 2 filas (header + content)
+    static lv_coord_t col[] = { LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST };
+    static lv_coord_t row[] = { LV_GRID_CONTENT, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST };
+
+    lv_obj_set_layout(s_screen, LV_LAYOUT_GRID);
+    lv_obj_set_grid_dsc_array(s_screen, col, row);
+    lv_obj_set_style_pad_row(s_screen, 8, 0);
+
+    // Header
+    s_header = lv_obj_create(s_screen);
+    lv_obj_set_size(s_header, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_grid_cell(s_header, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 0, 1);
+    lv_obj_set_style_pad_all(s_header, 8, 0);
+    lv_obj_clear_flag(s_header, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_flex_flow(s_header, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(s_header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    // Botón Back
+    s_btnBack = lv_btn_create(s_header);
+    lv_obj_t* lblBack = lv_label_create(s_btnBack);
+    lv_label_set_text(lblBack, LV_SYMBOL_LEFT "  Atrás");
+    lv_obj_add_event_cb(s_btnBack, on_back_event, LV_EVENT_CLICKED, nullptr);
+
+    // Título
+    s_title = lv_label_create(s_header);
+    lv_label_set_text(s_title, "");  // se rellena en runtime
+    lv_obj_add_style(s_title, &S.labelTitle, 0);
+    lv_obj_set_style_pad_left(s_title, 8, 0);
+
+    // Content
+    s_content = lv_obj_create(s_screen);
+    lv_obj_set_size(s_content, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_grid_cell(s_content, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
+    lv_obj_clear_flag(s_content, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_pad_all(s_content, 8, 0);
+    lv_obj_set_flex_flow(s_content, LV_FLEX_FLOW_COLUMN);
 }
 
-void UiLayoutScaffold::applyLayout_(lv_obj_t* root) {
-    // Root ocupa toda la pantalla y usa flex en columna
-    lv_obj_set_size(root, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(root, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+extern "C" {
 
-    // Header: altura fija
-    lv_obj_set_width(header_, LV_PCT(100));
-    lv_obj_set_height(header_, headerHeightPx_);
-
-    // Content: crece para ocupar el espacio entre header y footer
-    lv_obj_set_width(content_, LV_PCT(100));
-    lv_obj_set_flex_grow(content_, 1);
-
-    // Footer: altura fija
-    lv_obj_set_width(footer_, LV_PCT(100));
-    lv_obj_set_height(footer_, footerHeightPx_);
+void ui_layout_scaffold_load(void) {
+    build_once();
+    lv_scr_load(s_screen);
 }
 
-void UiLayoutScaffold::applyStyles_() {
-    // Aplica estilos del theme a cada contenedor
-    auto& styles = Ui::getThemeStyles();
-    Ui::applyHeader(header_,  styles);
-    Ui::applyContent(content_, styles);
-    Ui::applyFooter(footer_,  styles);
+lv_obj_t* ui_layout_scaffold_get_content(void) {
+    build_once();
+    return s_content;
 }
 
-} // namespace Ui
+void ui_layout_scaffold_set_title(const char* title) {
+    if (!s_title) return;
+    lv_label_set_text(s_title, title ? title : "");
+}
+
+void ui_layout_scaffold_set_back_enabled(bool enabled) {
+    if (!s_btnBack) return;
+    if (enabled) lv_obj_clear_state(s_btnBack, LV_STATE_DISABLED);
+    else         lv_obj_add_state(s_btnBack, LV_STATE_DISABLED);
+}
+
+void ui_layout_scaffold_set_back_handler(ui_back_cb_t cb, void* user) {
+    s_back_cb = cb;
+    s_back_ud = user;
+}
+}

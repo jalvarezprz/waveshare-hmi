@@ -14,9 +14,9 @@
 namespace Ui::Component::Button {
 
 struct _CbHolder {
-    Callbacks cb{};
-    void*     userData = nullptr;
-    const char* action = nullptr;  ///< NUEVO: acción declarativa opcional
+    Callbacks   cb{};
+    void*       userData = nullptr;
+    const char* action   = nullptr;  ///< (payload opcional; NO se usa para navegar aquí)
     _CbHolder() = default;
     ~_CbHolder() = default;
 };
@@ -38,9 +38,9 @@ static void apply_variant(lv_obj_t* btn, UiThemeStyles& s, Variant v, bool setSi
 /**
  * @copydoc Ui::Component::Button::create
  *
- * Prioridad de callbacks:
- *  - Si Props::action está definido → se usa Router::dispatch(action).
- *  - Si no hay action → se usan los callbacks clásicos (onClick, onToggle, onLong).
+ * Notas:
+ *  - El componente es **presentacional**: no conoce Router ni navega por sí mismo.
+ *  - Ejecuta SIEMPRE el callback correspondiente si está definido.
  */
 Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Callbacks& cb) {
     Ui::themeInitOnce();
@@ -81,7 +81,7 @@ Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Cal
         // (opcional: spinner)
     }
 
-    // --- Callbacks / Action ---
+    // --- Callbacks / Holder ---
     _CbHolder* holder = nullptr;
     if (p.action || cb.onClick || cb.onLong || (p.toggle && cb.onToggle)) {
         void* mem = lv_mem_alloc(sizeof(_CbHolder));
@@ -89,36 +89,27 @@ Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Cal
             holder = new (mem) _CbHolder();
             holder->cb       = cb;
             holder->userData = p.userData;
-            holder->action   = p.action; // NUEVO
+            holder->action   = p.action; // sólo como payload opcional
         }
     }
 
     if (holder) {
-        // Liberación: destructor + free
+        // Liberación: destructor + free (al borrar el objeto)
         lv_obj_add_event_cb(h.root, [](lv_event_t* e){
             auto* ud = static_cast<_CbHolder*>(lv_event_get_user_data(e));
-            if (ud) {
-                ud->~_CbHolder();
-                lv_mem_free(ud);
-            }
+            if (ud) { ud->~_CbHolder(); lv_mem_free(ud); }
         }, LV_EVENT_DELETE, holder);
-    }
 
-    // Eventos
-    if (holder) {
-        // Click
+        // Click → SIEMPRE intenta ejecutar el callback si existe
         lv_obj_add_event_cb(h.root, [](lv_event_t* e){
             auto* obj = lv_event_get_target(e);
             auto* ud  = static_cast<_CbHolder*>(lv_event_get_user_data(e));
             if (!ud) return;
             Handle hh{ obj, nullptr, nullptr };
-            // Sin router aquí: el componente solo emite eventos
-            if (ud->cb.onClick) {
-                ud->cb.onClick(hh, ud->userData);
-            }
+            if (ud->cb.onClick) ud->cb.onClick(hh, ud->userData);
         }, LV_EVENT_CLICKED, holder);
 
-        // Toggle
+        // Toggle (si procede)
         if (p.toggle) {
             lv_obj_add_event_cb(h.root, [](lv_event_t* e){
                 auto* obj = lv_event_get_target(e);
@@ -130,14 +121,14 @@ Handle create(lv_obj_t* parent, UiThemeStyles& styles, const Props& p, const Cal
             }, LV_EVENT_VALUE_CHANGED, holder);
         }
 
-        // Long press
+        // Long press (si procede)
         if (cb.onLong) {
             lv_obj_add_event_cb(h.root, [](lv_event_t* e){
                 auto* obj = lv_event_get_target(e);
                 auto* ud  = static_cast<_CbHolder*>(lv_event_get_user_data(e));
                 if (!ud) return;
                 Handle hh{ obj, nullptr, nullptr };
-                ud->cb.onLong(hh, ud->userData);
+                if (ud->cb.onLong) ud->cb.onLong(hh, ud->userData);
             }, LV_EVENT_LONG_PRESSED, holder);
         }
     }

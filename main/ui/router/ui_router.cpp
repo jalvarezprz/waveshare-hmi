@@ -9,6 +9,8 @@
 #include "ui/menu/ui_menu_loader.h"
 #include "ui/view/ui_view_factory.h"
 #include "ui/theme/ui_theme_styles.h"
+#include "ui/layout/ui_layout_scaffold.h"
+
 
 static const char* TAG = "UI_ROUTER";
 
@@ -23,24 +25,6 @@ static bool extract_nav_screen_id(const char* action, std::string& out_id) {
     if (std::strncmp(action, kPrefix, L) != 0) return false;
     out_id.assign(action + L);
     return !out_id.empty();
-}
-
-static void show_screen_spec(const ScreenSpecification& spec) {
-    // destruir pantalla anterior
-    if (g_screen) {
-        lv_obj_del(g_screen);
-        g_screen = nullptr;
-    }
-
-    // Crear nueva pantalla y construir vista
-    g_screen = lv_obj_create(nullptr);
-    lv_obj_clear_flag(g_screen, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_pad_all(g_screen, 12, 0);
-
-    (void)ui_view_build(g_screen, spec);
-
-    // Cargar
-    lv_scr_load(g_screen);
 }
 
 void ui_router_go_screen(const char* screen_id) {
@@ -63,15 +47,30 @@ void ui_router_go_screen(const char* screen_id) {
         return;
     }
 
-    // Historial: push si hay current
+    // 1) Asegura Scaffold cargado una vez
+    static bool s_scaffold_ready = false;
+    if (!s_scaffold_ready) {
+        ui_layout_scaffold_load();
+        ui_layout_scaffold_set_back_handler([](void*) { ui_router_back(); }, nullptr);
+        s_scaffold_ready = true;
+    }
+
+    // 2) Historial: push ANTES de actualizar header/estado
     if (!g_current_id.empty()) g_history.push_back(g_current_id);
     g_current_id = spec.id.empty() ? screen_id : spec.id;
 
+    // 3) Header (título) y botón Back
+    ui_layout_scaffold_set_title(spec.title.empty() ? screen_id : spec.title.c_str());
+    ui_layout_scaffold_set_back_enabled(!g_history.empty());
+
+    // 4) Monta SOLO el contenido dentro del Scaffold
+    Ui::themeReload(); // si procede
+    lv_obj_t* content = ui_layout_scaffold_get_content();
+    lv_obj_clean(content);
+    (void)ui_view_build(content, spec);
+
     ESP_LOGI(TAG, "Navegando a '%s' (view=%s, elements=%u)",
              g_current_id.c_str(), spec.view.c_str(), (unsigned)spec.elements.size());
-
-    Ui::themeReload();   // por si el tema cambió
-    show_screen_spec(spec);
 }
 
 void ui_router_back(void) {
@@ -86,6 +85,9 @@ void ui_router_back(void) {
 }
 
 void ui_router_dispatch(const char* action) {
+
+    ESP_LOGI("ROUTER", "dispatch: %s", action ? action : "(null)");
+
     if (!action) return;
 
     std::string id;
