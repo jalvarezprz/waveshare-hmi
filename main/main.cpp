@@ -68,9 +68,9 @@ extern "C" void app_main(void)
     // Pantalla simple con grid y 3 botones: "Inicio", "Parámetros", "Salir".
     // Sirve para validar layout/espaciados/eventos sin pasar por Router.
     // ================================================================
-    // ui_mockup_menu_load();
+    ui_mockup_menu_load();
     // ui_menu_loader_run_tests();
-    ui_menu_loader_run_smoke_test();
+    // ui_menu_loader_run_smoke_test();
 #endif
 
     // Desbloquea LVGL
