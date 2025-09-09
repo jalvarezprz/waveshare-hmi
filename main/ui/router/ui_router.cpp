@@ -86,7 +86,7 @@ void ui_router_back(void) {
 
 void ui_router_dispatch(const char* action) {
 
-    ESP_LOGI("ROUTER", "dispatch: %s", action ? action : "(null)");
+    ESP_LOGI("UI_ROUTER", "dispatch: %s", action ? action : "(null)");
 
     if (!action) return;
 

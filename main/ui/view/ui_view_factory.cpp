@@ -36,26 +36,38 @@ static std::string resolve_icon_id(const std::string& token) {
     return token; // deja pasar tal cual
 }
 
-// Engancha NAV/DO a un objeto LVGL sin depender del preset.
-// Copia 'act' en heap y la libera al borrar el objeto.
+static void enable_event_bubble_recursive(lv_obj_t* obj) {
+    if (!obj) return;
+    uint32_t cnt = lv_obj_get_child_cnt(obj);
+    for (uint32_t i = 0; i < cnt; ++i) {
+        lv_obj_t* ch = lv_obj_get_child(obj, i);
+        lv_obj_add_flag(ch, LV_OBJ_FLAG_EVENT_BUBBLE);
+        enable_event_bubble_recursive(ch);
+    }
+}
+
+// Ata NAV:/… / DO:/… al objeto LVGL. Copia la acción en heap y la libera en DELETE.
 static void bind_action_click(lv_obj_t* obj, const std::string& act) {
     if (!obj || act.empty()) return;
 
-    // Copia estable en heap (liberada en LV_EVENT_DELETE)
     char* payload = (char*)lv_mem_alloc(act.size() + 1);
     if (!payload) return;
     std::memcpy(payload, act.c_str(), act.size() + 1);
 
+    // Asegura que los clics en los hijos burbujeen hasta este objeto
+    enable_event_bubble_recursive(obj);
+
     lv_obj_add_event_cb(obj, [](lv_event_t* e){
-        auto* s = (const char*)lv_event_get_user_data(e);
+        const char* s = (const char*)lv_event_get_user_data(e);
         if (!s) return;
 
         switch (lv_event_get_code(e)) {
             case LV_EVENT_CLICKED:
-                ui_router_dispatch(s);     // ← dispara NAV:/... o DO:/...
+                ESP_LOGI("VIEW", "CLICK → dispatch: %s", s);
+                ui_router_dispatch(s);
                 break;
             case LV_EVENT_DELETE:
-                lv_mem_free((void*)s);     // liberar copia
+                lv_mem_free((void*)s);
                 break;
             default:
                 break;
@@ -111,7 +123,9 @@ static lv_obj_t* build_menu_grid(lv_obj_t* parent, const ScreenSpecification& sp
         p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
 
         if (!el.action.empty()) p.action = strdup_cxx(el.action);
+
         auto H = Ui::Preset::ButtonMenu::create(cont, S, p);
+        bind_action_click(H.base.root, el.action);
 
         lv_obj_set_grid_cell(H.base.root,
             LV_GRID_ALIGN_STRETCH, c, 1,
@@ -149,6 +163,7 @@ static lv_obj_t* build_menu_list(lv_obj_t* parent, const ScreenSpecification& sp
         auto H = Ui::Preset::ButtonMenu::create(cont, S, p);
         lv_obj_set_width(H.base.root, LV_PCT(100));
         bind_action_click(H.base.root, el.action);
+
     }
 
     return cont;
