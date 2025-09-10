@@ -2,8 +2,8 @@
 #include "esp_log.h"
 #include <vector>
 #include <string>
-#include <cstring>   // <-- necesario para memcpy
-#include <cstdlib>   // <-- necesario para malloc
+#include <cstring>   // memcpy
+#include <cstdlib>   // malloc
 
 // Tema/controles
 #include "ui/theme/ui_theme_styles.h"
@@ -23,7 +23,6 @@ static const char* strdup_cxx(const std::string& s) {
 }
 
 // Mapea tokens semánticos → id de icono del preset.
-// Devuelve std::string para evitar punteros colgantes.
 static std::string resolve_icon_id(const std::string& token) {
     if (token == "gear")    return "lv:settings";
     if (token == "info")    return "lv:info";
@@ -34,6 +33,26 @@ static std::string resolve_icon_id(const std::string& token) {
     if (token == "number")  return "lv:warning";
     if (token == "temp")    return "lv:charging";
     return token; // deja pasar tal cual
+}
+
+// --- helpers muy pequeños ---
+static lv_obj_t* make_row(lv_obj_t* parent, int pad_col) {
+    lv_obj_t* row = lv_obj_create(parent);
+    lv_obj_remove_style_all(row);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_style_pad_all(row, 0, 0);
+    lv_obj_set_style_pad_column(row, pad_col, 0);
+    lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
+    lv_obj_set_width(row, LV_PCT(100));
+    return row;
+}
+
+static lv_obj_t* make_label(lv_obj_t* parent, const char* txt, Ui::UiThemeStyles& s, bool bold=false) {
+    lv_obj_t* l = lv_label_create(parent);
+    lv_label_set_text(l, txt ? txt : "");
+    lv_obj_set_style_text_color(l, s.tokens.colorOnSurface, 0);
+    lv_obj_set_style_text_font(l, bold ? s.tokens.fontTitle : s.tokens.fontBody, 0);
+    return l;
 }
 
 static void enable_event_bubble_recursive(lv_obj_t* obj) {
@@ -73,6 +92,151 @@ static void bind_action_click(lv_obj_t* obj, const std::string& act) {
                 break;
         }
     }, LV_EVENT_ALL, payload);
+}
+
+/* ========================= VISTA: sw_temp_panel ========================= */
+
+// Contexto del panel para gestionar vida útil de labels + timer
+struct PanelCtx {
+    lv_obj_t* temp_val[3];
+    lv_timer_t* timer;
+};
+
+// Limpieza segura al destruir el contenedor de la vista
+static void panel_ctx_on_delete(lv_event_t* e) {
+    PanelCtx* ctx = (PanelCtx*)lv_event_get_user_data(e);
+    if (!ctx) return;
+    if (ctx->timer) {
+        lv_timer_del(ctx->timer);
+        ctx->timer = nullptr;
+    }
+    // Los objetos temp_val[] ya los destruye LVGL con el árbol; solo anulamos punteros
+    for (int i = 0; i < 3; ++i) ctx->temp_val[i] = nullptr;
+    lv_mem_free(ctx);
+}
+
+// Timer: actualiza lecturas si los objetos siguen vivos
+static void panel_timer_cb(lv_timer_t* t) {
+    PanelCtx* ctx = (PanelCtx*)t->user_data;   // LVGL v8.x compatible
+    if (!ctx) return;
+
+    static float base = 20.0f;
+    base += 0.1f; if (base > 25.0f) base = 20.0f;
+
+    for (int i = 0; i < 3; ++i) {
+        lv_obj_t* lab = ctx->temp_val[i];
+        if (!lab) continue;
+        if (!lv_obj_is_valid(lab)) { ctx->temp_val[i] = nullptr; continue; }
+
+        char buf[32];
+        float val = base + i * 0.5f;
+        std::snprintf(buf, sizeof(buf), "%.1f °C", val);
+        lv_label_set_text(lab, buf);
+    }
+}
+
+// builder específico: 2 columnas (izq: switches, dcha: temperaturas)
+static void build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification& spec)
+{
+    Ui::UiThemeStyles& s = Ui::getThemeStyles();
+
+    // Valores locales (no dependemos de nombres concretos de tokens)
+    static constexpr lv_coord_t OUTER_PAD = 16;
+    static constexpr lv_coord_t GRID_GAP  = 12;
+    static constexpr lv_coord_t ROW_GAP   = 12;  // para filas make_row
+
+    // Contenedor principal: grid 2 columnas, 3 filas compactas
+    static const lv_coord_t col_dsc[] = { LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST };
+    static const lv_coord_t row_dsc[] = { LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST };
+
+    lv_obj_set_layout(parent, LV_LAYOUT_GRID);
+    lv_obj_set_grid_dsc_array(parent, col_dsc, row_dsc);
+    lv_obj_set_style_pad_all(parent, OUTER_PAD, 0);
+    lv_obj_set_style_pad_row(parent, GRID_GAP, 0);
+    lv_obj_set_style_pad_column(parent, GRID_GAP, 0);
+
+    // Contexto del panel
+    PanelCtx* ctx = (PanelCtx*)lv_mem_alloc(sizeof(PanelCtx));
+    if (ctx) {
+        ctx->timer = nullptr;
+        for (int i = 0; i < 3; ++i) ctx->temp_val[i] = nullptr;
+
+        // Cuando se destruya la vista, cancelamos el timer y liberamos ctx
+        lv_obj_add_event_cb(parent, panel_ctx_on_delete, LV_EVENT_DELETE, ctx);
+    }
+
+    // Preparar 3 filas de switches (columna 0) y 3 de temperaturas (columna 1)
+    int sw_idx = 0;
+    int t_idx  = 0;
+
+    for (const auto& e : spec.elements) {
+        if (!e.visible) continue;
+
+        // Heurística simple: si id empieza por "sw" → switch; si "t" → temperatura.
+        bool is_switch = e.id.rfind("sw", 0) == 0;
+        if (is_switch && sw_idx < 3) {
+            int row = sw_idx;
+
+            // Fila: [Label] [Switch]
+            lv_obj_t* rowc = make_row(parent, ROW_GAP);
+            lv_obj_set_grid_cell(rowc, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, row, 1);
+
+            lv_obj_t* l = make_label(rowc, e.title.c_str(), s, false);
+            // Alto contraste para texto
+            lv_obj_set_style_text_color(l, lv_color_black(), 0);
+
+            lv_obj_t* sw = lv_switch_create(rowc);
+            if (!e.enabled) lv_obj_add_state(sw, LV_STATE_DISABLED);
+            // Tamaño más grande para buena usabilidad táctil
+            lv_obj_set_size(sw, 80, 40);
+            lv_obj_set_style_radius(sw, 20, 0);
+            if (s.tokens.minTouch > 0) lv_obj_set_style_min_height(sw, s.tokens.minTouch, 0);
+
+            // Evento: cuando cambie el switch, despachamos la acción DO:/...
+            if (!e.action.empty()) {
+                char* act = (char*)lv_mem_alloc(e.action.size() + 1);
+                if (act) {
+                    std::strcpy(act, e.action.c_str());
+                    lv_obj_add_event_cb(sw, [](lv_event_t* ev){
+                        const char* act = (const char*)lv_event_get_user_data(ev);
+                        ui_router_dispatch(act);
+                    }, LV_EVENT_VALUE_CHANGED, act);
+                }
+            }
+
+            // Auto-juste: etiqueta a la izquierda, switch a la derecha
+            lv_obj_set_flex_grow(l, 1);
+            ++sw_idx;
+            continue;
+        }
+
+        bool is_temp = e.id.rfind("t", 0) == 0;
+        if (is_temp && t_idx < 3) {
+            int row = t_idx;
+
+            // Fila: [Label] [Valor °C]
+            lv_obj_t* rowc = make_row(parent, ROW_GAP);
+            lv_obj_set_grid_cell(rowc, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, row, 1);
+
+            (void)make_label(rowc, e.title.c_str(), s, false);
+
+            lv_obj_t* v = make_label(rowc, "--.- °C", s, true);
+            // Valor más grande y con alto contraste
+            lv_obj_set_style_text_font(v, s.tokens.fontTitle, 0);
+            lv_obj_set_style_text_color(v, lv_color_black(), 0);
+            lv_obj_set_style_text_align(v, LV_TEXT_ALIGN_RIGHT, 0);
+            lv_obj_set_width(v, LV_PCT(40));
+
+            if (ctx) ctx->temp_val[t_idx] = v;
+            ++t_idx;
+            continue;
+        }
+    }
+
+    // Timer DEMO para actualizar lecturas (reemplaza con tus sensores reales)
+    if (ctx) {
+        ctx->timer = lv_timer_create(panel_timer_cb, 1000, ctx);
+    }
 }
 
 /* -------------------- menu_grid -------------------- */
@@ -163,18 +327,28 @@ static lv_obj_t* build_menu_list(lv_obj_t* parent, const ScreenSpecification& sp
         auto H = Ui::Preset::ButtonMenu::create(cont, S, p);
         lv_obj_set_width(H.base.root, LV_PCT(100));
         bind_action_click(H.base.root, el.action);
-
     }
 
     return cont;
 }
 
 /* -------------------- entrypoint -------------------- */
-lv_obj_t* ui_view_build(lv_obj_t* parent, const ScreenSpecification& spec) {
-    if (spec.view == "menu_grid") return build_menu_grid(parent, spec);
-    if (spec.view == "menu_list") return build_menu_list(parent, spec);
+lv_obj_t* ui_view_build(lv_obj_t* parent, const ScreenSpecification& spec)
+{
+    if (!parent) {
+        ESP_LOGE(TAG, "ui_view_build: parent nulo");
+        return nullptr;
+    }
 
-    // Fallback
+    if (spec.view == "menu_grid")      return build_menu_grid(parent, spec);
+    if (spec.view == "menu_list")      return build_menu_list(parent, spec);
+
+    if (spec.view == "sw_temp_panel") {
+        build_sw_temp_panel(parent, spec); // builder void
+        return parent;                      // devolvemos el contenedor trabajado
+    }
+
+    // Fallback: contenedor simple con mensaje
     lv_obj_t* cont = lv_obj_create(parent);
     lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
     lv_obj_center(cont);

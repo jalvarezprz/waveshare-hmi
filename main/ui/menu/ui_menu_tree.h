@@ -20,6 +20,7 @@ inline constexpr const char* UI_SCREEN_ID_PARAMS = "params";
 inline constexpr const char* UI_SCREEN_ID_HW     = "hw";
 inline constexpr const char* UI_SCREEN_ID_DDC    = "ddc";
 inline constexpr const char* UI_SCREEN_ID_BUS    = "bus";
+inline constexpr const char* UI_SCREEN_ID_PANEL = "panel";
 
 /* === JSON embebido por pantalla (extern: definido en el .cpp) === */
 extern const char UI_SCREEN_MAIN[];    // main
@@ -29,6 +30,7 @@ extern const char UI_SCREEN_PARAMS[];  // params
 extern const char UI_SCREEN_HW[];      // hw
 extern const char UI_SCREEN_DDC[];     // ddc
 extern const char UI_SCREEN_BUS[];     // bus
+extern const char UI_SCREEN_PANEL[];   // panel
 
 /**
  * @brief Devuelve el JSON de la pantalla solicitada por id, o nullptr si no existe.

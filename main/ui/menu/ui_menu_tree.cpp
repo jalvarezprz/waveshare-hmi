@@ -13,18 +13,20 @@ const char UI_SCREEN_MAIN[] = R"json(
   "view": "menu_grid",
   "title": "Principal",
   "elements": [
-    { "id": "tend",   "title": "Punt. Tendencia", "icon": "trend",  "action": "NAV:/screen/tend"   },
-    { "id": "params", "title": "Parámetros",      "icon": "gear",   "action": "NAV:/screen/params" },
-    { "id": "info",   "title": "Inf. Sistema",    "icon": "info",   "action": "NAV:/screen/info"   },
-    { "id": "hw",     "title": "Conf. Hardware",  "icon": "chip",   "action": "NAV:/screen/hw"     },
-    { "id": "ddc",    "title": "Ciclos DDC",      "icon": "repeat", "action": "NAV:/screen/ddc"    },
-    { "id": "bus",    "title": "Acceso Buswide",  "icon": "bus",    "action": "NAV:/screen/bus"    },
-    { "id": "test1", "title": "Prueba Uno",   "icon": "star",   "action": "NAV:/screen/test1" },
-    { "id": "test2", "title": "Prueba Dos",   "icon": "flash",  "action": "NAV:/screen/test2" },
-    { "id": "test3", "title": "Prueba Tres",  "icon": "hammer", "action": "NAV:/screen/test3" }
+    { "id": "tend",   "title": "Punt. Tendencia", "icon": "trend",    "action": "NAV:/screen/tend"   },
+    { "id": "params", "title": "Parámetros",      "icon": "gear",     "action": "NAV:/screen/params" },
+    { "id": "info",   "title": "Inf. Sistema",    "icon": "info",     "action": "NAV:/screen/info"   },
+    { "id": "hw",     "title": "Conf. Hardware",  "icon": "chip",     "action": "NAV:/screen/hw"     },
+    { "id": "ddc",    "title": "Ciclos DDC",      "icon": "repeat",   "action": "NAV:/screen/ddc"    },
+    { "id": "bus",    "title": "Acceso Buswide",  "icon": "bus",      "action": "NAV:/screen/bus"    },
+    { "id": "test1",  "title": "Prueba Uno",      "icon": "star",     "action": "NAV:/screen/test1" },
+    { "id": "test2",  "title": "Prueba Dos",      "icon": "flash",    "action": "NAV:/screen/test2" },
+    { "id": "test3",  "title": "Prueba Tres",     "icon": "hammer",   "action": "NAV:/screen/test3" },
+    { "id": "panel",  "title": "Panel Pruebas",   "icon": "settings", "action": "NAV:/screen/panel" }
   ]
 }
 )json";
+
 
 const char UI_SCREEN_TEND[] = R"json(
 {
@@ -141,6 +143,23 @@ const char UI_SCREEN_TEST3[] = R"json(
 }
 )json";
 
+const char UI_SCREEN_PANEL[] = R"json(
+{
+  "schemaVersion": 1,
+  "id": "panel",
+  "view": "sw_temp_panel",
+  "title": "Panel de Pruebas",
+  "elements": [
+    { "id": "sw1", "title": "Salida 1", "icon": "lv:power", "action": "DO:/io/sw1", "enabled": true,  "visible": true },
+    { "id": "sw2", "title": "Salida 2", "icon": "lv:power", "action": "DO:/io/sw2", "enabled": true,  "visible": true },
+    { "id": "sw3", "title": "Salida 3", "icon": "lv:power", "action": "DO:/io/sw3", "enabled": true,  "visible": true },
+
+    { "id": "t1",  "title": "T. Depósito", "icon": "lv:warning", "enabled": true, "visible": true },
+    { "id": "t2",  "title": "T. Ambiente", "icon": "lv:warning", "enabled": true, "visible": true },
+    { "id": "t3",  "title": "T. Retorno",  "icon": "lv:warning", "enabled": true, "visible": true }
+  ]
+}
+)json";
 
 /* // --- Alias legacy opcional (descomenta si lo necesitas) ---
 const char ui_menu_json_tree[] = R"json(
@@ -170,6 +189,7 @@ static const ScreenEntry kScreens[] = {
     { "test1", UI_SCREEN_TEST1 },
     { "test2", UI_SCREEN_TEST2 },
     { "test3", UI_SCREEN_TEST3 },
+    { UI_SCREEN_ID_PANEL, UI_SCREEN_PANEL },
 };
 
 
