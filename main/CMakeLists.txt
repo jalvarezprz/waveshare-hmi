@@ -23,7 +23,6 @@ set(SRCS_UI_WIDGETS
     ui/preset/ui_preset_button.cpp
     ui/preset/ui_preset_switch.cpp
     ui/preset/ui_preset_label.cpp
-    ui/preset/ui_preset_slider.cpp
     ui/component/ui_component_button.cpp
     ui/component/ui_component_label.cpp
     ui/layout/ui_layout_scaffold.cpp
@@ -54,7 +53,6 @@ set(SRCS_UI_FONTS
 # =========================
 set(SRCS_COMM_TX
     comm/tx/comm_tx_api.cpp
-    comm/tx/comm_tx_gateway.cpp
     comm/tx/comm_tx_handler.cpp
     comm/tx/comm_tx_queue.cpp
 )
@@ -83,25 +81,25 @@ set(SRCS_ALL
 # Candidatos obsoletos (ir activando)
 # =========================
 set(OBSOLETE_CANDIDATES
-    # ui/ui_router.cpp
-    # ui/component/ui_component_slider.cpp
-    # ui/ui_menu_json_utilities.cpp
-    # ui/ui_menu_json_tree.cpp
-    # ui/ui_menu_nav.cpp
-    # ui/ui_menu_render_detail.cpp
-    # ui/ui_menu_field_factory.cpp
-    # ui/ui_view_menu_list.cpp
-    # ui/view/ui_view_menu_grid.cpp
-    # ui/view/ui_menu_render_grid.cpp
-    # ui/ui_router.cpp
-    # ui/ui_router_adapter.cpp
-    # ui/ui_router_mount.cpp
-    # ui/ui_pin.cpp
-    # ui/actions/ui_actions.cpp
-    # ui/component/ui_component_slider.cpp
-    # ui/mockup/ui_mockup_menu.cpp
-    # ui/menu/ui_menu_loader_smoke_test.cpp
-    # ui/theme/ui_theme_c_api.cpp
+    # ui/ui_router.cpp                          *
+    # ui/ui_menu_json_utilities.cpp             *
+    # ui/ui_menu_json_tree.cpp                  *
+    # ui/ui_menu_nav.cpp                        *
+    # ui/ui_menu_render_detail.cpp              *
+    # ui/ui_menu_field_factory.cpp              *
+    # ui/ui_view_menu_list.cpp                  *
+    # ui/view/ui_view_menu_grid.cpp             *
+    # ui/view/ui_menu_render_grid.cpp           *
+    # ui/ui_router.cpp                          *
+    # ui/ui_router_adapter.cpp                  *
+    # ui/ui_router_mount.cpp                    *
+    # ui/ui_pin.cpp                             *
+    # ui/actions/ui_actions.cpp                 *
+    # ui/mockup/ui_mockup_menu.cpp              *
+    # ui/menu/ui_menu_loader_smoke_test.cpp     *
+    # ui/theme/ui_theme_c_api.cpp               *
+    # ui/component/ui_component_slider.cpp      *
+    # ui/preset/ui_preset_slider.cpp            *
 )
 
 if(OBSOLETE_CANDIDATES)

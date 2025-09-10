@@ -15,22 +15,15 @@
 #include "waveshare_rgb_lcd_port.h"
 #include "lvgl_lock_shim.h"
 
-#include "ui/theme/ui_theme_c_api.h"
 #include "ui/theme/ui_theme_styles.h"
 #include "ui/layout/ui_layout_scaffold.h"
 #include "ui/router/ui_router.h"
-#include "ui/ui_router_mount.h"
 #include "ui/menu/ui_menu_loader.h"
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-// --------------------------------------------------------------------
-// Mockup (usar y tirar): implementado en main/ui/mockup/ui_mockup_menu.cpp
-// --------------------------------------------------------------------
-extern "C" void ui_mockup_menu_load(void);
-extern "C" void ui_menu_loader_run_smoke_test(void);
 
 extern "C" void app_main(void)
 {
