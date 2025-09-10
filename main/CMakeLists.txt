@@ -12,20 +12,8 @@ set(SRCS_BASE
 # UI — utilidades y router
 # =========================
 set(SRCS_UI_CORE
-    ui/ui_menu_json_utilities.cpp
-    ui/ui_menu_json_tree.cpp
-    ui/ui_menu_nav.cpp
-    ui/ui_menu_render_detail.cpp
-    ui/ui_menu_field_factory.cpp
-    ui/ui_view_menu_list.cpp
-    ui/view/ui_view_menu_grid.cpp
-    ui/view/ui_menu_render_grid.cpp
     ui/view/ui_view_factory.cpp
-    ui/router/ui_router.cpp        # Nuevo
-#   ui/ui_router.cpp               # antiguo (desactivado)
-    ui/ui_router_adapter.cpp
-    ui/ui_router_mount.cpp
-    ui/ui_pin.cpp
+    ui/router/ui_router.cpp
 )
 
 # =========================
@@ -102,7 +90,18 @@ set(SRCS_ALL
 set(OBSOLETE_CANDIDATES
     # ui/ui_router.cpp
     # ui/component/ui_component_slider.cpp
-    # ... añade aquí candidatos para probar exclusión
+    # ui/ui_menu_json_utilities.cpp
+    # ui/ui_menu_json_tree.cpp
+    # ui/ui_menu_nav.cpp
+    # ui/ui_menu_render_detail.cpp
+    # ui/ui_menu_field_factory.cpp
+    # ui/ui_view_menu_list.cpp
+    # ui/view/ui_view_menu_grid.cpp
+    # ui/view/ui_menu_render_grid.cpp
+    # ui/ui_router.cpp
+    # ui/ui_router_adapter.cpp
+    # ui/ui_router_mount.cpp
+    # ui/ui_pin.cpp
 )
 
 if(OBSOLETE_CANDIDATES)
