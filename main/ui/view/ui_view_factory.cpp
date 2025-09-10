@@ -50,7 +50,8 @@ static lv_obj_t* make_row(lv_obj_t* parent, int pad_col) {
 static lv_obj_t* make_label(lv_obj_t* parent, const char* txt, Ui::UiThemeStyles& s, bool bold=false) {
     lv_obj_t* l = lv_label_create(parent);
     lv_label_set_text(l, txt ? txt : "");
-    lv_obj_set_style_text_color(l, s.tokens.colorSurface, 0);
+    // IMPORTANTE: usar color de texto sobre la superficie (no el color del fondo)
+    lv_obj_set_style_text_color(l, s.tokens.colorOnSurface, 0);
     lv_obj_set_style_text_font(l, bold ? s.tokens.fontTitle : s.tokens.fontBody, 0);
     return l;
 }
@@ -143,14 +144,17 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
     // Root propio del panel (hijo de parent)
     lv_obj_t* root = lv_obj_create(parent);
     lv_obj_set_size(root, LV_PCT(100), LV_PCT(100));
-    lv_obj_clear_flag(root, LV_OBJ_FLAG_SCROLLABLE);
+    // Permite scroll vertical si el contenido no cabe (por si aumentamos gaps)
+    lv_obj_set_scroll_dir(root, LV_DIR_VER);
 
     // Valores locales
-    static constexpr lv_coord_t OUTER_PAD = 16;
-    static constexpr lv_coord_t GRID_GAP  = 12;
-    static constexpr lv_coord_t ROW_GAP   = 8;  // separación interna en cada celda
+    static constexpr lv_coord_t OUTER_PAD   = 16;
+    static constexpr lv_coord_t GRID_GAP_ROW = 20; // ↑ más espacio vertical entre filas
+    static constexpr lv_coord_t GRID_GAP_COL = 16; // espacio entre columnas
+    static constexpr lv_coord_t ROW_GAP     = 8;   // separación interna en cada celda
+    static constexpr lv_coord_t CELL_PAD    = 10;  // padding interno del bloque verde
 
-    // Grid: 3 columnas (todas usadas), 4 filas
+    // Grid: 3 columnas (todas usadas), 4 filas (reparto proporcional)
     static const lv_coord_t col_dsc[] = {
         LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST
     };
@@ -166,8 +170,8 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
     lv_obj_set_layout(root, LV_LAYOUT_GRID);
     lv_obj_set_grid_dsc_array(root, col_dsc, row_dsc);
     lv_obj_set_style_pad_all(root, OUTER_PAD, 0);
-    lv_obj_set_style_pad_row(root, GRID_GAP, 0);
-    lv_obj_set_style_pad_column(root, GRID_GAP, 0);
+    lv_obj_set_style_pad_row(root, GRID_GAP_ROW, 0);
+    lv_obj_set_style_pad_column(root, GRID_GAP_COL, 0);
 
     // Contexto del panel y hook de borrado en root
     PanelCtx* ctx = (PanelCtx*)lv_mem_alloc(sizeof(PanelCtx));
@@ -195,6 +199,9 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
 
     ESP_LOGI(TAG, "sw_temp_panel: temps=%d, sws=%d", (int)temps.size(), (int)sws.size());
 
+    // Color verde claro para las celdas
+    const lv_color_t kCellBg = lv_color_make(0x2f, 0xad, 0x32); // #2FAD32FF
+
     // --- Fila 0: hasta 3 switches, columnas 0..2 ---
     for (int c = 0; c < (int)sws.size(); ++c) {
         const auto* e = sws[c];
@@ -205,10 +212,17 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
             LV_GRID_ALIGN_STRETCH, c, 1,
             LV_GRID_ALIGN_STRETCH, 0, 1);
 
+        // Estética del bloque (fondo verde claro + padding)
+        lv_obj_set_style_bg_opa(cell, LV_OPA_COVER, 0);
+        lv_obj_set_style_bg_color(cell, kCellBg, 0);
+        lv_obj_set_style_pad_all(cell, CELL_PAD, 0);
+        lv_obj_set_style_radius(cell, 8, 0);
+
         // [Label] [Switch]
         lv_obj_t* l = make_label(cell, e->title.c_str(), s, false);
         // Alto contraste para texto
-        lv_obj_set_style_text_color(l, lv_color_black(), 0);
+        lv_obj_set_style_text_color(l, lv_color_white(), 0);
+        lv_obj_set_flex_grow(l, 1); // empuja el switch a la derecha
 
         lv_obj_t* sw = lv_switch_create(cell);
         if (!e->enabled) lv_obj_add_state(sw, LV_STATE_DISABLED);
@@ -216,7 +230,6 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
         lv_obj_set_style_radius(sw, 15, 0);
         lv_obj_set_flex_grow(sw, 0);
         // NO aplicar s.tokens.minTouch aquí
-
 
         // Evento → router
         if (!e->action.empty()) {
@@ -229,9 +242,6 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
                 }, LV_EVENT_VALUE_CHANGED, act);
             }
         }
-
-        // Grow para empujar switch a la derecha
-        lv_obj_set_flex_grow(l, 1);
     }
 
     // --- Filas 1..3: indicadores de temperatura, 3 por fila (total hasta 9) ---
@@ -245,14 +255,24 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
             LV_GRID_ALIGN_STRETCH, col, 1,
             LV_GRID_ALIGN_STRETCH, row, 1);
 
-        (void)make_label(cell, e->title.c_str(), s, false);
+        // Estética del bloque (fondo verde claro + padding)
+        lv_obj_set_style_bg_opa(cell, LV_OPA_COVER, 0);
+        lv_obj_set_style_bg_color(cell, kCellBg, 0);
+        lv_obj_set_style_pad_all(cell, CELL_PAD, 0);
+        lv_obj_set_style_radius(cell, 8, 0);
 
+        // Título a la izquierda
+        lv_obj_t* title = make_label(cell, e->title.c_str(), s, false);
+        lv_obj_set_style_text_color(title, lv_color_white(), 0);
+        lv_obj_set_flex_grow(title, 1);  // ocupa espacio restante
+
+        // Valor a la derecha
         lv_obj_t* v = make_label(cell, "--.- °C", s, true);
         // Valor grande y con alto contraste
         lv_obj_set_style_text_font(v, s.tokens.fontTitle, 0);
-        lv_obj_set_style_text_color(v, lv_color_black(), 0);
+        lv_obj_set_style_text_color(v, lv_color_white(), 0);
         lv_obj_set_style_text_align(v, LV_TEXT_ALIGN_RIGHT, 0);
-        lv_obj_set_width(v, LV_PCT(40));
+        lv_obj_set_width(v, 80);  // ancho fijo; opcional: LV_PCT(30)
 
         if (ctx && ctx->temp_count < 9) {
             ctx->temp_val[ctx->temp_count++] = v;
