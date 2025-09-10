@@ -24,6 +24,8 @@
 #include "comm/rx/comm_rx_handler.h"
 #include "comm/rx/comm_rx_state.h"
 
+#include "comm/comm_demo_loopback.h"
+
 extern "C" void app_main(void)
 {
     // Log general
@@ -42,6 +44,9 @@ extern "C" void app_main(void)
     comm_tx_gateway_start();            // lee TX y (loopback o, después, ESP-NOW)
     // API TX (si requiere estado propio)
     CommTxApi::init();
+
+    // Demo
+    comm_demo_loopback_start();
 
     // Construcción de UI protegida por lock de LVGL
     lvgl_port_lock(UINT32_MAX);

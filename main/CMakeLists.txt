@@ -6,6 +6,8 @@ set(SRCS_BASE
     lvgl_port.c
     waveshare_rgb_lcd_port.c
     lvgl_lock_shim.c
+
+    comm/comm_demo_loopback.cpp         # demo communications
 )
 
 # =========================
@@ -78,9 +80,9 @@ set(SRCS_ALL
     ${SRCS_COMM_RX}
 )
 
-# =========================
-# Candidatos obsoletos (ir activando)
-# =========================
+# ===============================================
+# Candidatos obsoletos
+# ===============================================
 set(OBSOLETE_CANDIDATES
     # ui/ui_router.cpp                          *
     # ui/ui_menu_json_utilities.cpp             *
