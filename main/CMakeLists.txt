@@ -20,26 +20,21 @@ set(SRCS_UI_CORE
 # UI — acciones y presets
 # =========================
 set(SRCS_UI_WIDGETS
-    ui/actions/ui_actions.cpp
     ui/preset/ui_preset_button.cpp
     ui/preset/ui_preset_switch.cpp
     ui/preset/ui_preset_label.cpp
     ui/preset/ui_preset_slider.cpp
     ui/component/ui_component_button.cpp
     ui/component/ui_component_label.cpp
-#   ui/component/ui_component_slider.cpp  # desactivado
     ui/layout/ui_layout_scaffold.cpp
-    ui/mockup/ui_mockup_menu.cpp
     ui/menu/ui_menu_tree.cpp
     ui/menu/ui_menu_loader.cpp
-    ui/menu/ui_menu_loader_smoke_test.cpp
 )
 
 # =========================
 # UI — tema y fuentes
 # =========================
 set(SRCS_UI_THEME
-    ui/theme/ui_theme_c_api.cpp
     ui/theme/ui_theme_styles.cpp
     ui/theme/ui_theme_tokens.cpp
 )
@@ -102,6 +97,11 @@ set(OBSOLETE_CANDIDATES
     # ui/ui_router_adapter.cpp
     # ui/ui_router_mount.cpp
     # ui/ui_pin.cpp
+    # ui/actions/ui_actions.cpp
+    # ui/component/ui_component_slider.cpp
+    # ui/mockup/ui_mockup_menu.cpp
+    # ui/menu/ui_menu_loader_smoke_test.cpp
+    # ui/theme/ui_theme_c_api.cpp
 )
 
 if(OBSOLETE_CANDIDATES)
