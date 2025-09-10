@@ -50,7 +50,7 @@ static lv_obj_t* make_row(lv_obj_t* parent, int pad_col) {
 static lv_obj_t* make_label(lv_obj_t* parent, const char* txt, Ui::UiThemeStyles& s, bool bold=false) {
     lv_obj_t* l = lv_label_create(parent);
     lv_label_set_text(l, txt ? txt : "");
-    lv_obj_set_style_text_color(l, s.tokens.colorOnSurface, 0);
+    lv_obj_set_style_text_color(l, s.tokens.colorSurface, 0);
     lv_obj_set_style_text_font(l, bold ? s.tokens.fontTitle : s.tokens.fontBody, 0);
     return l;
 }
@@ -98,11 +98,12 @@ static void bind_action_click(lv_obj_t* obj, const std::string& act) {
 
 // Contexto del panel para gestionar vida útil de labels + timer
 struct PanelCtx {
-    lv_obj_t* temp_val[3];
+    lv_obj_t* temp_val[9];   // hasta 9 lecturas (3x3)
+    int temp_count;          // cuántas hay realmente
     lv_timer_t* timer;
 };
 
-// Limpieza segura al destruir el contenedor de la vista
+// Limpieza segura al destruir el root de la vista
 static void panel_ctx_on_delete(lv_event_t* e) {
     PanelCtx* ctx = (PanelCtx*)lv_event_get_user_data(e);
     if (!ctx) return;
@@ -110,133 +111,160 @@ static void panel_ctx_on_delete(lv_event_t* e) {
         lv_timer_del(ctx->timer);
         ctx->timer = nullptr;
     }
-    // Los objetos temp_val[] ya los destruye LVGL con el árbol; solo anulamos punteros
-    for (int i = 0; i < 3; ++i) ctx->temp_val[i] = nullptr;
+    for (int i = 0; i < 9; ++i) ctx->temp_val[i] = nullptr;
     lv_mem_free(ctx);
 }
 
 // Timer: actualiza lecturas si los objetos siguen vivos
 static void panel_timer_cb(lv_timer_t* t) {
-    PanelCtx* ctx = (PanelCtx*)t->user_data;   // LVGL v8.x compatible
+    PanelCtx* ctx = (PanelCtx*)t->user_data;   // compat LVGL 8.x
     if (!ctx) return;
 
     static float base = 20.0f;
     base += 0.1f; if (base > 25.0f) base = 20.0f;
 
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < ctx->temp_count; ++i) {
         lv_obj_t* lab = ctx->temp_val[i];
         if (!lab) continue;
         if (!lv_obj_is_valid(lab)) { ctx->temp_val[i] = nullptr; continue; }
 
         char buf[32];
-        float val = base + i * 0.5f;
+        float val = base + (i % 3) * 0.5f + (i / 3) * 0.2f; // ligera variación por celda
         std::snprintf(buf, sizeof(buf), "%.1f °C", val);
         lv_label_set_text(lab, buf);
     }
 }
 
-// builder específico: 2 columnas (izq: switches, dcha: temperaturas)
-static void build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification& spec)
+// builder: 3 columnas, 4 filas (fila 0 con 3 switches; filas 1..3 con 3 temps c/u)
+static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification& spec)
 {
     Ui::UiThemeStyles& s = Ui::getThemeStyles();
 
-    // Valores locales (no dependemos de nombres concretos de tokens)
+    // Root propio del panel (hijo de parent)
+    lv_obj_t* root = lv_obj_create(parent);
+    lv_obj_set_size(root, LV_PCT(100), LV_PCT(100));
+    lv_obj_clear_flag(root, LV_OBJ_FLAG_SCROLLABLE);
+
+    // Valores locales
     static constexpr lv_coord_t OUTER_PAD = 16;
     static constexpr lv_coord_t GRID_GAP  = 12;
-    static constexpr lv_coord_t ROW_GAP   = 12;  // para filas make_row
+    static constexpr lv_coord_t ROW_GAP   = 8;  // separación interna en cada celda
 
-    // Contenedor principal: grid 2 columnas, 3 filas compactas
-    static const lv_coord_t col_dsc[] = { LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST };
-    static const lv_coord_t row_dsc[] = { LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST };
+    // Grid: 3 columnas (todas usadas), 4 filas
+    static const lv_coord_t col_dsc[] = {
+        LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST
+    };
 
-    lv_obj_set_layout(parent, LV_LAYOUT_GRID);
-    lv_obj_set_grid_dsc_array(parent, col_dsc, row_dsc);
-    lv_obj_set_style_pad_all(parent, OUTER_PAD, 0);
-    lv_obj_set_style_pad_row(parent, GRID_GAP, 0);
-    lv_obj_set_style_pad_column(parent, GRID_GAP, 0);
+    static const lv_coord_t row_dsc[] = {
+        LV_GRID_FR(1),  // fila 0: switches
+        LV_GRID_FR(1),  // fila 1: temperaturas
+        LV_GRID_FR(1),  // fila 2: temperaturas
+        LV_GRID_FR(1),  // fila 3: temperaturas
+        LV_GRID_TEMPLATE_LAST
+    };
 
-    // Contexto del panel
+    lv_obj_set_layout(root, LV_LAYOUT_GRID);
+    lv_obj_set_grid_dsc_array(root, col_dsc, row_dsc);
+    lv_obj_set_style_pad_all(root, OUTER_PAD, 0);
+    lv_obj_set_style_pad_row(root, GRID_GAP, 0);
+    lv_obj_set_style_pad_column(root, GRID_GAP, 0);
+
+    // Contexto del panel y hook de borrado en root
     PanelCtx* ctx = (PanelCtx*)lv_mem_alloc(sizeof(PanelCtx));
     if (ctx) {
         ctx->timer = nullptr;
-        for (int i = 0; i < 3; ++i) ctx->temp_val[i] = nullptr;
-
-        // Cuando se destruya la vista, cancelamos el timer y liberamos ctx
-        lv_obj_add_event_cb(parent, panel_ctx_on_delete, LV_EVENT_DELETE, ctx);
+        ctx->temp_count = 0;
+        for (int i = 0; i < 9; ++i) ctx->temp_val[i] = nullptr;
+        lv_obj_add_event_cb(root, panel_ctx_on_delete, LV_EVENT_DELETE, ctx);
     }
 
-    // Preparar 3 filas de switches (columna 0) y 3 de temperaturas (columna 1)
-    int sw_idx = 0;
-    int t_idx  = 0;
+    // Recolectar elementos del JSON: 1) switches sw*, 2) temps t*
+    std::vector<const ElementSpecification*> sws;
+    std::vector<const ElementSpecification*> temps;
+    sws.reserve(3);
+    temps.reserve(9);
 
     for (const auto& e : spec.elements) {
         if (!e.visible) continue;
-
-        // Heurística simple: si id empieza por "sw" → switch; si "t" → temperatura.
-        bool is_switch = e.id.rfind("sw", 0) == 0;
-        if (is_switch && sw_idx < 3) {
-            int row = sw_idx;
-
-            // Fila: [Label] [Switch]
-            lv_obj_t* rowc = make_row(parent, ROW_GAP);
-            lv_obj_set_grid_cell(rowc, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, row, 1);
-
-            lv_obj_t* l = make_label(rowc, e.title.c_str(), s, false);
-            // Alto contraste para texto
-            lv_obj_set_style_text_color(l, lv_color_black(), 0);
-
-            lv_obj_t* sw = lv_switch_create(rowc);
-            if (!e.enabled) lv_obj_add_state(sw, LV_STATE_DISABLED);
-            // Tamaño más grande para buena usabilidad táctil
-            lv_obj_set_size(sw, 80, 40);
-            lv_obj_set_style_radius(sw, 20, 0);
-            if (s.tokens.minTouch > 0) lv_obj_set_style_min_height(sw, s.tokens.minTouch, 0);
-
-            // Evento: cuando cambie el switch, despachamos la acción DO:/...
-            if (!e.action.empty()) {
-                char* act = (char*)lv_mem_alloc(e.action.size() + 1);
-                if (act) {
-                    std::strcpy(act, e.action.c_str());
-                    lv_obj_add_event_cb(sw, [](lv_event_t* ev){
-                        const char* act = (const char*)lv_event_get_user_data(ev);
-                        ui_router_dispatch(act);
-                    }, LV_EVENT_VALUE_CHANGED, act);
-                }
-            }
-
-            // Auto-juste: etiqueta a la izquierda, switch a la derecha
-            lv_obj_set_flex_grow(l, 1);
-            ++sw_idx;
-            continue;
-        }
-
-        bool is_temp = e.id.rfind("t", 0) == 0;
-        if (is_temp && t_idx < 3) {
-            int row = t_idx;
-
-            // Fila: [Label] [Valor °C]
-            lv_obj_t* rowc = make_row(parent, ROW_GAP);
-            lv_obj_set_grid_cell(rowc, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, row, 1);
-
-            (void)make_label(rowc, e.title.c_str(), s, false);
-
-            lv_obj_t* v = make_label(rowc, "--.- °C", s, true);
-            // Valor más grande y con alto contraste
-            lv_obj_set_style_text_font(v, s.tokens.fontTitle, 0);
-            lv_obj_set_style_text_color(v, lv_color_black(), 0);
-            lv_obj_set_style_text_align(v, LV_TEXT_ALIGN_RIGHT, 0);
-            lv_obj_set_width(v, LV_PCT(40));
-
-            if (ctx) ctx->temp_val[t_idx] = v;
-            ++t_idx;
-            continue;
+        if (e.id.rfind("sw", 0) == 0) {
+            if (sws.size() < 3) sws.push_back(&e);
+        } else if (e.id.rfind("t", 0) == 0) {
+            if (temps.size() < 9) temps.push_back(&e);
         }
     }
 
-    // Timer DEMO para actualizar lecturas (reemplaza con tus sensores reales)
-    if (ctx) {
+    ESP_LOGI(TAG, "sw_temp_panel: temps=%d, sws=%d", (int)temps.size(), (int)sws.size());
+
+    // --- Fila 0: hasta 3 switches, columnas 0..2 ---
+    for (int c = 0; c < (int)sws.size(); ++c) {
+        const auto* e = sws[c];
+
+        // Celda contenedora en (col=c, row=0)
+        lv_obj_t* cell = make_row(root, ROW_GAP);
+        lv_obj_set_grid_cell(cell,
+            LV_GRID_ALIGN_STRETCH, c, 1,
+            LV_GRID_ALIGN_STRETCH, 0, 1);
+
+        // [Label] [Switch]
+        lv_obj_t* l = make_label(cell, e->title.c_str(), s, false);
+        // Alto contraste para texto
+        lv_obj_set_style_text_color(l, lv_color_black(), 0);
+
+        lv_obj_t* sw = lv_switch_create(cell);
+        if (!e->enabled) lv_obj_add_state(sw, LV_STATE_DISABLED);
+        lv_obj_set_size(sw, 60, 30);
+        lv_obj_set_style_radius(sw, 15, 0);
+        lv_obj_set_flex_grow(sw, 0);
+        // NO aplicar s.tokens.minTouch aquí
+
+
+        // Evento → router
+        if (!e->action.empty()) {
+            char* act = (char*)lv_mem_alloc(e->action.size() + 1);
+            if (act) {
+                std::strcpy(act, e->action.c_str());
+                lv_obj_add_event_cb(sw, [](lv_event_t* ev){
+                    const char* act = (const char*)lv_event_get_user_data(ev);
+                    ui_router_dispatch(act);
+                }, LV_EVENT_VALUE_CHANGED, act);
+            }
+        }
+
+        // Grow para empujar switch a la derecha
+        lv_obj_set_flex_grow(l, 1);
+    }
+
+    // --- Filas 1..3: indicadores de temperatura, 3 por fila (total hasta 9) ---
+    for (int i = 0; i < (int)temps.size(); ++i) {
+        const auto* e = temps[i];
+        const int row = 1 + i / 3; // filas 1..3
+        const int col = i % 3;     // columnas 0..2
+
+        lv_obj_t* cell = make_row(root, ROW_GAP);
+        lv_obj_set_grid_cell(cell,
+            LV_GRID_ALIGN_STRETCH, col, 1,
+            LV_GRID_ALIGN_STRETCH, row, 1);
+
+        (void)make_label(cell, e->title.c_str(), s, false);
+
+        lv_obj_t* v = make_label(cell, "--.- °C", s, true);
+        // Valor grande y con alto contraste
+        lv_obj_set_style_text_font(v, s.tokens.fontTitle, 0);
+        lv_obj_set_style_text_color(v, lv_color_black(), 0);
+        lv_obj_set_style_text_align(v, LV_TEXT_ALIGN_RIGHT, 0);
+        lv_obj_set_width(v, LV_PCT(40));
+
+        if (ctx && ctx->temp_count < 9) {
+            ctx->temp_val[ctx->temp_count++] = v;
+        }
+    }
+
+    // Timer DEMO para actualizar lecturas (reemplaza con sensores reales)
+    if (ctx && ctx->temp_count > 0) {
         ctx->timer = lv_timer_create(panel_timer_cb, 1000, ctx);
     }
+
+    return root;
 }
 
 /* -------------------- menu_grid -------------------- */
@@ -344,8 +372,7 @@ lv_obj_t* ui_view_build(lv_obj_t* parent, const ScreenSpecification& spec)
     if (spec.view == "menu_list")      return build_menu_list(parent, spec);
 
     if (spec.view == "sw_temp_panel") {
-        build_sw_temp_panel(parent, spec); // builder void
-        return parent;                      // devolvemos el contenedor trabajado
+        return build_sw_temp_panel(parent, spec); // devuelve root propio del panel
     }
 
     // Fallback: contenedor simple con mensaje

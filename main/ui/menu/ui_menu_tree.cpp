@@ -150,13 +150,21 @@ const char UI_SCREEN_PANEL[] = R"json(
   "view": "sw_temp_panel",
   "title": "Panel de Pruebas",
   "elements": [
-    { "id": "sw1", "title": "Salida 1", "icon": "lv:power", "action": "DO:/io/sw1", "enabled": true,  "visible": true },
-    { "id": "sw2", "title": "Salida 2", "icon": "lv:power", "action": "DO:/io/sw2", "enabled": true,  "visible": true },
-    { "id": "sw3", "title": "Salida 3", "icon": "lv:power", "action": "DO:/io/sw3", "enabled": true,  "visible": true },
+    { "id": "sw1", "title": "Rojo", "icon": "lv:power", "action": "DO:/io/sw1", "enabled": true,  "visible": true },
+    { "id": "sw2", "title": "Verde", "icon": "lv:power", "action": "DO:/io/sw2", "enabled": true,  "visible": true },
+    { "id": "sw3", "title": "Azul", "icon": "lv:power", "action": "DO:/io/sw3", "enabled": true,  "visible": true },
 
-    { "id": "t1",  "title": "T. Depósito", "icon": "lv:warning", "enabled": true, "visible": true },
-    { "id": "t2",  "title": "T. Ambiente", "icon": "lv:warning", "enabled": true, "visible": true },
-    { "id": "t3",  "title": "T. Retorno",  "icon": "lv:warning", "enabled": true, "visible": true }
+    { "id": "t1",  "title": "T. exterior", "icon": "lv:warning", "enabled": true, "visible": true },
+    { "id": "t2",  "title": "Depósito superior", "icon": "lv:warning", "enabled": true, "visible": true },
+    { "id": "t3",  "title": "Depósito inferior",  "icon": "lv:warning", "enabled": true, "visible": true },
+
+    { "id": "t4",  "title": "Caldera Ida", "icon": "lv:warning", "enabled": true, "visible": true },
+    { "id": "t4",  "title": "Caldera Retorno", "icon": "lv:warning", "enabled": true, "visible": true },
+    { "id": "t6",  "title": "Suelo Ida",  "icon": "lv:warning", "enabled": true, "visible": true },
+
+    { "id": "t7",  "title": "Suelo Retorno", "icon": "lv:warning", "enabled": true, "visible": true },
+    { "id": "t8",  "title": "Fancoil Ida", "icon": "lv:warning", "enabled": true, "visible": true },
+    { "id": "t9",  "title": "Fancoil Retorno",  "icon": "lv:warning", "enabled": true, "visible": true }
   ]
 }
 )json";
