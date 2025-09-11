@@ -26,10 +26,17 @@
 
 #include "comm/comm_demo_loopback.h"
 
+#include "comm/transport/comm_transport_espnow.h"
+
 extern "C" void app_main(void)
 {
     // Log general
     esp_log_level_set("*", ESP_LOG_INFO);
+
+    uint8_t mac[6]; comm_espnow_get_self_mac(mac);
+
+    ESP_LOGI("APP", "HMI STA MAC: %02X:%02X:%02X:%02X:%02X:%02X",
+          mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
     // Panel RGB + touch (Waveshare ESP32-S3 Touch LCD 7")
     ESP_ERROR_CHECK(waveshare_esp32_s3_rgb_lcd_init());

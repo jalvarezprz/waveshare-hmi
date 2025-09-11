@@ -43,8 +43,15 @@ menu "Communications"
 config COMM_LOOPBACK
     bool "Loopback TX→RX (sin segundo ESP32)"
     default y
-    help
-      Si está activado, el gateway TX inyecta los paquetes en RX y genera ACK sintético.
+
+config COMM_ESPNOW_CHANNEL
+    int "Canal Wi-Fi para ESP-NOW"
+    range 1 13
+    default 1
+
+config COMM_PEER_MAC_STR
+    string "MAC del peer (xx:xx:xx:xx:xx:xx)"
+    default "ff:ff:ff:ff:ff:ff"
 
 config COMM_TX_QUEUE_LEN
     int "Profundidad cola TX"

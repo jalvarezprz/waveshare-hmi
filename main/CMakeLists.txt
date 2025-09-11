@@ -57,6 +57,10 @@ set(SRCS_COMM
     comm/comm_diag.cpp
 )
 
+set(SRCS_COMM_TRANSPORT
+    comm/transport/comm_transport_espnow.cpp
+)
+
 set(SRCS_COMM_TX
     comm/tx/comm_tx_gateway.cpp
     comm/tx/comm_tx_handler.cpp
@@ -81,6 +85,7 @@ set(SRCS_ALL
     ${SRCS_UI_THEME}
     ${SRCS_UI_FONTS}
     ${SRCS_COMM}
+    ${SRCS_COMM_TRANSPORT}
     ${SRCS_COMM_TX}
     ${SRCS_COMM_RX}
 )
@@ -127,6 +132,9 @@ idf_component_register(
         esp_lcd
         lvgl
         json
+        esp_wifi
+        esp_netif
+        nvs_flash
 )
 
 target_compile_definitions(${COMPONENT_LIB} PRIVATE
