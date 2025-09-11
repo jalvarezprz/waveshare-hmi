@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>   // memcpy
 #include <cstdlib>   // malloc
+#include <cstdio>
 
 // Tema/controles
 #include "ui/theme/ui_theme_styles.h"
@@ -13,6 +14,68 @@
 #include "ui/router/ui_router.h"
 
 static const char* TAG = "UI_VIEW_FACTORY";
+
+#include "comm/comm_diag.h"   // <— añade este include
+
+// Panel lateral con contadores CommDiag, refresco 1 s.
+static lv_obj_t* add_comm_diag_panel(lv_obj_t* parent)
+{
+    lv_obj_t* panel = lv_obj_create(parent);
+    lv_obj_set_size(panel, 260, LV_PCT(100));
+    lv_obj_set_style_pad_all(panel, 12, 0);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_20, 0);
+    lv_obj_set_style_bg_color(panel, lv_palette_main(LV_PALETTE_GREY), 0);
+    lv_obj_set_style_radius(panel, 10, 0);
+    lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_row(panel, 6, 0);
+
+    // Título
+    lv_obj_t* title = lv_label_create(panel);
+    lv_label_set_text(title, "Comm · Diag");
+    lv_obj_set_style_text_font(title, Ui::getThemeStyles().tokens.fontTitle, 0); // <-- title + fontTitle
+
+    // Labels
+    auto mk = [&](const char* txt){
+        lv_obj_t* l = lv_label_create(panel);
+        lv_label_set_text(l, txt);
+        lv_obj_set_style_text_font(l, Ui::getThemeStyles().tokens.fontBody, 0);  // <-- tokens.fontBody
+        return l;
+    };
+    lv_obj_t* l_txq   = mk("TX queued: 0");
+    lv_obj_t* l_txlb  = mk("TX loopback: 0");
+    lv_obj_t* l_txok  = mk("TX ok: 0   / TX fail: 0");
+    lv_obj_t* l_rxpk  = mk("RX pkts: 0 / RX dropped: 0");
+    lv_obj_t* l_rxack = mk("RX ack: 0  / last seq: 0");
+
+    struct State { lv_obj_t* a; lv_obj_t* b; lv_obj_t* c; lv_obj_t* d; lv_obj_t* e; lv_timer_t* timer; };
+    State* st = (State*)lv_mem_alloc(sizeof(State));
+    *st = { l_txq, l_txlb, l_txok, l_rxpk, l_rxack, nullptr };
+
+    // Timer que refresca usando st
+    st->timer = lv_timer_create([](lv_timer_t* t){
+        auto* s = (State*)t->user_data;
+        auto d = CommDiag::get();
+        lv_label_set_text_fmt(s->a, "TX queued: %lu",   (unsigned long)d.txQueued);
+        lv_label_set_text_fmt(s->b, "TX loopback: %lu", (unsigned long)d.txLoopback);
+        lv_label_set_text_fmt(s->c, "TX ok: %lu / TX fail: %lu",
+                              (unsigned long)d.txOk, (unsigned long)d.txFail);
+        lv_label_set_text_fmt(s->d, "RX pkts: %lu / RX dropped: %lu",
+                              (unsigned long)d.rxPkt, (unsigned long)d.rxDropped);
+        lv_label_set_text_fmt(s->e, "RX ack: %lu  / last seq: %u",
+                              (unsigned long)d.rxAck, d.lastSeq);
+    }, 1000, st);
+
+    // Limpieza: usa st como user_data del evento
+    lv_obj_add_event_cb(panel, [](lv_event_t* e){
+        auto* s = (State*)lv_event_get_user_data(e);
+        if (!s) return;
+        if (s->timer) lv_timer_del(s->timer);
+        lv_mem_free(s);
+    }, LV_EVENT_DELETE, st);
+
+    return panel;
+}
+
 
 // dup de std::string → char* (lifetime heap). Devuelve const char* por comodidad.
 static const char* strdup_cxx(const std::string& s) {
@@ -141,10 +204,16 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
 {
     Ui::UiThemeStyles& s = Ui::getThemeStyles();
 
-    // Root propio del panel (hijo de parent)
-    lv_obj_t* root = lv_obj_create(parent);
+    // Contenedor fila que será la raíz devuelta
+    lv_obj_t* row = lv_obj_create(parent);
+    lv_obj_set_size(row, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_style_pad_column(row, 12, 0);
+
+    // Ahora sí, root cuelga de row
+    lv_obj_t* root = lv_obj_create(row);
+    lv_obj_set_flex_grow(root, 1);
     lv_obj_set_size(root, LV_PCT(100), LV_PCT(100));
-    // Permite scroll vertical si el contenido no cabe (por si aumentamos gaps)
     lv_obj_set_scroll_dir(root, LV_DIR_VER);
 
     // Valores locales
@@ -246,14 +315,14 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
 
     // --- Filas 1..3: indicadores de temperatura, 3 por fila (total hasta 9) ---
     for (int i = 0; i < (int)temps.size(); ++i) {
-        const auto* e = temps[i];
-        const int row = 1 + i / 3; // filas 1..3
-        const int col = i % 3;     // columnas 0..2
+        const auto* e   = temps[i];
+        const int grid_row = 1 + i / 3;   // filas 1..3
+        const int grid_col = i % 3;       // columnas 0..2
 
         lv_obj_t* cell = make_row(root, ROW_GAP);
         lv_obj_set_grid_cell(cell,
-            LV_GRID_ALIGN_STRETCH, col, 1,
-            LV_GRID_ALIGN_STRETCH, row, 1);
+            LV_GRID_ALIGN_STRETCH, grid_col, 1,
+            LV_GRID_ALIGN_STRETCH, grid_row, 1);
 
         // Estética del bloque (fondo verde claro + padding)
         lv_obj_set_style_bg_opa(cell, LV_OPA_COVER, 0);
@@ -283,8 +352,8 @@ static lv_obj_t* build_sw_temp_panel(lv_obj_t* parent, const ScreenSpecification
     if (ctx && ctx->temp_count > 0) {
         ctx->timer = lv_timer_create(panel_timer_cb, 1000, ctx);
     }
-
-    return root;
+    add_comm_diag_panel(row);
+    return row;   // En vez de 'return root;'
 }
 
 /* -------------------- menu_grid -------------------- */
@@ -298,8 +367,15 @@ static lv_obj_t* build_menu_grid(lv_obj_t* parent, const ScreenSpecification& sp
     const int n = (int)spec.elements.size();
     const int body_rows = n > 0 ? ((n + COLS - 1) / COLS) : 1;
 
+    // Contenedor fila: [grid | panel]
+    lv_obj_t* row = lv_obj_create(parent);
+    lv_obj_set_size(row, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_style_pad_column(row, 12, 0);
+
     // Contenedor
-    lv_obj_t* cont = lv_obj_create(parent);
+    lv_obj_t* cont = lv_obj_create(row);
+    lv_obj_set_flex_grow(cont, 1);
     lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
     lv_obj_center(cont);
     lv_obj_set_layout(cont, LV_LAYOUT_GRID);
@@ -343,8 +419,8 @@ static lv_obj_t* build_menu_grid(lv_obj_t* parent, const ScreenSpecification& sp
             LV_GRID_ALIGN_STRETCH, c, 1,
             LV_GRID_ALIGN_STRETCH, 1 + r, 1);
     }
-
-    return cont;
+    add_comm_diag_panel(row);
+    return row;
 }
 
 /* -------------------- menu_list -------------------- */

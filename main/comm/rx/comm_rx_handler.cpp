@@ -2,6 +2,9 @@
 #include "comm_rx_queue.h"
 #include "comm_rx_state.h"
 #include "comm_commitment.h"
+
+#include "comm_diag.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -13,8 +16,9 @@ static void task_rx_(void*) {
     AppEnvelope env{};
     for (;;) {
         if (!comm_rx_queue_recv(env, portMAX_DELAY)) continue;
+        CommDiag::incRxPkt();
+        CommDiag::setLastSeq(env.header.seq);
 
-        // Validación mínima
         if (env.header.ver != APP_PROTO_VER) { ESP_LOGW(TAG, "proto mismatch"); continue; }
 
         auto type = static_cast<AppMsgType>(env.header.type);
@@ -25,21 +29,21 @@ static void task_rx_(void*) {
                     CommRxState::setTelemetryRaw(p->temps, 8, env.header.seq);
                 } else {
                     ESP_LOGW(TAG, "bad len for Telemetry");
+                    CommDiag::incRxDropped();
                 }
             } break;
             case AppMsgType::Ack:
-            case AppMsgType::Heartbeat:
-            case AppMsgType::Error:
-            case AppMsgType::CmdLed:
-            case AppMsgType::ReqSnapshot:
+                CommDiag::incRxAck();
+                ESP_LOGI(TAG, "RX ACK seq=%u", env.header.seq);
+                break;
             default:
-                // Por ahora, solo log
                 ESP_LOGI(TAG, "RX type=0x%02X seq=%u len=%u",
                          env.header.type, env.header.seq, env.header.len);
                 break;
         }
     }
 }
+
 
 bool comm_rx_handler_start() {
     if (s_task) return true;

@@ -53,6 +53,10 @@ set(SRCS_UI_FONTS
 # =========================
 # COMM — TX y RX
 # =========================
+set(SRCS_COMM
+    comm/comm_diag.cpp
+)
+
 set(SRCS_COMM_TX
     comm/tx/comm_tx_gateway.cpp
     comm/tx/comm_tx_handler.cpp
@@ -76,6 +80,7 @@ set(SRCS_ALL
     ${SRCS_UI_WIDGETS}
     ${SRCS_UI_THEME}
     ${SRCS_UI_FONTS}
+    ${SRCS_COMM}
     ${SRCS_COMM_TX}
     ${SRCS_COMM_RX}
 )
