@@ -9,6 +9,7 @@
 #include "comm/rx/comm_rx_queue.h"   // para inyectar en RX
 #include "comm/comm_commitment.h"    // AppEnvelope, etc.
 #include "comm/comm_diag.h"
+#include "comm/comm_peers.h"
 
 #include "nvs_flash.h"
 #include "esp_netif.h"
@@ -16,6 +17,8 @@
 static const char* TAG = "comm_espnow";
 
 static bool s_inited = false;
+
+static void comm_add_peers();
 
 // Reemplaza tu wifi_init_sta_no_ip() por este:
 static esp_err_t wifi_init_sta_no_ip()
@@ -91,12 +94,33 @@ bool comm_espnow_init_sta()
     ESP_ERROR_CHECK(esp_now_register_recv_cb(espnow_recv_cb));
     ESP_ERROR_CHECK(esp_now_register_send_cb(espnow_send_cb));
 
+    // Añadir peers (incluye al CORE)
+    comm_add_peers();
+
     s_inited = true;
 
-    uint8_t mac[6]; comm_espnow_get_self_mac(mac);
+    uint8_t mac[6];
+    comm_espnow_get_self_mac(mac);
     ESP_LOGI(TAG, "ESP-NOW listo (STA MAC: %02X:%02X:%02X:%02X:%02X:%02X)",
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     return true;
+}
+
+static void comm_add_peers()
+{
+    esp_now_peer_info_t peerInfo{};
+    memcpy(peerInfo.peer_addr, CORE_MAC, 6);
+    peerInfo.ifidx   = WIFI_IF_STA;  // <-- añade esto
+    peerInfo.channel = 1;            // 0 = canal actual (asegúrate de usar el mismo en ambos)
+    peerInfo.encrypt = false;        // sin cifrado por ahora
+
+    if (esp_now_add_peer(&peerInfo) == ESP_OK) {
+        ESP_LOGI("COMM", "Peer CORE añadido (%02X:%02X:%02X:%02X:%02X:%02X)",
+                 CORE_MAC[0], CORE_MAC[1], CORE_MAC[2],
+                 CORE_MAC[3], CORE_MAC[4], CORE_MAC[5]);
+    } else {
+        ESP_LOGE("COMM", "Fallo al añadir peer CORE");
+    }
 }
 
 bool comm_espnow_add_peer(const uint8_t mac[6], uint8_t channel)
