@@ -6,7 +6,8 @@
 #include "comm/comm_diag.h"
 #include "comm/rx/comm_rx_queue.h" // para inyectar en RX en modo loopback
 
-#if !CONFIG_COMM_LOOPBACK
+// #if !CONFIG_COMM_LOOPBACK
+#if 1
 #include "comm/transport/comm_transport_espnow.h"
 #endif
 
@@ -19,7 +20,8 @@ static const char* TAG = "comm_tx_gateway";
 
 static TaskHandle_t s_task{nullptr};
 
-#if !CONFIG_COMM_LOOPBACK
+//#if !CONFIG_COMM_LOOPBACK
+#if 1
 // Peer por defecto: broadcast; se sobrescribe con CONFIG_COMM_PEER_MAC_STR si existe
 static uint8_t s_peer_mac[6] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 static uint8_t s_channel =
@@ -45,7 +47,8 @@ static void task_tx_(void*)
 
         CommDiag::incTxQueued();
 
-#if CONFIG_COMM_LOOPBACK
+//#if CONFIG_COMM_LOOPBACK
+#if 0
         // Inyecta en la cola RX local (simula que "llega por radio")
         (void)comm_rx_queue_send(env, 0);
         CommDiag::incTxLoopback();
@@ -79,7 +82,8 @@ bool comm_tx_gateway_start()
 {
     if (s_task) return true;
 
-#if !CONFIG_COMM_LOOPBACK
+//#if !CONFIG_COMM_LOOPBACK
+#if 1
     // Inicializa Wi-Fi (STA sin IP) + ESP-NOW y registra callbacks
     if (!comm_espnow_init_sta()) {
         ESP_LOGE(TAG, "Fallo en comm_espnow_init_sta()");

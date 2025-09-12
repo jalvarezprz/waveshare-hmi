@@ -56,18 +56,16 @@ static esp_err_t wifi_init_sta_no_ip()
 
 static void espnow_recv_cb(const esp_now_recv_info_t* info, const uint8_t* data, int len)
 {
-    // Seguridad básica: tamaño mínimo de nuestro sobre
-    if (!data || len < (int)sizeof(AppHeader)) {
-        CommDiag::incRxDropped();
-        return;
-    }
+    if(!info || !data || len < (int)sizeof(AppHeader)) { CommDiag::incRxDropped(); return; }
 
-    // Copia directa al AppEnvelope y a la cola RX
+    ESP_LOGI("ESPNOW", "RADIO RX from %02X:%02X:%02X:%02X:%02X:%02X len=%d",
+             info->src_addr[0],info->src_addr[1],info->src_addr[2],
+             info->src_addr[3],info->src_addr[4],info->src_addr[5], len);
+
     AppEnvelope env{};
     size_t copy = len > sizeof(env) ? sizeof(env) : (size_t)len;
     std::memcpy(&env, data, copy);
 
-    // Contabiliza y entrega
     CommDiag::incRxPkt();
     CommDiag::setLastSeq(env.header.seq);
     (void)comm_rx_queue_send(env, 0);
@@ -75,11 +73,12 @@ static void espnow_recv_cb(const esp_now_recv_info_t* info, const uint8_t* data,
 
 static void espnow_send_cb(const uint8_t* mac_addr, esp_now_send_status_t status)
 {
-    if (status == ESP_NOW_SEND_SUCCESS) {
-        CommDiag::incTxOk();
-    } else {
-        CommDiag::incTxFail();
-    }
+    ESP_LOGI("ESPNOW", "SEND_CB to %02X:%02X:%02X:%02X:%02X:%02X -> %s",
+             mac_addr?mac_addr[0]:0, mac_addr?mac_addr[1]:0, mac_addr?mac_addr[2]:0,
+             mac_addr?mac_addr[3]:0, mac_addr?mac_addr[4]:0, mac_addr?mac_addr[5]:0,
+             status==ESP_NOW_SEND_SUCCESS ? "OK" : "FAIL");
+    if (status == ESP_NOW_SEND_SUCCESS) CommDiag::incTxOk();
+    else CommDiag::incTxFail();
 }
 
 bool comm_espnow_init_sta()
@@ -140,6 +139,8 @@ bool comm_espnow_add_peer(const uint8_t mac[6], uint8_t channel)
 bool comm_espnow_send(const uint8_t mac[6], const void* data, size_t len)
 {
     if (!s_inited || !mac || !data || len == 0) return false;
+    ESP_LOGI("ESPNOW", "RADIO TX to %02X:%02X:%02X:%02X:%02X:%02X len=%u",
+             mac[0],mac[1],mac[2],mac[3],mac[4],mac[5], (unsigned)len);
     esp_err_t err = esp_now_send(mac, reinterpret_cast<const uint8_t*>(data), len);
     return (err == ESP_OK);
 }
