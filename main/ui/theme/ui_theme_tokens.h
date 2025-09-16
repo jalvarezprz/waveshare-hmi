@@ -26,7 +26,8 @@ namespace Color {
     // Superficies
     inline constexpr uint32_t Surface        = 0x121212;
     inline constexpr uint32_t OnSurface      = 0xEDEDED;
-    inline constexpr uint32_t SurfaceVariant = 0x1E1E1E;
+    inline constexpr uint32_t SurfaceVariant = 0x2FAD32;
+
     inline constexpr uint32_t Outline        = 0x3C3C3C;
     inline constexpr uint32_t Muted          = 0x9E9E9E;
 
