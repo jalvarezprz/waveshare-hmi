@@ -1,10 +1,12 @@
 #include "ui/view/ui_view_factory.h"
 #include "esp_log.h"
+
 #include <vector>
 #include <string>
 #include <cstring>   // memcpy, strcmp
 #include <cstdlib>   // malloc
 #include <cstdio>
+#include <cmath>
 
 // Tema/controles
 #include "ui/theme/ui_theme_styles.h"
@@ -15,6 +17,8 @@
 
 // (Menús) Diagnóstico de comunicaciones
 #include "comm/comm_diag.h"
+#include "comm/rx/comm_rx_state.h"      // Recepción temperaturas
+
 
 static const char* TAG = "UI_VIEW_FACTORY";
 
@@ -176,6 +180,8 @@ static void temps2x5_ctx_on_delete(lv_event_t* e) {
     lv_mem_free(ctx);
 }
 
+/*
+
 static void temps2x5_timer_cb(lv_timer_t* t) {
     Temps2x5Ctx* ctx = (Temps2x5Ctx*)t->user_data;
     if (!ctx) return;
@@ -195,7 +201,25 @@ static void temps2x5_timer_cb(lv_timer_t* t) {
     }
 }
 
-/* Variante basada en TÍTULOS (pintamos SIEMPRE 10 tiles en orden canónico) */
+*/
+
+static void temps2x5_timer_cb(lv_timer_t* t) {
+    Temps2x5Ctx* ctx = (Temps2x5Ctx*)t->user_data;
+    if (!ctx) return;
+
+    auto vals = CommRxState::getTemps();
+    for (int i = 0; i < ctx->temp_count; ++i) {
+        lv_obj_t* lab = ctx->temp_val[i];
+        if (!lab || !lv_obj_is_valid(lab)) continue;
+
+        if (!std::isnan(vals[i])) {
+            lv_label_set_text_fmt(lab, "%.1f °C", vals[i]);
+        } else {
+            lv_label_set_text(lab, "--.- °C");
+        }
+    }
+}
+
 /* Variante basada en TÍTULOS (pintamos SIEMPRE 10 tiles en orden canónico)
  * Valor (temperatura) en la línea superior, Título en la inferior.
  */
@@ -378,7 +402,7 @@ static lv_obj_t* build_temps2x5_panel(lv_obj_t* parent, const ScreenSpecificatio
 
     // Timer DEMO (quitar al conectar provider real)
     if (ctx && ctx->temp_count > 0) {
-        ctx->timer = lv_timer_create(temps2x5_timer_cb, 1000, ctx);
+        ctx->timer = lv_timer_create(temps2x5_timer_cb, 500, ctx);
     }
 
     // NO añadir add_comm_diag_panel(root) aquí (se pidió ocultarlo en esta pantalla)

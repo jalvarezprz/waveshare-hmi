@@ -1,60 +1,118 @@
 #include "comm_rx_state.h"
-#include "freertos/semphr.h"
-#include <algorithm>
 #include <cmath>
+#include <cstring>
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include "esp_timer.h"
+#include "esp_log.h"
 
 namespace CommRxState {
-static std::array<int16_t,8> s_vals{};
-static std::array<uint8_t,8> s_valid{};
-static uint8_t  s_seq{0};
-static uint32_t s_tick{0};
-static SemaphoreHandle_t s_mtx{nullptr};
 
-static constexpr int MAX_L = 4;
-static std::array<QueueHandle_t, MAX_L> s_listeners{};
+static const char* TAG = "CommRxState";
 
-static void notify_() {
-    Event ev{ Event::Type::TelemetryUpdated, s_seq, s_tick };
-    for (auto& q : s_listeners) if (q) (void)xQueueSend(q, &ev, 0);
+// Estado interno
+static Snapshot              s_snap{};
+static SemaphoreHandle_t     s_mutex = nullptr;
+static bool                  s_inited = false;
+
+static inline uint64_t now_ms() {
+    return static_cast<uint64_t>(esp_timer_get_time() / 1000ULL);
 }
 
-bool init() {
-    if (!s_mtx) s_mtx = xSemaphoreCreateMutex();
-    s_vals.fill(0); s_valid.fill(0); s_seq = 0; s_tick = 0;
-    s_listeners.fill(nullptr);
-    return s_mtx != nullptr;
+static void ensure_init() {
+    if (s_inited) return;
+    s_mutex = xSemaphoreCreateMutex();
+    if (!s_mutex) {
+        // Si no hay mutex, seguimos pero sin protección (muy improbable)
+        ESP_LOGE(TAG, "Mutex create failed");
+    }
+    // Estado inicial: NaN + valid=false
+    for (size_t i = 0; i < kNumTemps; ++i) {
+        s_snap.temps[i] = NAN;
+        s_snap.valid[i] = false;
+    }
+    s_snap.ts_ms = 0;
+    s_snap.seq   = 0;
+    s_inited = true;
 }
 
-void setTelemetryRaw(const int16_t* temps8, uint8_t count, uint8_t seq) {
-    if (!s_mtx && !init()) return;
-    const uint8_t n = (count > 8) ? 8 : count;
-    xSemaphoreTake(s_mtx, portMAX_DELAY);
-    for (uint8_t i=0;i<n;++i){ s_vals[i]=temps8[i]; s_valid[i]=1; }
-    for (uint8_t i=n;i<8;++i){ s_vals[i]=0; s_valid[i]=0; }
-    s_seq = seq; s_tick = xTaskGetTickCount();
-    xSemaphoreGive(s_mtx);
-    notify_();
+/* ====================== API nueva (10 sensores) ====================== */
+
+void init() {
+    ensure_init();
 }
 
-std::array<float,8> getTempsCelsius() {
-    std::array<int16_t,8> v; std::array<uint8_t,8> ok;
-    xSemaphoreTake(s_mtx, portMAX_DELAY);
-    v = s_vals; ok = s_valid;
-    xSemaphoreGive(s_mtx);
-    std::array<float,8> out{};
-    for (int i=0;i<8;++i) out[i] = ok[i]? (v[i]/100.0f) : NAN;
+void setTemps(const std::array<float, kNumTemps>& vals, uint32_t seq, uint64_t ts_ms) {
+    ensure_init();
+    if (s_mutex && xSemaphoreTake(s_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        s_snap.temps = vals;
+        for (size_t i = 0; i < kNumTemps; ++i) {
+            s_snap.valid[i] = !std::isnan(vals[i]);
+        }
+        s_snap.seq   = seq;
+        s_snap.ts_ms = (ts_ms != 0) ? ts_ms : now_ms();
+        xSemaphoreGive(s_mutex);
+    } else {
+        // Fallback sin mutex
+        s_snap.temps = vals;
+        for (size_t i = 0; i < kNumTemps; ++i) {
+            s_snap.valid[i] = !std::isnan(vals[i]);
+        }
+        s_snap.seq   = seq;
+        s_snap.ts_ms = (ts_ms != 0) ? ts_ms : now_ms();
+    }
+}
+
+Snapshot getSnapshot() {
+    ensure_init();
+    Snapshot out;
+    if (s_mutex && xSemaphoreTake(s_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        out = s_snap;
+        xSemaphoreGive(s_mutex);
+    } else {
+        // Sin mutex, copia “best effort”
+        out = s_snap;
+    }
     return out;
 }
 
-bool subscribe(QueueHandle_t q) {
-    if (!q) return false;
-    for (auto& s : s_listeners) {
-        if (s==q) return true;
-        if (!s) { s=q; return true; }
+std::array<float, kNumTemps> getTemps() {
+    ensure_init();
+    std::array<float, kNumTemps> out{};
+    if (s_mutex && xSemaphoreTake(s_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        out = s_snap.temps;
+        xSemaphoreGive(s_mutex);
+    } else {
+        out = s_snap.temps;
     }
-    return false;
+    return out;
 }
-void unsubscribe(QueueHandle_t q) {
-    for (auto& s : s_listeners) if (s==q) { s=nullptr; return; }
+
+/* ====================== API legada (8 sensores) ====================== */
+
+void setTelemetryRaw(const int16_t* temps8, uint8_t count, uint8_t seq) {
+    // Conversión típica: DS18x (Q4.4, Q8.4, entero*16, etc.)
+    // Aquí suponemos entero*16 → °C = raw / 16.0f. Ajusta si tu protocolo es distinto.
+    ensure_init();
+
+    std::array<float, kNumTemps> vals{};
+    // Rellena NaN por defecto
+    for (size_t i = 0; i < kNumTemps; ++i) vals[i] = NAN;
+
+    const uint8_t n = (count > 8) ? 8 : count;
+    for (uint8_t i = 0; i < n; ++i) {
+        vals[i] = static_cast<float>(temps8[i]) / 16.0f;
+    }
+    setTemps(vals, seq, now_ms());
 }
+
+std::array<float, 8> getTempsCelsius8() {
+    ensure_init();
+    std::array<float, 8> out{};
+    for (size_t i = 0; i < 8; ++i) {
+        out[i] = s_snap.temps[i];
+    }
+    return out;
 }
+
+} // namespace CommRxState
