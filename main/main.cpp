@@ -52,8 +52,10 @@ extern "C" void app_main(void)
     // API TX (si requiere estado propio)
     CommTxApi::init();
 
-    // Demo
-    comm_demo_loopback_start();
+
+    #if CONFIG_COMM_LOOPBACK
+        comm_demo_loopback_start();
+    #endif
 
     // Construcción de UI protegida por lock de LVGL
     lvgl_port_lock(UINT32_MAX);

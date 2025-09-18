@@ -17,14 +17,23 @@
 
 static const char* TAG = "comm_transport_espnow";
 
-/* ========= Header “en el aire” (AJUSTA si el tuyo difiere) ========= */
+/* ========= Cabeceras “en el aire” detectables (empaquetadas) ========= */
 #pragma pack(push, 1)
-struct AppHeaderRadio {
+// AppV1 real (lo que envía el CORE)
+struct AppV1HeaderShim {
+    uint8_t  ver;
+    uint8_t  type;
+    uint8_t  seq;
+    uint8_t  flags;
+    uint16_t ts10ms;  // LE
+    uint16_t len;     // LE = bytes de payload inmediatamente después de esta cabecera
+};
+
+// Formato legacy mínimo que se usó antes (sin len): ver(1), type(1), seq(2)
+struct LegacyHeader {
     uint8_t  ver;
     uint8_t  type;
     uint16_t seq;
-    // Nota: algunos diseños llevan len aquí; para 0x30 no te fíes de ese len,
-    //       usa frame_len - sizeof(AppHeaderRadio).
 };
 #pragma pack(pop)
 
@@ -37,34 +46,80 @@ static inline const char* mac_to_str(const uint8_t* mac, char* buf, size_t bufle
     return buf;
 }
 
+static bool looks_like_appv1(const uint8_t* p, int n)
+{
+    if (!p || n < (int)sizeof(AppV1HeaderShim)) return false;
+    const auto* h = reinterpret_cast<const AppV1HeaderShim*>(p);
+    if (h->ver == 0 || h->ver > 2) return false;     // ver 1..2
+    // El tipo puede ser 0x30 (JSON_BRIDGE) u otros (ACK/compat, etc.)
+    // Chequeo básico de len coherente:
+    const int rest = n - (int)sizeof(AppV1HeaderShim);
+    const int pay  = (int)h->len;
+    if (pay <= 0 || pay > rest) return false;
+    return true;
+}
+
 /* =================== RX callback =================== */
 
 static void espnow_rx_cb(const esp_now_recv_info_t* info, const uint8_t* frame, int frame_len)
 {
-    if (!frame || frame_len < (int)sizeof(AppHeaderRadio)) {
-        ESP_LOGW(TAG, "RX frame corto (%d)", frame_len);
+    if (!frame || frame_len <= 0) {
+        ESP_LOGW(TAG, "RX frame vacío (%d)", frame_len);
         return;
     }
 
-    const AppHeaderRadio* h = reinterpret_cast<const AppHeaderRadio*>(frame);
-    const uint8_t* payload  = frame + sizeof(AppHeaderRadio);
-    int payload_len         = frame_len - (int)sizeof(AppHeaderRadio);
-    if (payload_len < 0) payload_len = 0;
+    AppEnvelope env{};
+    const uint8_t* payload = nullptr;
+    int payload_len = 0;
 
-    AppEnvelope env{}; // estructura propia del proyecto (comm_commitment.h)
-    env.header.ver = h->ver;
-    env.header.type = h->type;
-    env.header.seq = h->seq;
+    // 1) Preferimos AppV1 “real” del aire (8B + len)
+    if (looks_like_appv1(frame, frame_len)) {
+        const auto* h = reinterpret_cast<const AppV1HeaderShim*>(frame);
+        payload     = frame + sizeof(AppV1HeaderShim);
+        payload_len = (int)h->len;
 
-    // ***** CLAVE: copiar SIEMPRE el payload real que llegó por radio *****
-    env.header.len = (uint16_t)((payload_len >= 0 && payload_len <= 0xFFFF) ? payload_len : 0);
+        env.header.ver   = h->ver;
+        env.header.type  = h->type;
+        env.header.seq   = h->seq;          // ojo: en JSON_BRIDGE cambia por chunk
+        env.header.len   = (uint16_t)((payload_len >= 0 && payload_len <= 0xFFFF) ? payload_len : 0);
+        // flags/ts10ms no están en AppEnvelope; si te interesan, extiéndelo.
 
+        // Log útil para depurar
+        if (h->type == 0x30) {
+            ESP_LOGI(TAG, "RX AppV1: type=0x%02X seq=%u len=%u (JSON_BRIDGE)",
+                     (unsigned)h->type, (unsigned)h->seq, (unsigned)h->len);
+        } else {
+            ESP_LOGI(TAG, "RX AppV1: type=0x%02X seq=%u len=%u",
+                     (unsigned)h->type, (unsigned)h->seq, (unsigned)h->len);
+        }
+    }
+    // 2) Si no parece AppV1, intentamos legacy (ver,type,seq) sin len
+    else if (frame_len >= (int)sizeof(LegacyHeader)) {
+        const auto* h = reinterpret_cast<const LegacyHeader*>(frame);
+        payload     = frame + sizeof(LegacyHeader);
+        payload_len = frame_len - (int)sizeof(LegacyHeader);
+
+        env.header.ver   = h->ver;
+        env.header.type  = h->type;
+        env.header.seq   = h->seq;
+        env.header.len   = (uint16_t)((payload_len >= 0 && payload_len <= 0xFFFF) ? payload_len : 0);
+
+        ESP_LOGI(TAG, "RX Legacy: type=0x%02X seq=%u len=%u",
+                 (unsigned)h->type, (unsigned)h->seq, (unsigned)payload_len);
+    }
+    // 3) Si no encaja en nada, descartamos con log
+    else {
+        ESP_LOGW(TAG, "RX frame no reconoce cabecera (len=%d). Se descarta.", frame_len);
+        return;
+    }
+
+    // Copiar payload al sobre del proyecto (capado al tamaño del array)
     if (payload_len > 0) {
-        const size_t MAX = env.payload.size();  // std::array<uint8_t, N>
+        const size_t MAX = env.payload.size();
         size_t n = (payload_len <= (int)MAX) ? (size_t)payload_len : MAX;
         std::memcpy(env.payload.data(), payload, n);
         if ((int)n < payload_len) {
-            ESP_LOGW(TAG, "Payload truncado RX: %d -> %u", payload_len, (unsigned)n);
+            ESP_LOGW(TAG, "Payload RX truncado: %d -> %u", payload_len, (unsigned)n);
         }
     }
 
@@ -85,7 +140,6 @@ static void espnow_tx_cb(const uint8_t* mac_addr, esp_now_send_status_t status)
 }
 
 /* =================== API esperada por el proyecto =================== */
-/* Firmas usadas por comm_tx_gateway.cpp y main.cpp                      */
 
 bool comm_espnow_init_sta()
 {
@@ -94,7 +148,6 @@ bool comm_espnow_init_sta()
     // --- NVS obligatorio para Wi-Fi / ESP-NOW ---
     err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        // Partición llena o versión distinta → borra y vuelve a init
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
@@ -148,7 +201,6 @@ bool comm_espnow_init_sta()
     return true;
 }
 
-
 bool comm_espnow_get_self_mac(uint8_t* mac_out)
 {
     if (!mac_out) return false;
@@ -164,8 +216,8 @@ bool comm_parse_mac_str(const char* s, uint8_t* mac_out)
 {
     if (!s || !mac_out) return false;
     unsigned int m[6] = {};
-    // Acepta con ":" o "-" (ej. "AA:BB:CC:DD:EE:FF")
-    int n = std::sscanf(s, "%2x%*[:\-]%2x%*[:\-]%2x%*[:\-]%2x%*[:\-]%2x%*[:\-]%2x",
+    // Acepta ":" o "-" (ej. "AA:BB:CC:DD:EE:FF")
+    int n = std::sscanf(s, "%2x%*[:\\-]%2x%*[:\\-]%2x%*[:\\-]%2x%*[:\\-]%2x%*[:\\-]%2x",
                         &m[0], &m[1], &m[2], &m[3], &m[4], &m[5]);
     if (n != 6) return false;
     for (int i = 0; i < 6; ++i) mac_out[i] = (uint8_t)m[i];
@@ -179,17 +231,15 @@ bool comm_espnow_add_peer(const uint8_t* mac, uint8_t channel)
     esp_now_peer_info_t peer{};
     std::memset(&peer, 0, sizeof(peer));
     std::memcpy(peer.peer_addr, mac, 6);
-    peer.channel = channel;          // 0 = canal actual
+    peer.ifidx   = WIFI_IF_STA;                     // ⬅️ añadido
+    peer.channel = channel;                         // 0 = canal actual
     peer.encrypt = false;
 
-    esp_err_t err;
-
-    // Si ya existe, elimínalo antes de añadir
     if (esp_now_is_peer_exist(mac)) {
         esp_now_del_peer(mac);
     }
 
-    err = esp_now_add_peer(&peer);
+    esp_err_t err = esp_now_add_peer(&peer);
     if (err != ESP_OK) {
         char s[18]; mac_to_str(mac, s, sizeof(s));
         ESP_LOGE(TAG, "esp_now_add_peer(%s): %s", s, esp_err_to_name(err));
