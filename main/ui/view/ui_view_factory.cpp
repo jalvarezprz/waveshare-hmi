@@ -180,31 +180,9 @@ static void temps2x5_ctx_on_delete(lv_event_t* e) {
     lv_mem_free(ctx);
 }
 
-/*
-
 static void temps2x5_timer_cb(lv_timer_t* t) {
     Temps2x5Ctx* ctx = (Temps2x5Ctx*)t->user_data;
-    if (!ctx) return;
-
-    static float base = 20.0f;
-    base += 0.15f; if (base > 25.0f) base = 20.0f;
-
-    for (int i = 0; i < ctx->temp_count; ++i) {
-        lv_obj_t* lab = ctx->temp_val[i];
-        if (!lab) continue;
-        if (!lv_obj_is_valid(lab)) { ctx->temp_val[i] = nullptr; continue; }
-
-        char buf[32];
-        float val = base + (i % 5) * 0.3f + (i / 5) * 0.4f;
-        std::snprintf(buf, sizeof(buf), "%.1f °C", val);
-        lv_label_set_text(lab, buf);
-    }
-}
-
-*/
-
-static void temps2x5_timer_cb(lv_timer_t* t) {
-    Temps2x5Ctx* ctx = (Temps2x5Ctx*)t->user_data;
+    static const int kSensorMap[10] = { 1, 3, 5, 7, 9, 0, 2, 4, 6, 8 };
     if (!ctx) return;
 
     auto vals = CommRxState::getTemps();
@@ -212,8 +190,9 @@ static void temps2x5_timer_cb(lv_timer_t* t) {
         lv_obj_t* lab = ctx->temp_val[i];
         if (!lab || !lv_obj_is_valid(lab)) continue;
 
-        if (!std::isnan(vals[i])) {
-            lv_label_set_text_fmt(lab, "%.1f °C", vals[i]);
+        int srcIdx = kSensorMap[i];  // índice real en vals[]
+        if (srcIdx >= 0 && !std::isnan(vals[srcIdx])) {
+            lv_label_set_text_fmt(lab, "%.1f °C", vals[srcIdx]);
         } else {
             lv_label_set_text(lab, "--.- °C");
         }
@@ -377,20 +356,11 @@ static lv_obj_t* build_temps2x5_panel(lv_obj_t* parent, const ScreenSpecificatio
         if (e.id.rfind("sw", 0) == 0 && (int)sws.size() < 3) sws.push_back(&e);
     }
 
-    // 2) Títulos canónicos (10 sensores en orden fijo)
+    // 2) Títulos canónicos (10 sensores en orden fijo en pantalla)
     static const char* kSensorTitles[10] = {
-        "Caldera OUT",
-        "Depósito TOP",
-        "Suelo OUT",
-        "Fancoil OUT",
-        "Exterior",
-        "Caldera IN",
-        "Depósito BOTTOM",
-        "Suelo IN",
-        "Fancoil IN",
-        "Libre"
+        "Caldera OUT",  "Depósito TOP",      "Suelo OUT",   "Fancoil OUT",  "Exterior",
+        "Caldera IN",   "Depósito BOTTOM",   "Suelo IN",    "Fancoil IN",   "Libre"
     };
-
 
     std::vector<std::string> sensorTitles;
     sensorTitles.reserve(10);
