@@ -19,6 +19,7 @@
 #include "comm/comm_diag.h"
 #include "comm/rx/comm_rx_state.h"      // Recepción temperaturas
 
+#include "hmi_command_sender.h"
 
 static const char* TAG = "UI_VIEW_FACTORY";
 
@@ -316,12 +317,26 @@ static lv_obj_t* create_footer_switches(lv_obj_t* parent,
         lv_obj_set_style_radius(sw, 15, 0);
 
         if (!e->action.empty()) {
+            // Copiamos la acción a un buffer propio para usar como user_data
             char* act = (char*)lv_mem_alloc(e->action.size() + 1);
             if (act) {
                 std::strcpy(act, e->action.c_str());
+
                 lv_obj_add_event_cb(sw, [](lv_event_t* ev){
                     const char* act = (const char*)lv_event_get_user_data(ev);
-                    ui_router_dispatch(act);
+
+                    // Log básico del gesto UI
+                    ESP_LOGI("UI_ROUTER", "dispatch: %s", act ? act : "(null)");
+
+                    // Si es nuestro switch 1: mando "toggle" del LED builtin
+                    if (act && std::strcmp(act, "DO:/io/sw1") == 0) {
+                        const bool ok = Hmi::CommandSender::send_do("io/led_builtin", "toggle", true);
+                        ESP_LOGI("UI_ROUTER", "DO:/io/sw1 -> send_do(io/led_builtin,toggle) %s",
+                                 ok ? "OK" : "FAIL");
+                    } else {
+                        // Si no, delega al enrutador existente (si lo usas)
+                        ui_router_dispatch(act);
+                    }
                 }, LV_EVENT_VALUE_CHANGED, act);
             }
         }
@@ -329,6 +344,7 @@ static lv_obj_t* create_footer_switches(lv_obj_t* parent,
 
     return footer;
 }
+
 
 static lv_obj_t* build_temps2x5_panel(lv_obj_t* parent, const ScreenSpecification& spec)
 {

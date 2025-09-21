@@ -25,8 +25,10 @@
 #include "comm/rx/comm_rx_state.h"
 
 #include "comm/comm_demo_loopback.h"
-
 #include "comm/transport/comm_transport_espnow.h"
+
+// HMI -> CORE command sender
+#include "hmi_command_sender.h"
 
 extern "C" void app_main(void)
 {
@@ -34,9 +36,8 @@ extern "C" void app_main(void)
     esp_log_level_set("*", ESP_LOG_INFO);
 
     uint8_t mac[6]; comm_espnow_get_self_mac(mac);
-
     ESP_LOGI("APP", "HMI STA MAC: %02X:%02X:%02X:%02X:%02X:%02X",
-          mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+             mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
     // Panel RGB + touch (Waveshare ESP32-S3 Touch LCD 7")
     ESP_ERROR_CHECK(waveshare_esp32_s3_rgb_lcd_init());
@@ -52,6 +53,8 @@ extern "C" void app_main(void)
     // API TX (si requiere estado propio)
     CommTxApi::init();
 
+    // Hmi::CommandSender: usa la ruta por defecto (cola TX)
+    Hmi::CommandSender::set_tx_fn(nullptr);
 
     #if CONFIG_COMM_LOOPBACK
         comm_demo_loopback_start();

@@ -7,7 +7,7 @@ set(SRCS_BASE
     waveshare_rgb_lcd_port.c
     lvgl_lock_shim.c
 
-    comm/comm_demo_loopback.cpp         # demo communications
+    hmi_command_sender.cpp
 )
 
 # =========================
@@ -54,7 +54,9 @@ set(SRCS_UI_FONTS
 # COMM — TX y RX
 # =========================
 set(SRCS_COMM
+    comm/comm_demo_loopback.cpp
     comm/comm_diag.cpp
+    comm/command_contract.cpp
 )
 
 set(SRCS_COMM_TRANSPORT
