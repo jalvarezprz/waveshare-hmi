@@ -68,6 +68,7 @@ set(SRCS_COMM_TX
     comm/tx/comm_tx_handler.cpp
     comm/tx/comm_tx_queue.cpp
     comm/tx/comm_tx_api.cpp
+    comm/tx/comm_tx_json_bridge.cpp
 )
 
 set(SRCS_COMM_RX

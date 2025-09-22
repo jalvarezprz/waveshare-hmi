@@ -1,10 +1,10 @@
 #include "sdkconfig.h"
-#include "comm_tx_gateway.h"
+#include "comm/tx/comm_tx_gateway.h"
 
-#include "comm_tx_queue.h"
-#include "comm_commitment.h"       // AppEnvelope, AppHeader, enums, APP_PROTO_VER
+#include "comm/tx/comm_tx_queue.h"
+#include "comm/comm_proto_v1.h"          // <-- contrato común (sustituye a “comm_commitment.h”)
 #include "comm/comm_diag.h"
-#include "comm/rx/comm_rx_queue.h" // para inyectar en RX en modo loopback
+#include "comm/rx/comm_rx_queue.h"       // para loopback (si se activa)
 
 // #if !CONFIG_COMM_LOOPBACK
 #if 1
@@ -34,14 +34,15 @@ static uint8_t s_channel =
 
 static void task_tx_(void*)
 {
-    AppEnvelope env{};
+    AppV1::Envelope env{};
     for (;;)
     {
         if (!comm_tx_queue_recv(env, portMAX_DELAY)) continue;
 
-        // Seguridad básica de longitud (no deberíamos enviar basura)
-        if (env.header.len > sizeof(env.payload)) {
-            ESP_LOGW(TAG, "Descartado: len=%u > payload=%u", env.header.len, (unsigned)sizeof(env.payload));
+        // Seguridad básica de longitud
+        if (env.hdr.len > sizeof(env.payload)) {
+            ESP_LOGW(TAG, "Descartado: len=%u > payload=%u",
+                     (unsigned)env.hdr.len, (unsigned)sizeof(env.payload));
             continue;
         }
 
@@ -53,26 +54,17 @@ static void task_tx_(void*)
         (void)comm_rx_queue_send(env, 0);
         CommDiag::incTxLoopback();
 
-        // Si el emisor pide ACK, generamos uno sintético
-        if (env.header.flags & static_cast<uint8_t>(AppMsgFlags::ReqAck)) {
-            AppEnvelope ack{};
-            ack.header.ver   = APP_PROTO_VER;
-            ack.header.type  = static_cast<uint8_t>(AppMsgType::Ack);
-            ack.header.seq   = env.header.seq;
-            ack.header.flags = 0;
-            ack.header.ts10ms= 0;
-            ack.header.len   = 0;
-            (void)comm_rx_queue_send(ack, 0);
-        }
+        // Si el emisor pidiese ACK, aquí podrías generar uno sintético
+        // (bloque omitido para simplificar; no usamos AppMsgFlags aquí)
 
         ESP_LOGI(TAG, "LOOPBACK TX→RX type=0x%02X seq=%u len=%u",
-                 env.header.type, env.header.seq, env.header.len);
+                 env.hdr.type, env.hdr.seq, env.hdr.len);
 #else
         // Envío real por ESP-NOW
-        const size_t frame_len = sizeof(AppHeader) + env.header.len;
+        const size_t frame_len = sizeof(AppV1::Header) + env.hdr.len;
         bool ok = comm_espnow_send(s_peer_mac, &env, frame_len);
         ESP_LOGI(TAG, "TX ESPNOW type=0x%02X seq=%u len=%u -> %s",
-                 env.header.type, env.header.seq, env.header.len, ok ? "OK" : "ERR");
+                 env.hdr.type, env.hdr.seq, env.hdr.len, ok ? "OK" : "ERR");
         // El resultado final (ok/fail) lo contabiliza el callback global de send
 #endif
     }
@@ -98,8 +90,7 @@ bool comm_tx_gateway_start()
     }
     #endif
 
-    // Alta del peer (unencrypted). Con broadcast (FF:FF:...) esp-now no exige alta.
-    // Aun así, dar de alta permite fijar canal si se usa unicast.
+    // Alta del peer (unencrypted). Con broadcast no es estrictamente necesario
     (void)comm_espnow_add_peer(s_peer_mac, s_channel);
 
     // Log de la MAC local para emparejado manual

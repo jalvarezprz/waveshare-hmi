@@ -1,4 +1,6 @@
 #pragma once
+#include <cstddef>
+#include <cstdint>
 
-/** Gateway TX: tarea que lee la cola TX y envía por el transporte (más adelante ESP-NOW) */
-bool comm_tx_gateway_start();  ///< crea la tarea TX
+/** Inicializa la pasarela TX (WiFi/ESPNOW, task de envío, etc.). */
+bool comm_tx_gateway_start();

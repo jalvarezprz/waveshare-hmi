@@ -4,9 +4,8 @@
 #include <string>
 #include "esp_log.h"
 
-#include "comm/tx/comm_tx_queue.h"   // comm_tx_queue_send(...)
-#include "comm/comm_proto_v1.h"      // AppEnvelope, AppV1::JsonBridge
-#include "comm/command_contract.h"   // Comm::CommandContract::make_command_do(...)
+#include "comm/tx/comm_tx_json_bridge.h"  // comm_tx_json_send(...)
+#include "comm/command_contract.h"        // Comm::CommandContract::make_command_do(...)
 
 namespace Hmi::CommandSender {
 
@@ -14,33 +13,6 @@ static const char* TAG = "HMI_CMD_SENDER";
 
 // Callback opcional (si alguien quiere sobreescribir el envío)
 static TxFn s_tx = nullptr;
-
-// Encola un JSON en la cola TX usando el framing v1 + JSON_BRIDGE (0x30)
-static bool enqueue_via_tx_queue(const char* json, size_t len)
-{
-    if (!json || len == 0) return false;
-
-    AppEnvelope env{};
-    env.header.ver    = 1;
-    env.header.type   = static_cast<uint8_t>(AppV1::JsonBridge); // == 0x30
-    env.header.seq    = 0;
-    env.header.flags  = 0;
-    env.header.ts10ms = 0;
-
-    if (len > env.payload.size()) {
-        ESP_LOGE(TAG, "JSON demasiado largo (%u > %u)",
-                 (unsigned)len, (unsigned)env.payload.size());
-        return false;
-    }
-
-    env.header.len = static_cast<uint16_t>(len);
-    std::memcpy(env.payload.data(), json, len);
-
-    const bool ok = comm_tx_queue_send(env, pdMS_TO_TICKS(50));
-    ESP_LOGI(TAG, "TX enqueue JSON (%u bytes) -> %s",
-             (unsigned)len, ok ? "OK" : "FAIL");
-    return ok;
-}
 
 void set_tx_fn(TxFn fn)
 {
@@ -55,9 +27,12 @@ bool send_raw_json(const char* json)
 
     ESP_LOGI(TAG, "TX CMD: %.*s", (int)len, json);
 
-    // Si hay callback, se usa; si no, por la cola estándar
+    // Si hay callback, úsalo; si no, por el bridge estándar (fragmentado)
     if (s_tx) return s_tx(json, len);
-    return enqueue_via_tx_queue(json, len);
+
+    const bool ok = comm_tx_json_send(json, len);
+    ESP_LOGI(TAG, "TX JSON_BRIDGE len=%u -> %s", (unsigned)len, ok ? "OK" : "FAIL");
+    return ok;
 }
 
 // Envío “raw” de JSON (std::string)

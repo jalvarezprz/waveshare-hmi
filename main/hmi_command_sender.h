@@ -1,18 +1,21 @@
 #pragma once
 #include <cstddef>
-#include <cstdint>
+#include <string>
 
-namespace Hmi { namespace CommandSender {
+namespace Hmi::CommandSender {
 
-using TxFn = bool(*)(const char* data, size_t len); // alternativa opcional
+using TxFn = bool(*)(const char* data, size_t len);  // alternativa opcional
 
-// Instala TX personalizado; pasa nullptr para usar la ruta por defecto (cola TX)
+/** Registra un callback alternativo para el envío (tests, mocks…). */
 void set_tx_fn(TxFn fn);
 
-// Enviar JSON “tal cual” (ya formateado por command_contract)
+/** Envía JSON crudo (c-string). */
 bool send_raw_json(const char* json);
 
-// Helper alto nivel para comandos DO (usa command_contract)
-bool send_do(const char* path, const char* op, bool expects_ack);
+/** Envía JSON crudo (std::string). */
+bool send_raw_json(const std::string& j);
 
-}} // namespace Hmi::CommandSender
+/** Helper alto nivel: construye y envía un comando DO. */
+bool send_do(const char* path, const char* op, bool expects_ack = true);
+
+} // namespace Hmi::CommandSender

@@ -1,9 +1,17 @@
 #pragma once
 #include <cstdint>
 
-/** API semántica para que la UI envíe comandos */
+// API de alto nivel de TX del HMI
 namespace CommTxApi {
-    bool init();                         ///< init opcional si se requiere
-    bool sendLed(uint8_t idx, bool on);  ///< Encola comando LED (ReqAck)
-    bool requestSnapshot();              ///< Encola petición de telemetría
-}
+
+/// Inicializa la pasarela de TX (Wi-Fi STA + ESP-NOW + tarea TX).
+/// Devuelve true si queda lista para enviar.
+bool init();
+
+/// Enviar un comando LED sencillo (payload binario).
+bool sendLed(uint8_t led_idx, bool on);
+
+/// Solicitar un snapshot/telemetría inmediata (payload vacío).
+bool requestSnapshot();
+
+} // namespace CommTxApi
