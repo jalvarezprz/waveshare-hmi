@@ -48,14 +48,38 @@ static inline void json_append_str(std::string& s, const char* key, const char* 
 }
 
 // Body mínimo del comando DO
+// Ahora soporta alias de op: "set_true"/"set_false" -> op:"set" + args.value bool
 std::string make_body_do(const char* path, const char* op) {
+    // Normalizamos el op y decidimos si inyectar args.value
+    std::string op_s = op ? op : "toggle";
+    bool inject_bool = false;
+    bool bool_val = false;
+
+    if (op_s == "set_true") {
+        op_s = "set";
+        inject_bool = true;
+        bool_val = true;
+    } else if (op_s == "set_false") {
+        op_s = "set";
+        inject_bool = true;
+        bool_val = false;
+    }
+
     std::string b;
-    b.reserve(96);
+    b.reserve(112);
     b += "{";
     json_append_str(b, "do", path ? path : "io/unknown");
-    json_append_str(b, "op", op ? op : "toggle");
+    json_append_str(b, "op", op_s.c_str());
     // args (último campo del body): lo añadimos sin helper para no poner coma extra
-    b += "\"args\":{}";
+    b += "\"args\":";
+    if (inject_bool) {
+        b += "{";
+        b += "\"value\":";
+        b += (bool_val ? "true" : "false");
+        b += "}";
+    } else {
+        b += "{}";
+    }
     b += "}";
     return b;
 }

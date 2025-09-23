@@ -330,18 +330,24 @@ static lv_obj_t* create_footer_switches(lv_obj_t* parent,
 
                     // Si es nuestro switch 1: mando "toggle" del LED builtin
                     if (act && std::strcmp(act, "DO:/io/sw1") == 0) {
-                        const bool ok = Hmi::CommandSender::send_do("io/led_builtin", "toggle", true);
-                        ESP_LOGI("UI_ROUTER", "DO:/io/sw1 -> send_do(io/led_builtin,toggle) %s",
-                                 ok ? "OK" : "FAIL");
+                        lv_obj_t* target = lv_event_get_target(ev);
+                        const bool state_on = lv_obj_has_state(target, LV_STATE_CHECKED);
+
+                        const char* op = state_on ? "set_true" : "set_false";
+                        const bool ok = Hmi::CommandSender::send_do("io/led_builtin", op, true);
+
+                        ESP_LOGI("UI_ROUTER",
+                                "DO:/io/sw1 -> send_do(io/led_builtin,%s) %s",
+                                op, ok ? "OK" : "FAIL");
                     } else {
-                        // Si no, delega al enrutador existente (si lo usas)
                         ui_router_dispatch(act);
                     }
+
+
                 }, LV_EVENT_VALUE_CHANGED, act);
             }
         }
     }
-
     return footer;
 }
 
