@@ -222,11 +222,7 @@ static lv_obj_t* create_sensors_grid_2x5_titles(lv_obj_t* parent,
     Ui::UiThemeStyles& s = Ui::getThemeStyles();
 
     lv_obj_t* grid = lv_obj_create(parent);
-    lv_obj_clear_flag(grid, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_width(grid, LV_PCT(100));
-    lv_obj_set_height(grid, LV_SIZE_CONTENT);
-    lv_obj_set_style_pad_all(grid, 0, 0);
-    lv_obj_set_style_border_width(grid, 0, 0);
+    Ui::applySensorGrid(grid, Ui::getThemeStyles());
 
     static lv_coord_t col_dsc[] = {
         LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1),
@@ -253,7 +249,7 @@ static lv_obj_t* create_sensors_grid_2x5_titles(lv_obj_t* parent,
         lv_obj_set_style_bg_color(cell, kCellBg, 0);
         lv_obj_set_style_radius(cell, 8, 0);
         lv_obj_set_style_pad_all(cell, 10, 0);
-        lv_obj_set_style_min_height(cell, 90, 0);
+        lv_obj_set_style_min_height(cell, 96, 0);
 
         // Layout interno: COLUMNA → [ Valor (arriba, alineado a derecha) | Título (abajo) ]
         lv_obj_set_flex_flow(cell, LV_FLEX_FLOW_COLUMN);
