@@ -37,12 +37,22 @@ void Button::setOnClick(void (*cb)(void*), void* user_data) {
 }
 
 void Button::applyTheme() {
-    auto& S = Ui::getThemeStyles();     // ← define S
+    auto& S = Ui::getThemeStyles();
 
-    // Styles del tema (btnPrimary_main/label)
-    lv_obj_add_style(root_,  &S.btnPrimary,  LV_PART_MAIN);
+    // 1) Cuerpo del botón (usa styles del tema: colores, padding, estados…)
+    Ui::applyButtonPrimary(root_, S, /*setSize=*/false);
+
+    // 2) Texto del botón
     if (label_) {
-        lv_obj_add_style(label_, &S.btnPrimary, 0);
+        // Aplica style tipográfico base (usa Montserrat si fontBody lo es)
+        lv_obj_add_style(label_, &S.labelBody, 0);
+
+        // Fuerza explícitamente la fuente Montserrat del tema (por si el style cambia)
+        lv_obj_set_style_text_font(label_, S.tokens.fontBody, 0);
+
+        // Color correcto sobre fondo "primary" y estado disabled
+        lv_obj_set_style_text_color(label_, S.tokens.colorOnPrimary, 0);
+        lv_obj_set_style_text_color(label_, S.tokens.colorMuted, LV_STATE_DISABLED);
     }
 }
 
