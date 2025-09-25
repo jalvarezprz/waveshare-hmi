@@ -486,4 +486,56 @@ void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, b
     }
 }
 
+/*========================== Presets por bloque (lego) ========================*/
+/* Nota: Sólo usan tokens/styles ya existentes. No cambian geometrías globales. */
+
+void applySensorTile(lv_obj_t* obj, UiThemeStyles& s) {
+    if (!obj) return;
+    // Base: card (radio/padding/borde coherentes)
+    lv_obj_add_style(obj, &s.card, LV_PART_MAIN);
+    // Ajuste cromático suave para “baldosa”
+    lv_obj_set_style_bg_color  (obj, s.tokens.colorSurfaceVariant, LV_PART_MAIN);
+    lv_obj_set_style_text_color(obj, s.tokens.colorOnSurface,      LV_PART_MAIN);
+}
+
+void applySensorGrid(lv_obj_t* obj, UiThemeStyles& s) {
+    if (!obj) return;
+    // Contenedor de grid “limpio”
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN);
+    lv_obj_set_width(obj, LV_PCT(100));
+    // Gaps desde tokens existentes
+    lv_obj_set_style_pad_row   (obj, s.tokens.gapRow, LV_PART_MAIN);
+    lv_obj_set_style_pad_column(obj, s.tokens.gapCol, LV_PART_MAIN);
+}
+
+void applySwitchGroupBox(lv_obj_t* obj, UiThemeStyles& s) {
+    if (!obj) return;
+    // Caja ligera para cada switch del footer
+    lv_obj_set_style_bg_color  (obj, s.tokens.colorSurfaceVariant, LV_PART_MAIN);
+    lv_obj_set_style_text_color(obj, s.tokens.colorOnSurface,      LV_PART_MAIN);
+    lv_obj_set_style_radius    (obj, s.tokens.cardRadius,          LV_PART_MAIN);
+    lv_obj_set_style_pad_all   (obj, s.tokens.panelPadAll,         LV_PART_MAIN);
+    lv_obj_set_style_border_width(obj, s.tokens.panelBorderW,      LV_PART_MAIN);
+    lv_obj_set_style_border_color(obj, s.tokens.colorOutline,      LV_PART_MAIN);
+}
+
+void applyPanelSurface(lv_obj_t* obj, UiThemeStyles& s) {
+    if (!obj) return;
+    // Panel de contenido genérico (diagnóstico, contenedores)
+    lv_obj_add_style(obj, &s.content, LV_PART_MAIN);
+    lv_obj_set_style_border_width(obj, s.tokens.panelBorderW, LV_PART_MAIN);
+    lv_obj_set_style_border_color(obj, s.tokens.colorOutline, LV_PART_MAIN);
+}
+
+void applyMenuButtonBox(lv_obj_t* obj, UiThemeStyles& s) {
+    if (!obj) return;
+    // Ajuste neutro del contenedor del botón en listas/cuadrículas
+    lv_obj_set_width(obj, LV_PCT(100));
+    // Sugerencia de espacio sin forzar: reutilizamos paddings del botón como guía
+    lv_obj_set_style_pad_hor(obj, s.tokens.btnPadLR, LV_PART_MAIN);
+    lv_obj_set_style_pad_ver(obj, s.tokens.btnPadTB, LV_PART_MAIN);
+}
+
+
 } // namespace Ui

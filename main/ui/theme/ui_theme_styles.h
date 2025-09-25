@@ -188,4 +188,10 @@ inline void applyIconDefault(lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px
     applyIconOnSurface(obj, s, size_px);
 }
 
+/*========================== Presets por bloque (lego) ========================*/
+void applySensorTile     (lv_obj_t* obj, UiThemeStyles& s);
+void applySensorGrid     (lv_obj_t* obj, UiThemeStyles& s);
+void applySwitchGroupBox (lv_obj_t* obj, UiThemeStyles& s);
+void applyPanelSurface   (lv_obj_t* obj, UiThemeStyles& s);
+
 } // namespace Ui
