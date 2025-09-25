@@ -530,12 +530,16 @@ void applyPanelSurface(lv_obj_t* obj, UiThemeStyles& s) {
 
 void applyMenuButtonBox(lv_obj_t* obj, UiThemeStyles& s) {
     if (!obj) return;
-    // Ajuste neutro del contenedor del botón en listas/cuadrículas
+
+    // Ajustes básicos de estilo para el contenedor del botón en listas/cuadrículas
     lv_obj_set_width(obj, LV_PCT(100));
-    // Sugerencia de espacio sin forzar: reutilizamos paddings del botón como guía
+
+    // Usamos paddings de botón desde tokens, para consistencia
     lv_obj_set_style_pad_hor(obj, s.tokens.btnPadLR, LV_PART_MAIN);
     lv_obj_set_style_pad_ver(obj, s.tokens.btnPadTB, LV_PART_MAIN);
-}
 
+    // Opcional: color de fondo transparente para no interferir
+    lv_obj_set_style_bg_opa(obj, LV_OPA_TRANSP, LV_PART_MAIN);
+}
 
 } // namespace Ui

@@ -193,5 +193,6 @@ void applySensorTile     (lv_obj_t* obj, UiThemeStyles& s);
 void applySensorGrid     (lv_obj_t* obj, UiThemeStyles& s);
 void applySwitchGroupBox (lv_obj_t* obj, UiThemeStyles& s);
 void applyPanelSurface   (lv_obj_t* obj, UiThemeStyles& s);
+void applyMenuButtonBox  (lv_obj_t* obj, UiThemeStyles& s);
 
 } // namespace Ui

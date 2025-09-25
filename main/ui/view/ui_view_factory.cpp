@@ -483,6 +483,8 @@ static lv_obj_t* build_menu_list(lv_obj_t* parent, const ScreenSpecification& sp
                                    el.title.empty() ? el.id : el.title,
                                    el.action);
         lv_obj_set_width(B->root(), LV_PCT(100));
+
+        Ui::applyMenuButtonBox(B->root(), S);
     }
 
     return cont;
