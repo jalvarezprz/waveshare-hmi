@@ -114,6 +114,15 @@ static UiThemeTokens makeSnapshotFromTokens() {
     t.badgeOffsetX = Tokens::badge_offset_x();
     t.badgeOffsetY = Tokens::badge_offset_y();
 
+    // Iconos
+    t.iconSizeSm          = Tokens::icon_size_sm();
+    t.iconSizeMd          = Tokens::icon_size_md();
+    t.iconSizeLg          = Tokens::icon_size_lg();
+    t.iconGap             = Tokens::icon_gap();
+    t.iconColorOnSurface  = Tokens::icon_color_on_surface();
+    t.iconColorOnPrimary  = Tokens::icon_color_on_primary();
+    t.iconColorMuted      = Tokens::icon_color_muted();
+
     return t;
 }
 
@@ -227,6 +236,26 @@ static void initThemeStyles(UiThemeStyles& s, const UiThemeTokens& t) {
     lv_style_set_pad_ver     (&s.btnGhost, t.btnPadTB);
     lv_style_set_text_color  (&s.btnGhost, t.colorOnSurface);
 
+    /* ===== Variantes extra (botones) ===== */
+    style_reset(s.btnDestructive);
+    // Tomamos geometría base de Secondary y recoloreamos en los aplicadores
+
+    style_reset(s.btnSuccess);
+    style_reset(s.btnWarning);
+
+    /* ===== Iconos ===== */
+    style_reset(s.iconOnSurface);
+    lv_style_set_text_font (&s.iconOnSurface, t.fontIcon);
+    lv_style_set_text_color(&s.iconOnSurface, t.iconColorOnSurface);
+
+    style_reset(s.iconOnPrimary);
+    lv_style_set_text_font (&s.iconOnPrimary, t.fontIcon);
+    lv_style_set_text_color(&s.iconOnPrimary, t.iconColorOnPrimary);
+
+    style_reset(s.iconMuted);
+    lv_style_set_text_font (&s.iconMuted, t.fontIcon);
+    lv_style_set_text_color(&s.iconMuted, t.iconColorMuted);
+
     s.initialized = true;
 }
 
@@ -245,7 +274,7 @@ void themeInitOnce() {
     if (!g_styles.initialized) {
         g_tokens = makeSnapshotFromTokens();
         initThemeStyles(g_styles, g_tokens);
-        g_styles.initialized = true;   // <-- AÑADIR ESTA LÍNEA
+        g_styles.initialized = true;
     }
 }
 
@@ -352,10 +381,9 @@ void applyButtonGhost(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     lv_obj_set_style_text_font(btn, s.tokens.fontBody, LV_PART_MAIN);
 }
 
-/* ---- NUEVAS variantes movidas desde el componente ---- */
+/* ---- Variantes extra: se aplican sobre geometría base de Secondary ---- */
 
 void applyButtonDestructive(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
-    // Base: geometría de Secondary (mismo padding/radius), recoloreado a Error
     apply_btn_base_and_size(btn, &s.btnSecondary, s.tokens, setSize);
 
     // MAIN
@@ -366,7 +394,7 @@ void applyButtonDestructive(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
     lv_obj_set_style_bg_color(btn, mix_pressed(s.tokens.colorError, s.tokens),
                               sel(LV_PART_MAIN, LV_STATE_PRESSED));
 
-    // FOCUS (anillo común)
+    // FOCUS
     lv_obj_set_style_outline_width(btn, s.tokens.focusOutlineW, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
     lv_obj_set_style_outline_color(btn, s.tokens.focusOutlineColor, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
     lv_obj_set_style_outline_pad  (btn, s.tokens.focusOutlinePad, sel(LV_PART_MAIN, LV_STATE_FOCUSED));
@@ -406,6 +434,46 @@ void applyButtonWarning(lv_obj_t* btn, UiThemeStyles& s, bool setSize) {
 
     lv_obj_set_style_bg_opa(btn, s.tokens.opaDisabled, sel(LV_PART_MAIN, LV_STATE_DISABLED));
 }
+
+/*========================== Iconos ========================*/
+/**
+ * Nota de uso:
+ *  - Estos helpers están pensados para LABELS que muestran iconos
+ *    (símbolos LVGL: LV_SYMBOL_*, o glifos en la fuente de iconos).
+ *  - Si pasas size_px > 0 se fija min_width/height para reservar caja.
+ *  - El color y la tipografía vienen del tema (tokens/styles).
+ */
+
+static inline void apply_icon_common_box(lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px) {
+    if (size_px > 0) {
+        lv_obj_set_style_min_width (obj, size_px, LV_PART_MAIN);
+        lv_obj_set_style_min_height(obj, size_px, LV_PART_MAIN);
+        lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    }
+    // Espaciado horizontal sugerido por token
+    lv_obj_set_style_pad_left (obj, s.tokens.iconGap/2, LV_PART_MAIN);
+    lv_obj_set_style_pad_right(obj, s.tokens.iconGap/2, LV_PART_MAIN);
+}
+
+void applyIconOnSurface(lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px) {
+    if (!obj) return;
+    lv_obj_add_style(obj, &s.iconOnSurface, LV_PART_MAIN);
+    apply_icon_common_box(obj, s, size_px);
+}
+
+void applyIconOnPrimary(lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px) {
+    if (!obj) return;
+    lv_obj_add_style(obj, &s.iconOnPrimary, LV_PART_MAIN);
+    apply_icon_common_box(obj, s, size_px);
+}
+
+void applyIconMuted(lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px) {
+    if (!obj) return;
+    lv_obj_add_style(obj, &s.iconMuted, LV_PART_MAIN);
+    apply_icon_common_box(obj, s, size_px);
+}
+
+/*========================== Utilidades extra ========================*/
 
 void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, bool withDivider) {
     if (!parent) return;

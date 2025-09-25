@@ -1,34 +1,68 @@
 #pragma once
-/**
- * @file ui_component_button.h
- * @brief Componente Ui::Button. Envuelve lv_btn + label interno.
- */
-#include "ui_component.h"
+#include "lvgl.h"
+#include "ui/theme/ui_theme_styles.h"   // Ui::getThemeStyles, applyButtonPrimary, applyIconOnPrimary
+#include <functional>
 
 namespace Ui {
 
-class Button : public Component {
+/**
+ * Botón de alto nivel con:
+ *  - Texto + icono opcional
+ *  - onClick callback
+ *  - Enabled/disabled
+ *  - Aplicación de tema (tokens/styles) para colores y tipografía
+ *
+ * Variantes: por ahora usa la variante "Primary" del tema.
+ * Si más adelante añadimos variantes (Secondary, Ghost, ...),
+ * podemos exponer un setter y reusar los applyButton* de styles.
+ */
+class Button {
 public:
     Button() = default;
-    ~Button() override = default;
+    ~Button() = default;
 
-    void create(lv_obj_t* parent) override;
+    /** Crea el botón (root = lv_btn) y aplica layout + theme */
+    void create(lv_obj_t* parent);
 
+    /** Devuelve el objeto raíz (para layouts de la vista) */
+    lv_obj_t* root() const { return root_; }
+
+    /** Texto (seguro con UTF-8; depende de la fuente cargada) */
     void setText(const char* txt);
+
+    /** Icono (texto: LV_SYMBOL_*, "", "↩", etc.). nullptr o "" para quitarlo */
+    void setIcon(const char* iconTxt);
+
+    /** Coloca el icono a la izquierda (true) o a la derecha (false) del texto */
+    void setIconLeft(bool left);
+
+    /** Habilita/inhabilita el botón */
     void setEnabled(bool en);
     bool isEnabled() const;
 
-    // onClick simple (click corto)
-    void setOnClick(void (*cb)(void*), void* user_data = nullptr);
+    /** Callback de click */
+    void setOnClick(void (*cb)(void*), void* user_data);
 
-protected:
-    void applyTheme() override;
-    void onEvent(lv_event_t* e) override;
+    /** Reaplica el tema (colores, tipografía). Útil si recargas Theme */
+    virtual void applyTheme();
 
 private:
+    // Objetos LVGL
+    lv_obj_t* root_  = nullptr;
     lv_obj_t* label_ = nullptr;
+    lv_obj_t* icon_  = nullptr;
+
+    // Estado
+    bool iconLeft_ = true;
+
+    // Callback
     void (*onClick_)(void*) = nullptr;
     void* userData_ = nullptr;
+
+    // Eventos
+    void registerAllEvents();
+    static void on_event_cb(lv_event_t* e);
+    void onEvent(lv_event_t* e);
 };
 
 } // namespace Ui

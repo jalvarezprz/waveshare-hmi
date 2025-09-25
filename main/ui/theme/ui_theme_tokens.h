@@ -239,6 +239,24 @@ inline lv_color_t list_bg_color()      { return color_surface(); }
 inline lv_color_t list_item_bg_color() { return color_surface(); }
 inline lv_color_t list_text_color()    { return color_on_surface(); }
 
+/*────────────────────────  ICONOS (NUEVO)  ───────────────────────────*/
+/** Tamaños y gap por defecto para iconografía UI (labels con símbolos). */
+namespace IconTok {
+    inline constexpr int SizeSm = 16;  // px
+    inline constexpr int SizeMd = 20;  // px
+    inline constexpr int SizeLg = 24;  // px
+    inline constexpr int Gap    = 8;   // px entre icono y texto (coherente con ButtonTok::IconGap)
+}
+inline lv_coord_t icon_size_sm() { return static_cast<lv_coord_t>(IconTok::SizeSm); }
+inline lv_coord_t icon_size_md() { return static_cast<lv_coord_t>(IconTok::SizeMd); }
+inline lv_coord_t icon_size_lg() { return static_cast<lv_coord_t>(IconTok::SizeLg); }
+inline lv_coord_t icon_gap()     { return static_cast<lv_coord_t>(IconTok::Gap);    }
+
+/** Colores de icono recomendados por contexto (reutilizan roles existentes). */
+inline lv_color_t icon_color_on_surface() { return color_on_surface(); }
+inline lv_color_t icon_color_on_primary() { return color_on_primary(); }
+inline lv_color_t icon_color_muted()      { return color_muted(); }
+
 /*────────────────────────────  FIN TOKENS  ───────────────────────────*/
 
 }} // namespace Ui::Tokens

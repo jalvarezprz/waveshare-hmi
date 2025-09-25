@@ -85,12 +85,21 @@ struct UiThemeTokens {
     lv_coord_t btnPadTB;
     lv_coord_t btnIconGap;
 
-    // --- NUEVO: Badges ---
-    lv_coord_t badgePadH;     ///< Padding horizontal del badge (p.ej. 6)
-    lv_coord_t badgePadV;     ///< Padding vertical   del badge (p.ej. 2)
-    lv_coord_t badgeRadius;   ///< Radio del badge (p.ej. 10)
-    lv_coord_t badgeOffsetX;  ///< Offset X desde esquina TOP_RIGHT (p.ej. -6)
-    lv_coord_t badgeOffsetY;  ///< Offset Y desde esquina TOP_RIGHT (p.ej. 6)
+    // --- Badges ---
+    lv_coord_t badgePadH;
+    lv_coord_t badgePadV;
+    lv_coord_t badgeRadius;
+    lv_coord_t badgeOffsetX;
+    lv_coord_t badgeOffsetY;
+
+    // --- Iconos ---
+    lv_coord_t iconSizeSm;
+    lv_coord_t iconSizeMd;
+    lv_coord_t iconSizeLg;
+    lv_coord_t iconGap;
+    lv_color_t iconColorOnSurface;
+    lv_color_t iconColorOnPrimary;
+    lv_color_t iconColorMuted;
 };
 
 /**
@@ -130,10 +139,15 @@ struct UiThemeStyles {
     lv_style_t btnSecondary;
     lv_style_t btnGhost;
 
-    // NUEVO: variantes trasladadas a styles
+    // Variantes extra
     lv_style_t btnDestructive;
     lv_style_t btnSuccess;
     lv_style_t btnWarning;
+
+    // Iconos
+    lv_style_t iconOnSurface;
+    lv_style_t iconOnPrimary;
+    lv_style_t iconMuted;
 
     bool initialized = false;
 };
@@ -142,13 +156,8 @@ struct UiThemeStyles {
 void                 themeInitOnce();
 UiThemeStyles&       getThemeStyles();
 const UiThemeTokens& getThemeTokens();
-/**
- * @brief Fuerza la recarga del tema (reconstruye snapshot de tokens y estilos).
- * Úsala cuando cambies valores en ui_theme_tokens.h (p. ej., Color::Primary)
- * y quieras que se reflejen al construir nuevas pantallas/componentes.
- */
+/** Reconstruye snapshot de tokens + estilos */
 void themeReload();
-
 
 /*===================== Aplicadores de estilo =====================*/
 // Barras / contenidos
@@ -165,10 +174,18 @@ void applyListStylesToChildren(lv_obj_t* parent, UiThemeStyles& s, bool large, b
 void applyButtonPrimary    (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
 void applyButtonSecondary  (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
 void applyButtonGhost      (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
-
-// NUEVO: variantes trasladadas a styles
 void applyButtonDestructive(lv_obj_t* btn, UiThemeStyles& s, bool setSize);
 void applyButtonSuccess    (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
 void applyButtonWarning    (lv_obj_t* btn, UiThemeStyles& s, bool setSize);
+
+// Iconos (una sola familia de helpers; size_px opcional)
+void applyIconOnSurface(lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px = 0);
+void applyIconOnPrimary(lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px = 0);
+void applyIconMuted    (lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px = 0);
+
+// (Opcional) Alias por comodidad/compatibilidad:
+inline void applyIconDefault(lv_obj_t* obj, UiThemeStyles& s, lv_coord_t size_px = 0) {
+    applyIconOnSurface(obj, s, size_px);
+}
 
 } // namespace Ui
