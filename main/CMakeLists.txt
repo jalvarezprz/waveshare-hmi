@@ -22,10 +22,8 @@ set(SRCS_UI_CORE
 # UI — acciones y presets
 # =========================
 set(SRCS_UI_WIDGETS
-    ui/preset/ui_preset_button.cpp
-    ui/preset/ui_preset_switch.cpp
-    ui/preset/ui_preset_label.cpp
     ui/component/ui_component.cpp
+    ui/component/ui_component_switch.cpp
     ui/component/ui_component_button.cpp
     ui/component/ui_component_label.cpp
     ui/layout/ui_layout_scaffold.cpp

@@ -10,9 +10,10 @@
 
 // Tema/controles
 #include "ui/theme/ui_theme_styles.h"
-#include "ui/preset/ui_preset_button.h"
+#include "ui/component/ui_component_switch.h"
+#include "ui/component/ui_component_button.h"
 
-// Router: el preset invoca ui_router_dispatch si p.action está definido
+// Router
 #include "ui/router/ui_router.h"
 
 // (Menús) Diagnóstico de comunicaciones
@@ -30,19 +31,6 @@ static const char* strdup_cxx(const std::string& s) {
     if (!p) return nullptr;
     std::memcpy(p, s.c_str(), s.size() + 1);
     return p;
-}
-
-// Mapea tokens semánticos → id de icono del preset.
-static std::string resolve_icon_id(const std::string& token) {
-    if (token == "gear")    return "lv:settings";
-    if (token == "info")    return "lv:info";
-    if (token == "repeat")  return "lv:refresh";
-    if (token == "trend")   return "lv:directory";
-    if (token == "chip")    return "lv:chip";
-    if (token == "bus")     return "lv:list";
-    if (token == "number")  return "lv:warning";
-    if (token == "temp")    return "lv:charging";
-    return token; // deja pasar tal cual
 }
 
 static lv_obj_t* make_row(lv_obj_t* parent, int pad_col) {
@@ -100,6 +88,30 @@ static void bind_action_click(lv_obj_t* obj, const std::string& act) {
                 break;
         }
     }, LV_EVENT_ALL, payload);
+}
+
+/* ───────────────────────────── Helper botón menú (sin presets) ───────────────────────────── */
+
+static Ui::Button* make_menu_button(lv_obj_t* parent, Ui::UiThemeStyles& S,
+                                    const std::string& text,
+                                    const std::string& action) {
+    auto* btn = new Ui::Button();
+    btn->create(parent);
+    btn->setText(text.c_str());
+
+    // Estilos mínimos (mover a Theme cuando toque)
+    lv_obj_set_width(btn->root(), LV_PCT(100));
+    lv_obj_set_style_pad_hor(btn->root(), 10, 0);
+    lv_obj_set_style_pad_ver(btn->root(), 8, 0);
+
+    if (!action.empty()) {
+        auto* act = new std::string(action);
+        btn->setOnClick([](void* ud){
+            auto* a = static_cast<std::string*>(ud);
+            ui_router_dispatch(a->c_str());
+        }, act);
+    }
+    return btn;
 }
 
 /* ───────────────────────────── Panel diag (menús) ─────────────────────────────
@@ -264,7 +276,6 @@ static lv_obj_t* create_sensors_grid_2x5_titles(lv_obj_t* parent,
         lv_obj_set_style_text_color(title, lv_color_white(), 0);
         lv_obj_set_style_text_font(title, s.tokens.fontBody, 0);
         lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_LEFT, 0);
-        // Si prefieres centrado: LV_TEXT_ALIGN_CENTER
 
         if (ctx && ctx->temp_count < 10) ctx->temp_val[ctx->temp_count++] = v;
     }
@@ -311,41 +322,31 @@ static lv_obj_t* create_footer_switches(lv_obj_t* parent,
         lv_obj_set_style_text_font(lbl, s.tokens.fontBody, 0);
         lv_obj_set_style_text_color(lbl, s.tokens.colorOnSurface, 0);
 
-        lv_obj_t* sw = lv_switch_create(cont);
-        if (!e->enabled) lv_obj_add_state(sw, LV_STATE_DISABLED);
-        lv_obj_set_size(sw, 60, 30);
-        lv_obj_set_style_radius(sw, 15, 0);
+        auto* sw = new Ui::Switch();
+        sw->create(cont);
 
+        // enabled/disabled
+        if (!e->enabled) lv_obj_add_state(sw->root(), LV_STATE_DISABLED);
+
+        // (opcional) tamaño/radio -> mejor en applyTheme(), pero si urge:
+        lv_obj_set_size(sw->root(), 60, 30);
+        lv_obj_set_style_radius(sw->root(), 15, 0);
+
+        // acción
         if (!e->action.empty()) {
-            // Copiamos la acción a un buffer propio para usar como user_data
-            char* act = (char*)lv_mem_alloc(e->action.size() + 1);
-            if (act) {
-                std::strcpy(act, e->action.c_str());
+            auto* action = new std::string(e->action);
+            sw->setOnToggle([](bool state, void* ud){
+                auto* act = static_cast<std::string*>(ud);
+                ESP_LOGI("UI_ROUTER", "dispatch: %s", act->c_str());
 
-                lv_obj_add_event_cb(sw, [](lv_event_t* ev){
-                    const char* act = (const char*)lv_event_get_user_data(ev);
-
-                    // Log básico del gesto UI
-                    ESP_LOGI("UI_ROUTER", "dispatch: %s", act ? act : "(null)");
-
-                    // Si es nuestro switch 1: mando "toggle" del LED builtin
-                    if (act && std::strcmp(act, "DO:/io/sw1") == 0) {
-                        lv_obj_t* target = lv_event_get_target(ev);
-                        const bool state_on = lv_obj_has_state(target, LV_STATE_CHECKED);
-
-                        const char* op = state_on ? "set_true" : "set_false";
-                        const bool ok = Hmi::CommandSender::send_do("io/led_builtin", op, true);
-
-                        ESP_LOGI("UI_ROUTER",
-                                "DO:/io/sw1 -> send_do(io/led_builtin,%s) %s",
-                                op, ok ? "OK" : "FAIL");
-                    } else {
-                        ui_router_dispatch(act);
-                    }
-
-
-                }, LV_EVENT_VALUE_CHANGED, act);
-            }
+                if (*act == "DO:/io/sw1") {
+                    const char* op = state ? "set_true" : "set_false";
+                    bool ok = Hmi::CommandSender::send_do("io/led_builtin", op, true);
+                    ESP_LOGI("UI_ROUTER", "DO:/io/sw1 -> %s", ok ? "OK" : "FAIL");
+                } else {
+                    ui_router_dispatch(act->c_str());
+                }
+            }, action);
         }
     }
     return footer;
@@ -451,17 +452,11 @@ static lv_obj_t* build_menu_grid(lv_obj_t* parent, const ScreenSpecification& sp
         const int r = i / COLS;
         const int c = i % COLS;
 
-        Ui::Preset::ButtonMenu::Props p{};
-        p.text    = strdup_cxx(el.title.empty() ? el.id : el.title);
-        p.iconId  = strdup_cxx(resolve_icon_id(el.icon.empty() ? std::string("info") : el.icon));
-        p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
+        auto* B = make_menu_button(cont, S,
+                                   el.title.empty() ? el.id : el.title,
+                                   el.action);
 
-        if (!el.action.empty()) p.action = strdup_cxx(el.action);
-
-        auto H = Ui::Preset::ButtonMenu::create(cont, S, p);
-        bind_action_click(H.base.root, el.action);
-
-        lv_obj_set_grid_cell(H.base.root,
+        lv_obj_set_grid_cell(B->root(),
             LV_GRID_ALIGN_STRETCH, c, 1,
             LV_GRID_ALIGN_STRETCH, 1 + r, 1);
     }
@@ -488,15 +483,10 @@ static lv_obj_t* build_menu_list(lv_obj_t* parent, const ScreenSpecification& sp
 
     // Fila por elemento
     for (const auto& el : spec.elements) {
-        Ui::Preset::ButtonMenu::Props p{};
-        p.text    = strdup_cxx(el.title.empty() ? el.id : el.title);
-        p.iconId  = strdup_cxx(resolve_icon_id(el.icon.empty() ? std::string("info") : el.icon));
-        p.variant = Ui::Preset::ButtonMenu::Variant::Primary;
-        if (!el.action.empty()) p.action = strdup_cxx(el.action);
-
-        auto H = Ui::Preset::ButtonMenu::create(cont, S, p);
-        lv_obj_set_width(H.base.root, LV_PCT(100));
-        bind_action_click(H.base.root, el.action);
+        auto* B = make_menu_button(cont, S,
+                                   el.title.empty() ? el.id : el.title,
+                                   el.action);
+        lv_obj_set_width(B->root(), LV_PCT(100));
     }
 
     return cont;

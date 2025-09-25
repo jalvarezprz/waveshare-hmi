@@ -1,16 +1,16 @@
 #include "ui/layout/ui_layout_scaffold.h"
 #include "ui/theme/ui_theme_styles.h"
-#include "ui/preset/ui_preset_button.h"
+#include "ui/component/ui_component_button.h"   // ← sustituye al preset ButtonBack
 #include "esp_log.h"
 
 static const char* TAG = "UI_SCAFFOLD";
 
 // Punteros globales del Scaffold
-static lv_obj_t* s_screen  = nullptr;
-static lv_obj_t* s_header  = nullptr;
-static Ui::Preset::ButtonBack::Handle s_btnBack;
-static lv_obj_t* s_title   = nullptr;
-static lv_obj_t* s_content = nullptr;
+static lv_obj_t*  s_screen  = nullptr;
+static lv_obj_t*  s_header  = nullptr;
+static Ui::Button* s_btnBack = nullptr;        // ← ahora es Ui::Button*
+static lv_obj_t*  s_title   = nullptr;
+static lv_obj_t*  s_content = nullptr;
 
 // Back handler (inyectado desde fuera; nada de router aquí)
 static ui_back_cb_t s_back_cb = nullptr;
@@ -47,13 +47,12 @@ static void build_once() {
     lv_obj_set_flex_flow(s_header, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(s_header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
-    // Botón Back
-    Ui::Preset::ButtonBack::Props pb;
-    pb.callbacks.onClick = [](Ui::Component::Button::Handle&, void*) {
-        on_back_event(nullptr);
-    };
-    s_btnBack = Ui::Preset::ButtonBack::create(s_header, Ui::getThemeStyles(), pb);
-    lv_obj_align(s_btnBack.base.root, LV_ALIGN_LEFT_MID, 8, 0);
+    // Botón Back (Ui::Button)
+    s_btnBack = new Ui::Button();
+    s_btnBack->create(s_header);
+    s_btnBack->setText(LV_SYMBOL_LEFT " Atrás");
+    s_btnBack->setOnClick([](void*) { on_back_event(nullptr); }, nullptr);
+    lv_obj_align(s_btnBack->root(), LV_ALIGN_LEFT_MID, 8, 0);
 
     // Título
     s_title = lv_label_create(s_header);
@@ -89,30 +88,30 @@ void ui_layout_scaffold_set_title(const char* title) {
 
 void ui_layout_scaffold_set_back_enabled(bool enabled)
 {
-    // s_btnBack es Ui::Preset::ButtonBack::Handle
-    if (!s_btnBack.base.root) return;
-
-    // Usa la API del preset para (des)habilitar respetando el tema/estilos
-    Ui::Preset::ButtonBack::setDisabled(s_btnBack, Ui::getThemeStyles(), !enabled);
+    if (!s_btnBack || !s_btnBack->root()) return;
+    s_btnBack->setEnabled(enabled);
 }
 
 void ui_layout_scaffold_set_back_handler(ui_back_cb_t cb, void* user) {
     s_back_cb = cb;
     s_back_ud = user;
+    if (s_btnBack) {
+        s_btnBack->setOnClick([](void*) { if (s_back_cb) s_back_cb(s_back_ud); }, nullptr);
+    }
 }
 
 void ui_layout_scaffold_show_back(bool show)
 {
-    if (!s_btnBack.base.root) return;
+    if (!s_btnBack || !s_btnBack->root()) return;
 
     if (show) {
-        lv_obj_clear_flag(s_btnBack.base.root, LV_OBJ_FLAG_HIDDEN);
-        Ui::Preset::ButtonBack::setDisabled(s_btnBack, Ui::getThemeStyles(), false);
+        lv_obj_clear_flag(s_btnBack->root(), LV_OBJ_FLAG_HIDDEN);
+        s_btnBack->setEnabled(true);
     } else {
         // Evita que el foco navegue a un control oculto
-        Ui::Preset::ButtonBack::setDisabled(s_btnBack, Ui::getThemeStyles(), true);
-        lv_obj_add_flag(s_btnBack.base.root, LV_OBJ_FLAG_HIDDEN);
+        s_btnBack->setEnabled(false);
+        lv_obj_add_flag(s_btnBack->root(), LV_OBJ_FLAG_HIDDEN);
     }
 }
 
-}
+} // extern "C"
