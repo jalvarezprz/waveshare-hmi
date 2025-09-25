@@ -1,6 +1,6 @@
 #pragma once
 #include "lvgl.h"
-#include "ui/theme/ui_theme_styles.h"   // Ui::getThemeStyles, applyButtonPrimary, applyIconOnPrimary
+#include "ui/theme/ui_theme_styles.h"   // Ui::getThemeStyles, applyButton*, applyIcon*
 #include <functional>
 
 namespace Ui {
@@ -12,12 +12,21 @@ namespace Ui {
  *  - Enabled/disabled
  *  - Aplicación de tema (tokens/styles) para colores y tipografía
  *
- * Variantes: por ahora usa la variante "Primary" del tema.
- * Si más adelante añadimos variantes (Secondary, Ghost, ...),
- * podemos exponer un setter y reusar los applyButton* de styles.
+ * Incorpora:
+ *  - Variantes (Primary/Secondary/Ghost/Destructive/Success/Warning)
+ *  - Factory para botón “Back” con valores por defecto
  */
 class Button {
 public:
+    enum class Variant {
+        Primary,
+        Secondary,
+        Ghost,
+        Destructive,
+        Success,
+        Warning
+    };
+
     Button() = default;
     ~Button() = default;
 
@@ -43,8 +52,30 @@ public:
     /** Callback de click */
     void setOnClick(void (*cb)(void*), void* user_data);
 
+    /** Cambia la variante visual y reaplica el theme */
+    void setVariant(Variant v);
+
     /** Reaplica el tema (colores, tipografía). Útil si recargas Theme */
     virtual void applyTheme();
+
+    /*----------------- Factory: Back -----------------*/
+    struct BackProps {
+        // Nota: usar UTF-8 explícito para evitar problemas de codificación en Windows
+        const char* text     = "Atr\xc3\xa1s";   // "Atrás"
+        bool        showText = true;
+        bool        iconLeft = true;
+        bool        enabled  = true;
+        lv_align_t  align    = LV_ALIGN_LEFT_MID;
+        lv_coord_t  ofsX     = 8;
+        lv_coord_t  ofsY     = 0;
+        void (*onClick)(void*) = nullptr;
+        void* user = nullptr;
+    };
+
+    // Overload sin props (usa todos los defaults)
+    static Button* CreateBack(lv_obj_t* parent);
+    // Overload con props
+    static Button* CreateBack(lv_obj_t* parent, const BackProps& p);
 
 private:
     // Objetos LVGL
@@ -53,7 +84,8 @@ private:
     lv_obj_t* icon_  = nullptr;
 
     // Estado
-    bool iconLeft_ = true;
+    bool    iconLeft_ = true;
+    Variant variant_  = Variant::Primary;
 
     // Callback
     void (*onClick_)(void*) = nullptr;
@@ -63,6 +95,9 @@ private:
     void registerAllEvents();
     static void on_event_cb(lv_event_t* e);
     void onEvent(lv_event_t* e);
+
+    // Aplica la variante actual
+    void applyVariantStyles();
 };
 
 } // namespace Ui

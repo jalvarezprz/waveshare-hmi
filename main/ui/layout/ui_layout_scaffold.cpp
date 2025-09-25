@@ -48,14 +48,8 @@ static void build_once() {
     lv_obj_set_flex_align(s_header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     // Botón Back (Ui::Button)
-    s_btnBack = new Ui::Button();
-    s_btnBack->create(s_header);
-    s_btnBack->setText("Atrás");             // Montserrat Body + color onPrimary
-    s_btnBack->setIcon(LV_SYMBOL_LEFT);      // Icono a la izquierda por defecto
-    // s_btnBack->setIcon("");               // Si tu fontIcon incluye este glifo
-    // s_btnBack->setIconLeft(false);         // Si lo quieres a la derecha
+    s_btnBack = Ui::Button::CreateBack(s_header);
     s_btnBack->setOnClick([](void*){ on_back_event(nullptr); }, nullptr);
-    lv_obj_align(s_btnBack->root(), LV_ALIGN_LEFT_MID, 8, 0);
 
     // Título
     s_title = lv_label_create(s_header);
