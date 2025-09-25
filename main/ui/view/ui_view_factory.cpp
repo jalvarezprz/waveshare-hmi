@@ -119,25 +119,28 @@ static Ui::Button* make_menu_button(lv_obj_t* parent, Ui::UiThemeStyles& S,
  */
 static lv_obj_t* add_comm_diag_panel(lv_obj_t* parent)
 {
+    Ui::UiThemeStyles& S = Ui::getThemeStyles();
+
     lv_obj_t* panel = lv_obj_create(parent);
     lv_obj_set_size(panel, 260, LV_PCT(100));
-    lv_obj_set_style_pad_all(panel, 12, 0);
-    lv_obj_set_style_bg_opa(panel, LV_OPA_20, 0);
-    lv_obj_set_style_bg_color(panel, lv_palette_main(LV_PALETTE_GREY), 0);
-    lv_obj_set_style_radius(panel, 10, 0);
     lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_row(panel, 6, 0);
+
+    // Nuevo: estilo de panel desde styles (coherente con el tema)
+    Ui::applyPanelSurface(panel, S);
+
+    // Ajustes mínimos de layout (sin tocar la receta del tema)
+    lv_obj_set_style_pad_row(panel, S.tokens.gapRow, LV_PART_MAIN);
 
     // Título
     lv_obj_t* title = lv_label_create(panel);
     lv_label_set_text(title, "Comm · Diag");
-    lv_obj_set_style_text_font(title, Ui::getThemeStyles().tokens.fontTitle, 0);
+    lv_obj_add_style(title, &S.labelTitle, 0);
 
     // Labels
     auto mk = [&](const char* txt){
         lv_obj_t* l = lv_label_create(panel);
         lv_label_set_text(l, txt);
-        lv_obj_set_style_text_font(l, Ui::getThemeStyles().tokens.fontBody, 0);
+        lv_obj_add_style(l, &S.labelBody, 0);
         return l;
     };
     lv_obj_t* l_txq   = mk("TX queued: 0");
@@ -172,6 +175,7 @@ static lv_obj_t* add_comm_diag_panel(lv_obj_t* parent)
 
     return panel;
 }
+
 
 /* ─────────────────────────── Vista: temps_2x5 ───────────────────────────
  * 10 sensores (2 filas × 5 columnas) + footer con 3 switches.
